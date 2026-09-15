@@ -40,7 +40,7 @@ DEFAULT_MODE:
        Any radio (0/1/2) NOT listed under an AP's "bands" is skipped
        entirely for that AP (no veth interfaces configured on it).
 """
-DEFAULT_MODE = 1
+DEFAULT_MODE = 0
 
 """
 ─── DEFAULT_BAND_CFG (used only when DEFAULT_MODE = 1) ─────────────────
@@ -95,32 +95,39 @@ minus "radios" (the radio number is the dict key itself: 0, 1 or 2).
 Any radio key you don't list is skipped for that AP.
 
 Template to copy per radio:
-  <radio>: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+  <radio>: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4/IPv6/Dual", "target_type": "ip / hostname"},
 
 ─── Blank skeleton — copy/paste this per AP and fill in the values ─────
 Add/remove radio lines (0/1/2) as needed; an omitted radio is skipped.
+Copy from here and paste it:
+
 "ap_ip": {
     "bands": {
-        0: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
-        1: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
-        2: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
-    }
-},
+            0: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
+            1: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
+            2: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
+        }
+    },
+
+
 """
 AP_CONFIG: dict[str, dict] = {
-    "10.86.205.157": {
-        "bands": {
+"10.86.205.157": {
+    "bands": {
             0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "ip"},
             1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
             2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
         }
     },
-    # "10.86.205.60": {
-    #     "bands": {
-    #         0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-    #         # radios 1 and 2 omitted -> skipped for this AP
-    #     }
-    # },
+
+# "10.86.205.90": {
+#     "bands": {
+#             0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+#             1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+#             2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+#         }
+#     },
+
 }
 
 # ─── Discovery URLs / connection settings ────────────────────────────────

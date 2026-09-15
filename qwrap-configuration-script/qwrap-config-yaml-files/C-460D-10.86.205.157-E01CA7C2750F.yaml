@@ -1,0 +1,470 @@
+qwrapConfigPersistReboot: true
+radios:
+  0:
+    radioId: 0
+    ssid: S2-Agni-Office
+    protocol: 5
+    channelWidth: 2
+    securityCli: wpa3-dot1x
+    eapType: tls
+    username: qwrapAP3028@qwrap.com
+    caCertPath: /root/qwrapAP3028@qwrap.com/ca.pem
+    clientCertPath: /root/qwrapAP3028@qwrap.com/client.pem
+    privateKeyPath: /root/qwrapAP3028@qwrap.com/key.pem
+    keyMgmt: WPA-EAP-SUITE-B-192
+    pairwise: GCMP-256
+    group: GCMP-256
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: f2:1c:a7:c2:74:00
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      2:
+        clientId: 2
+        mac: f2:1c:a7:c2:74:01
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      3:
+        clientId: 3
+        mac: f2:1c:a7:c2:74:02
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      4:
+        clientId: 4
+        mac: f2:1c:a7:c2:74:03
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      5:
+        clientId: 5
+        mac: f2:1c:a7:c2:74:04
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      6:
+        clientId: 6
+        mac: f2:1c:a7:c2:74:05
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      7:
+        clientId: 7
+        mac: f2:1c:a7:c2:74:06
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      8:
+        clientId: 8
+        mac: f2:1c:a7:c2:74:07
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      9:
+        clientId: 9
+        mac: f2:1c:a7:c2:74:08
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      10:
+        clientId: 10
+        mac: f2:1c:a7:c2:74:09
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      11:
+        clientId: 11
+        mac: f2:1c:a7:c2:74:0a
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      12:
+        clientId: 12
+        mac: f2:1c:a7:c2:74:0b
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      13:
+        clientId: 13
+        mac: f2:1c:a7:c2:74:0c
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      14:
+        clientId: 14
+        mac: f2:1c:a7:c2:74:0d
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      15:
+        clientId: 15
+        mac: f2:1c:a7:c2:74:0e
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      16:
+        clientId: 16
+        mac: f2:1c:a7:c2:74:0f
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      17:
+        clientId: 17
+        mac: f2:1c:a7:c2:74:10
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      18:
+        clientId: 18
+        mac: f2:1c:a7:c2:74:11
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      19:
+        clientId: 19
+        mac: f2:1c:a7:c2:74:12
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      20:
+        clientId: 20
+        mac: f2:1c:a7:c2:74:13
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      21:
+        clientId: 21
+        mac: f2:1c:a7:c2:74:14
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      22:
+        clientId: 22
+        mac: f2:1c:a7:c2:74:15
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      23:
+        clientId: 23
+        mac: f2:1c:a7:c2:74:16
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      24:
+        clientId: 24
+        mac: f2:1c:a7:c2:74:17
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      25:
+        clientId: 25
+        mac: f2:1c:a7:c2:74:18
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      26:
+        clientId: 26
+        mac: f2:1c:a7:c2:74:19
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      27:
+        clientId: 27
+        mac: f2:1c:a7:c2:74:1a
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+      28:
+        clientId: 28
+        mac: f2:1c:a7:c2:74:1b
+        ipv6Enabled: true
+        hostnamePrefix: Radio-0
+  1:
+    radioId: 1
+    ssid: S2-Agni-Office
+    protocol: 5
+    channelWidth: 4
+    securityCli: wpa3-dot1x
+    eapType: tls
+    username: qwrapAP3027@qwrap.com
+    caCertPath: /root/qwrapAP3027@qwrap.com/ca.pem
+    clientCertPath: /root/qwrapAP3027@qwrap.com/client.pem
+    privateKeyPath: /root/qwrapAP3027@qwrap.com/key.pem
+    keyMgmt: WPA-EAP-SUITE-B-192
+    pairwise: GCMP-256
+    group: GCMP-256
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: f2:1c:a7:c2:74:aa
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      2:
+        clientId: 2
+        mac: f2:1c:a7:c2:74:ab
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      3:
+        clientId: 3
+        mac: f2:1c:a7:c2:74:ac
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      4:
+        clientId: 4
+        mac: f2:1c:a7:c2:74:ad
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      5:
+        clientId: 5
+        mac: f2:1c:a7:c2:74:ae
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      6:
+        clientId: 6
+        mac: f2:1c:a7:c2:74:af
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      7:
+        clientId: 7
+        mac: f2:1c:a7:c2:74:b0
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      8:
+        clientId: 8
+        mac: f2:1c:a7:c2:74:b1
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      9:
+        clientId: 9
+        mac: f2:1c:a7:c2:74:b2
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      10:
+        clientId: 10
+        mac: f2:1c:a7:c2:74:b3
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      11:
+        clientId: 11
+        mac: f2:1c:a7:c2:74:b4
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      12:
+        clientId: 12
+        mac: f2:1c:a7:c2:74:b5
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      13:
+        clientId: 13
+        mac: f2:1c:a7:c2:74:b6
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      14:
+        clientId: 14
+        mac: f2:1c:a7:c2:74:b7
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      15:
+        clientId: 15
+        mac: f2:1c:a7:c2:74:b8
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      16:
+        clientId: 16
+        mac: f2:1c:a7:c2:74:b9
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      17:
+        clientId: 17
+        mac: f2:1c:a7:c2:74:ba
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      18:
+        clientId: 18
+        mac: f2:1c:a7:c2:74:bb
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      19:
+        clientId: 19
+        mac: f2:1c:a7:c2:74:bc
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      20:
+        clientId: 20
+        mac: f2:1c:a7:c2:74:bd
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      21:
+        clientId: 21
+        mac: f2:1c:a7:c2:74:be
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      22:
+        clientId: 22
+        mac: f2:1c:a7:c2:74:bf
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      23:
+        clientId: 23
+        mac: f2:1c:a7:c2:74:c0
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      24:
+        clientId: 24
+        mac: f2:1c:a7:c2:74:c1
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      25:
+        clientId: 25
+        mac: f2:1c:a7:c2:74:c2
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      26:
+        clientId: 26
+        mac: f2:1c:a7:c2:74:c3
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      27:
+        clientId: 27
+        mac: f2:1c:a7:c2:74:c4
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+      28:
+        clientId: 28
+        mac: f2:1c:a7:c2:74:c5
+        ipv6Enabled: true
+        hostnamePrefix: Radio-1
+  2:
+    radioId: 2
+    ssid: S2-Agni-Office
+    protocol: 5
+    channelWidth: 6
+    securityCli: wpa3-dot1x
+    eapType: tls
+    username: qwrapAP3028@qwrap.com
+    caCertPath: /root/qwrapAP3028@qwrap.com/ca.pem
+    clientCertPath: /root/qwrapAP3028@qwrap.com/client.pem
+    privateKeyPath: /root/qwrapAP3028@qwrap.com/key.pem
+    keyMgmt: WPA-EAP-SUITE-B-192
+    pairwise: GCMP-256
+    group: GCMP-256
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: f2:1c:a7:c2:75:54
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      2:
+        clientId: 2
+        mac: f2:1c:a7:c2:75:55
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      3:
+        clientId: 3
+        mac: f2:1c:a7:c2:75:56
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      4:
+        clientId: 4
+        mac: f2:1c:a7:c2:75:57
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      5:
+        clientId: 5
+        mac: f2:1c:a7:c2:75:58
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      6:
+        clientId: 6
+        mac: f2:1c:a7:c2:75:59
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      7:
+        clientId: 7
+        mac: f2:1c:a7:c2:75:5a
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      8:
+        clientId: 8
+        mac: f2:1c:a7:c2:75:5b
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      9:
+        clientId: 9
+        mac: f2:1c:a7:c2:75:5c
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      10:
+        clientId: 10
+        mac: f2:1c:a7:c2:75:5d
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      11:
+        clientId: 11
+        mac: f2:1c:a7:c2:75:5e
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      12:
+        clientId: 12
+        mac: f2:1c:a7:c2:75:5f
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      13:
+        clientId: 13
+        mac: f2:1c:a7:c2:75:60
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      14:
+        clientId: 14
+        mac: f2:1c:a7:c2:75:61
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      15:
+        clientId: 15
+        mac: f2:1c:a7:c2:75:62
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      16:
+        clientId: 16
+        mac: f2:1c:a7:c2:75:63
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      17:
+        clientId: 17
+        mac: f2:1c:a7:c2:75:64
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      18:
+        clientId: 18
+        mac: f2:1c:a7:c2:75:65
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      19:
+        clientId: 19
+        mac: f2:1c:a7:c2:75:66
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      20:
+        clientId: 20
+        mac: f2:1c:a7:c2:75:67
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      21:
+        clientId: 21
+        mac: f2:1c:a7:c2:75:68
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      22:
+        clientId: 22
+        mac: f2:1c:a7:c2:75:69
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      23:
+        clientId: 23
+        mac: f2:1c:a7:c2:75:6a
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      24:
+        clientId: 24
+        mac: f2:1c:a7:c2:75:6b
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      25:
+        clientId: 25
+        mac: f2:1c:a7:c2:75:6c
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      26:
+        clientId: 26
+        mac: f2:1c:a7:c2:75:6d
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      27:
+        clientId: 27
+        mac: f2:1c:a7:c2:75:6e
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2
+      28:
+        clientId: 28
+        mac: f2:1c:a7:c2:75:6f
+        ipv6Enabled: true
+        hostnamePrefix: Radio-2

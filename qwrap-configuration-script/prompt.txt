@@ -1,0 +1,31 @@
+I need to add support for a new qwrap configure CLI option in qwrap_manager.py
+and qwrap_config.py under qwrap-configuration-script/.
+
+New CLI syntax example:
+qwrap configure radios <id> security <sec> ssid "<ssid>" <NEW-FLAG> "<value>" ...
+
+Details:
+- New field name (Python dict key, camelCase): <fieldName>
+- New CLI flag it maps to: <cli-flag-name>
+- Applies to which security types (all / wpa2 / wpa2-dot1x / wpa3 / wpa3-dot1x / owe / open): <...>
+- Is it a simple "flag <value>" pair (like existing MISC_KEY_MAP entries),
+  or does it need special positioning/conditional logic like eapType
+  (peap vs tls) in buildConfigureCmd()? <...>
+
+Update:
+1. qwrap_config.py - add <fieldName> to the docstring field list and TEMPLATE block.
+2. qwrap_manager.py - add <fieldName> to MISC_KEY_MAP (if simple) or extend
+   buildConfigureCmd() (if it needs conditional logic), following the existing
+   pattern for eapType/keyMgmt etc.
+
+Two cases in practice:
+- Simple flag (qwrap configure ... <flag> "<value>") - just add one line to
+  MISC_KEY_MAP in qwrap_manager.py:
+      MISC_KEY_MAP  = {
+          'keyMgmt':        'key-mgmt',
+          ...
+      }
+- Conditional/positional flag (like eapType which branches peap vs tls with
+  different sub-flags) - needs a new if block inside buildConfigureCmd().
+
+Keep the diff minimal - don't restructure existing fields.
