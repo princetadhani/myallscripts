@@ -38,7 +38,7 @@ NOTE: keyMgmt "WPA-EAP-SUITE-B-192" generally requires groupCipher/pairwiseCiphe
       "GCMP-256" and disables FT roaming (FT-EAP not settable together with it).
 
 NOTE: For eapType "tls", digitalCertPath/privateKeyPath/serverCaCertPath must be
-      LOCAL paths on this laptop. qwrap_manager.py automatically SCPs each file
+      LOCAL paths on this laptop. qwrap-manager.py automatically SCPs each file
       to "/root/<username>/<filename>" on the AP (creating the directory if
       needed) and rewrites the CLI command to use the AP-side path, mirroring
       CueQwrapCluster's cert upload behavior. No manual SCP or AP-side path is
@@ -267,6 +267,26 @@ AP_LIST = [
                     "ipv4":           0,
                     "ipv6":           1,
                 },
+            },
+        },
+    },
+
+    {
+        "host": "10.86.205.223",
+        "radios": {
+            0: { 
+            },
+            1: {  # 5ghz
+                "ssid":             "IGMP",
+                "security":         "owe",
+                "clients": {
+                    "count":          3,
+                    "hostnamePrefix": "",
+                    "ipv4":           1,
+                    "ipv6":           1,
+                },
+            },
+            2: {  # 6ghz
             },
         },
     },

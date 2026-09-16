@@ -33,8 +33,8 @@ for _noisyLogger in ('urllib3', 'requests'):
 
 # Path to the qwrap config file (AP_LIST, DEFAULT_CLI_USERNAME/PASSWORD) to
 # use for this run, 
-# EG: config_file_path = "/Users/prince.tadhani/git/swat/qwrap-configuration-script/qwrap_config.py"
-config_file_path = "/Users/prince.tadhani/git/swat/qwrap-configuration-script/qwrap_config.py"
+# EG: config_file_path = "/Users/prince.tadhani/git/swat/qwrap-configuration-script/qwrap-config.py"
+config_file_path = "/Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-config.py"
 
 AP_LIST              = None
 DEFAULT_CLI_USERNAME = None
@@ -747,27 +747,27 @@ actions:
   apply-qwrap-config-yaml  Apply a saved yaml (matched by the AP's live MAC) back to /opt/qwrap/qwrap_config.yaml on the AP, then reboot (fire-and-forget)
 
 examples:
-  python3 qwrap_manager.py --action configure
-  python3 qwrap_manager.py --action deconfigure
-  python3 qwrap_manager.py --action configure --ap 10.86.205.157,10.86.205.158
-  python3 qwrap_manager.py --action radio-configure --ap 10.86.205.157
-  python3 qwrap_manager.py --action client-add --ap 10.86.205.157
-  python3 qwrap_manager.py --action client-remove --ap 10.86.205.157
-  python3 qwrap_manager.py --action client-remove-count --count 2
-  python3 qwrap_manager.py --action client-remove-count --count 2 --ap 10.86.205.157
-  python3 qwrap_manager.py --action client-disassociate
-  python3 qwrap_manager.py --action client-reassociate
-  python3 qwrap_manager.py --action client-reassociate --reacquire-ip
-  python3 qwrap_manager.py --action config-persist-enable
-  python3 qwrap_manager.py --action config-persist-enable --ap 10.86.205.157
-  python3 qwrap_manager.py --action config-persist-disable
-  python3 qwrap_manager.py --action configure --config-persist enable
-  python3 qwrap_manager.py --action deconfigure --config-persist disable --ap 10.86.205.157
-  python3 qwrap_manager.py --action save-qwrap-config-yaml
-  python3 qwrap_manager.py --action save-qwrap-config-yaml --ap 10.86.205.157
-  python3 qwrap_manager.py --action apply-qwrap-config-yaml
-  python3 qwrap_manager.py --action apply-qwrap-config-yaml --ap 10.86.205.157
-  python3 qwrap_manager.py --action configure --debug
+  python3 qwrap-manager.py --action configure
+  python3 qwrap-manager.py --action deconfigure
+  python3 qwrap-manager.py --action configure --ap 10.86.205.157,10.86.205.158
+  python3 qwrap-manager.py --action radio-configure --ap 10.86.205.157
+  python3 qwrap-manager.py --action client-add --ap 10.86.205.157
+  python3 qwrap-manager.py --action client-remove --ap 10.86.205.157
+  python3 qwrap-manager.py --action client-remove-count --count 2
+  python3 qwrap-manager.py --action client-remove-count --count 2 --ap 10.86.205.157
+  python3 qwrap-manager.py --action client-disassociate
+  python3 qwrap-manager.py --action client-reassociate
+  python3 qwrap-manager.py --action client-reassociate --reacquire-ip
+  python3 qwrap-manager.py --action config-persist-enable
+  python3 qwrap-manager.py --action config-persist-enable --ap 10.86.205.157
+  python3 qwrap-manager.py --action config-persist-disable
+  python3 qwrap-manager.py --action configure --config-persist enable
+  python3 qwrap-manager.py --action deconfigure --config-persist disable --ap 10.86.205.157
+  python3 qwrap-manager.py --action save-qwrap-config-yaml
+  python3 qwrap-manager.py --action save-qwrap-config-yaml --ap 10.86.205.157
+  python3 qwrap-manager.py --action apply-qwrap-config-yaml
+  python3 qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.86.205.157
+  python3 qwrap-manager.py --action configure --debug
 '''
 
 
@@ -778,7 +778,7 @@ class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
 
 def parseArgs():
     parser = argparse.ArgumentParser(
-        prog='qwrap_manager.py',
+        prog='qwrap-manager.py',
         description=__doc__,
         epilog=EPILOG,
         formatter_class=_HelpFormatter,
