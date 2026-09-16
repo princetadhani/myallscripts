@@ -40,41 +40,6 @@ AP_IPS: list[str] = [
 # '10.86.205.165'
 ]
 
-
-# radio_edef[
-#     radio_0=1
-#     radio_1=1
-#     radio_2=0
-# ]
-
-# client_per_Radio[
-#     radio_0_veth_in_0_clients= 28
-#     radio_1_veth_in_0_clients= 28
-#     radio_2_veth_in_0_clients= 28
-# ]
-# traffic_sessions[
-# fileops=3
-# clientops=2
-# ]
-
-
-# radio0=1[
-#     radio_0_veth_in_0_clients= 1-10[
-#         traffic_sessions[
-# fileops=3
-# clientops=2
-# ]
-#     ]
-
-# radio_0_veth_in_0_clients= 11-20[
-#         traffic_sessions[
-# fileops=1
-# clientops=2
-# ]
-#     ]
-# ]
-
-
 # Discovery endpoint is chosen per-AP based on the AP IP's leading octets.
 # Add new prefix → URL entries here as more sites come online.
 DISCOVERY_URLS: dict[str, str] = {

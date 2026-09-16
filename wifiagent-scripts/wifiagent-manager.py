@@ -23,6 +23,7 @@ Examples:
   ./wifiagent-manager.py --action restart     # Restart
   ./wifiagent-manager.py --action install     # Force reinstall
   ./wifiagent-manager.py --ap 10.86.58.139    # Target a single AP
+  ./wifiagent-manager.py --ap 10.86.58.139,10.86.58.140  # Target multiple APs
   ./wifiagent-manager.py --help               # Show help
 
 Author:  Prince Tadhani
@@ -31,8 +32,8 @@ Created: 2026-06-25
 
 # Standard Library Modules
 import argparse
+import json
 import logging
-import os
 import sys
 import textwrap
 import threading
@@ -43,13 +44,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pexpect
 import requests
 import urllib3
-from dotenv import load_dotenv
 
-load_dotenv()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _print_lock  = threading.Lock()
-_portal_lock = threading.Lock()   # one portal request at a time to avoid auth conflicts
 
 
 def _print(msg=''):
@@ -85,28 +83,26 @@ AP_IPS: list[str] = [
 '10.87.169.243'
 ]
 # ---------------------------------------------------------------------------
-# Portal credentials for OTP challenge-response  (loaded from .env)
+# Wifi OTP signing endpoint used by the arista-ssh-agent Response[...] challenge/
+# response prompt (same as SWAT's otpLib.getWifiOTP(), and qwrap-manager.py).
 # ---------------------------------------------------------------------------
-CACHE_FILE    = '/tmp/nssh.txt'
-ONELOGIN_USER = os.environ["ONELOGIN_USER"]
-ONELOGIN_PASS = os.environ["ONELOGIN_PASS"]
-PORTAL_LOGIN  = 'https://license.aristanetworks.com/api-auth/login/'
-PORTAL_OTP    = 'https://license.aristanetworks.com/sign/wifi_otp/'
+WIFI_OTP_URL = 'https://license.aristanetworks.com/sign/wifi-otp/'
+WIFI_OTP_KEY = 'd9ca932a4bc8fbaaa5021b00e14dd453d469eaaf'
 
-# ---------------------------------------------------------------------------
-# AP SSH credentials  (loaded from .env)
+# -------------------------------\--------------------------------------------
+# AP SSH credentials
 # ---------------------------------------------------------------------------
 CONFIG_USER = 'config'
-CONFIG_PASS = os.environ["CONFIG_PASS"]
+CONFIG_PASS = 'Config@123'
 ROOT_USER   = 'root'
+DEBUG_ROOT_PASS = 'arastra'   # plain root password accepted on debug builds (no OTP)
 
 # ---------------------------------------------------------------------------
 # SSH / pexpect constants
 # ---------------------------------------------------------------------------
 SSH_TIMEOUT   = 30
 CONFIG_PROMPT = r']\$\s*'          # e.g. "hostname]$ "
-ROOT_PROMPT   = r' # '             # root shell " # " (space-hash-space)
-CHALLENGE_RE  = r'Response\[([^\]]{54})\]'
+ROOT_PROMPT   = r'~ # '            # root shell prompt, e.g. "~ # " (consume the leading "~" too)
 SSH_OPTS      = (
     '-o StrictHostKeyChecking=no '
     '-o UserKnownHostsFile=/dev/null '
@@ -129,107 +125,68 @@ WIFIAGENT_BASE_URL = 'https://10.86.107.57/sensorimages/airtight/please-dont-del
 WIFIAGENT_BIN_URL  = f'{WIFIAGENT_BASE_URL}/wifiagent.app/wifiagent'
 WIFIAGENT_CONF_URL = f'{WIFIAGENT_BASE_URL}/config.yaml'
 # ===========================================================================
-# OTP helpers  –  cache-first, then portal
+# OTP helper – stateless token-based signing (same as qwrap-manager.py)
 # ===========================================================================
 
-def check_cache(challenge):
-    '''Return cached OTP response for a challenge, or None.'''
-    if not os.path.exists(CACHE_FILE):
-        return None
-    with open(CACHE_FILE) as f:
-        lines = f.read().splitlines()
-    for i, line in enumerate(lines):
-        if line == challenge and i + 1 < len(lines):
-            return lines[i + 1]
-    return None
-
-
-def save_cache(challenge, response):
-    '''Append challenge/response pair; trim file if > 200 lines.'''
-    with open(CACHE_FILE, 'a') as f:
-        f.write(f'{challenge}\n{response}\n')
-    with open(CACHE_FILE) as f:
-        lines = f.readlines()
-    if len(lines) > 200:
-        with open(CACHE_FILE, 'w') as f:
-            f.writelines(lines[2:])
-
-
-def get_portal_response(challenge):
-    '''Fetch OTP response from the Arista license portal. Retries up to 3 times.'''
-    for attempt in range(1, 4):
-        try:
-            session = requests.Session()
-            session.verify = False
-
-            # Grab CSRF token from login page
-            session.get(PORTAL_LOGIN, timeout=15)
-            csrf = session.cookies.get('csrftoken', '')
-
-            # Log in
-            session.post(
-                PORTAL_LOGIN,
-                data={
-                    'username':            ONELOGIN_USER,
-                    'password':            ONELOGIN_PASS,
-                    'submit':              'Log in',
-                    'csrfmiddlewaretoken': csrf,
-                },
-                headers={'Referer': PORTAL_LOGIN},
-                timeout=15,
-            )
-            csrf = session.cookies.get('csrftoken', csrf)
-
-            # Request OTP signature
-            # Referer must be PORTAL_LOGIN (Django validates the origin matches the domain)
-            r = session.post(
-                PORTAL_OTP,
-                data={'message': challenge, 'csrfmiddlewaretoken': csrf},
-                headers={'Referer': PORTAL_LOGIN},
-                timeout=15,
-            )
-
-            sig = r.json().get('signature', '')
-            if sig:
-                return sig
-            logging.warning(f'Portal attempt {attempt}: empty signature – retrying')
-
-        except Exception as exc:
-            logging.warning(f'Portal attempt {attempt} failed: {exc}')
-
-        if attempt < 3:
-            time.sleep(2 * attempt)
-
-    return ''
-
-
-def get_response(challenge):
-    '''Cache-first lookup, then hit the portal (serialized to avoid concurrent auth conflicts).'''
-    cached = check_cache(challenge)
-    if cached:
-        logging.info(f'   [cache] Challenge {challenge[:12]}... -> using cached response')
-        return cached
-
-    with _portal_lock:
-        # Re-check cache inside lock: another thread may have just fetched this challenge
-        cached = check_cache(challenge)
-        if cached:
-            logging.info(f'   [cache] Challenge {challenge[:12]}... -> using cached response')
-            return cached
-
-        logging.info(f'   [portal] Fetching response for challenge: {challenge[:12]}...')
-        response = get_portal_response(challenge)
-        if response:
-            save_cache(challenge, response)
-            return response
-
-    logging.error('[ERROR] Could not get OTP response from portal.')
-    return ''
+def getWifiOtp(challenge):
+    '''Sign an arista-ssh-agent Response[...] challenge via the Wifi OTP
+    endpoint. Stateless (no session/login), so it is safe to call from any
+    number of threads at once.'''
+    header = {
+        'Authorization': f'Token {WIFI_OTP_KEY}',
+        'Content-Type':  'application/json',
+    }
+    payload = json.dumps({'message': challenge})
+    response = requests.post(WIFI_OTP_URL, headers=header, data=payload, allow_redirects=True)
+    if response.status_code != 201:
+        raise RuntimeError(f'Wifi OTP request failed ({response.status_code}) for challenge {challenge}')
+    return response.json()['signature']
 
 
 # ===========================================================================
 # SSH helpers
 # ===========================================================================
+
+def _authenticate(child, password, host, promptPattern=None, timeout=SSH_TIMEOUT):
+    '''Shared login challenge/response loop (host-key/password/OTP), same as
+    qwrap-manager.py's _authenticate() / SWAT's cliLib._createSshSession().
+    Used for both interactive SSH sessions (where promptPattern is the shell
+    prompt to land on) and one-shot commands (where promptPattern is None and
+    we just wait for EOF once authenticated).'''
+    patterns = ['continue connecting', '[Pp]assword:', r'Response\[([^\]]{54})', 'Enter .*code',
+                pexpect.EOF, pexpect.TIMEOUT]
+    if promptPattern:
+        patterns = [promptPattern] + patterns
+        offset   = 1
+    else:
+        offset = 0
+
+    while True:
+        result = child.expect(patterns, timeout=timeout)
+        if promptPattern and result == 0:
+            return
+        idx = result - offset
+        if idx == 0:                        # host-key prompt
+            child.sendline('yes')
+        elif idx == 1:                      # password prompt
+            child.sendline(password)
+        elif idx == 2:
+            # arista-ssh-agent challenge/response prompt. Sign the challenge
+            # via the Wifi OTP endpoint and send the resulting one-time
+            # password back.
+            challenge = child.match.group(1)
+            child.sendline(getWifiOtp(challenge))
+        elif idx == 3:
+            raise RuntimeError(f'{host}: MFA/OTP prompt received but not supported by this script')
+        elif idx == 4:
+            # EOF: fine for one-shot commands (finished after auth), an error
+            # if we were still waiting to land on an interactive shell prompt.
+            if promptPattern:
+                raise RuntimeError(f'Failed to connect/login to {host}')
+            return
+        else:
+            raise RuntimeError(f'Failed to connect/login to {host}')
+
 
 def _unlock_rootuser(ip):
     '''
@@ -241,22 +198,7 @@ def _unlock_rootuser(ip):
     conn = pexpect.spawn(cmd, timeout=SSH_TIMEOUT, encoding='utf-8')
 
     try:
-        idx = conn.expect(
-            ['continue connecting', r'[Pp]assword:', pexpect.EOF, pexpect.TIMEOUT],
-            timeout=SSH_TIMEOUT,
-        )
-        if idx == 0:                        # host-key prompt
-            conn.sendline('yes')
-            conn.expect(r'[Pp]assword:', timeout=SSH_TIMEOUT)
-            conn.sendline(CONFIG_PASS)
-        elif idx == 1:                      # password prompt directly
-            conn.sendline(CONFIG_PASS)
-        elif idx == 2:
-            raise RuntimeError(f'[{ip}] config SSH: connection closed unexpectedly')
-        else:
-            raise RuntimeError(f'[{ip}] config SSH: timed out waiting for password prompt')
-
-        conn.expect(CONFIG_PROMPT, timeout=SSH_TIMEOUT)
+        _authenticate(conn, CONFIG_PASS, ip, promptPattern=CONFIG_PROMPT, timeout=SSH_TIMEOUT)
         conn.sendline('privilege access')
         conn.expect(CONFIG_PROMPT, timeout=SSH_TIMEOUT)
         conn.sendline('rootuser unlock')
@@ -273,42 +215,74 @@ def _unlock_rootuser(ip):
     logging.info(f'[{ip}] Rootuser unlocked')
 
 
+def _try_root_direct(ip, timeout=SSH_TIMEOUT):
+    '''
+    Attempt SSH login directly as root, skipping the config-user unlock hop.
+    Handles three cases seen in the field:
+      - Normal case: arista-ssh-agent Response[...] challenge -> sign with
+        the Wifi OTP endpoint and reply.
+      - Debug build: root accepts a plain password ("arastra"), no OTP.
+      - Rootuser locked: a password prompt appears but any password is
+        rejected (re-prompted, or the connection is closed) -> rootuser
+        needs to be unlocked via the config hop first.
+
+    Returns an open pexpect conn sitting at the root prompt on success, or
+    None if the config-hop fallback is required.
+    '''
+    logging.info(f'[{ip}] Trying direct root login (no config hop)')
+    cmd = f'ssh {SSH_OPTS} {ROOT_USER}@{ip}'
+    conn = pexpect.spawn(cmd, timeout=timeout, encoding='utf-8')
+    patterns = [ROOT_PROMPT, 'continue connecting', r'[Pp]assword:',
+                r'Response\[([^\]]{54})', pexpect.EOF, pexpect.TIMEOUT]
+    triedDebugPassword = False
+
+    while True:
+        idx = conn.expect(patterns, timeout=timeout)
+        if idx == 0:                        # root prompt reached
+            logging.info(f'[{ip}] Direct root login succeeded')
+            return conn
+        elif idx == 1:                      # host-key prompt
+            conn.sendline('yes')
+        elif idx == 2:                      # password prompt
+            if triedDebugPassword:
+                # Debug password rejected too -> rootuser is locked.
+                logging.info(f'[{ip}] Root password rejected – rootuser is locked')
+                conn.close(force=True)
+                return None
+            triedDebugPassword = True
+            conn.sendline(DEBUG_ROOT_PASS)
+        elif idx == 3:                      # OTP challenge
+            challenge = conn.match.group(1)
+            conn.sendline(getWifiOtp(challenge))
+        elif idx == 4:                      # EOF – closed before a shell prompt
+            logging.info(f'[{ip}] Direct root SSH closed early – rootuser likely locked')
+            return None
+        else:                                # TIMEOUT
+            conn.close(force=True)
+            return None
+
+
 def _ssh_root(ip):
     '''
-    Unlock rootuser then SSH as root with OTP challenge-response.
+    SSH as root. Tries a direct root login first (OTP challenge, or on debug
+    builds a plain password) to avoid the slower config-user unlock hop on
+    every call. Falls back to unlocking rootuser via the config shell only
+    when the direct attempt shows rootuser is locked.
     Returns an open pexpect session sitting at the root shell prompt.
     '''
+    conn = _try_root_direct(ip)
+    if conn:
+        return conn
+
+    logging.info(f'[{ip}] Falling back to config-user unlock + root login')
     _unlock_rootuser(ip)
 
     logging.info(f'[{ip}] Connecting as root')
     cmd = f'ssh {SSH_OPTS} {ROOT_USER}@{ip}'
     conn = pexpect.spawn(cmd, timeout=SSH_TIMEOUT, encoding='utf-8')
-
-    while True:
-        idx = conn.expect(
-            [ROOT_PROMPT, 'continue connecting', r'[Pp]assword:', CHALLENGE_RE,
-             pexpect.EOF, pexpect.TIMEOUT],
-            timeout=SSH_TIMEOUT,
-        )
-        if idx == 0:
-            logging.info(f'[{ip}] Root shell ready')
-            return conn
-        elif idx == 1:                      # host-key prompt
-            conn.sendline('yes')
-        elif idx == 2:                      # password prompt (unexpected)
-            conn.sendline('')
-        elif idx == 3:                      # OTP challenge
-            challenge = conn.match.group(1)
-            otp = get_response(challenge)
-            if not otp:
-                conn.close(force=True)
-                raise RuntimeError(f'[{ip}] Failed to obtain OTP from portal')
-            conn.sendline(otp)
-        elif idx == 4:
-            raise RuntimeError(f'[{ip}] SSH connection closed unexpectedly')
-        else:
-            conn.close(force=True)
-            raise RuntimeError(f'[{ip}] SSH timed out waiting for root prompt')
+    _authenticate(conn, '', ip, promptPattern=ROOT_PROMPT, timeout=SSH_TIMEOUT)
+    logging.info(f'[{ip}] Root shell ready')
+    return conn
 
 
 def _close(conn):
@@ -411,8 +385,15 @@ def _start_binary(conn, ip):
     _print(f'[{ip}]  {launchCmd}')
     _run(conn, ip, launchCmd, timeout=10)
 
-    time.sleep(2)
-    pid = _get_pid(conn, ip)
+    # Poll for the process instead of a single fixed sleep+check: on a slow/busy
+    # AP the binary can take longer than 2s to appear in `ps`, which otherwise
+    # causes intermittent false "may not have started" warnings.
+    pid = None
+    for _ in range(5):
+        time.sleep(1)
+        pid = _get_pid(conn, ip)
+        if pid:
+            break
 
     if not pid:
         # Show any error output the binary wrote before it died
@@ -454,9 +435,11 @@ def action_status(ip):
                 _print(f'[{ip}]  wifiagent  STOPPED')
         finally:
             _close(conn)
+        return True
     except Exception as e:
         _print(f'[{ip}]  ERROR: {e}')
         logging.error(f'[{ip}] status failed: {e}')
+        return False
 
 
 def action_stop(ip):
@@ -475,19 +458,21 @@ def action_stop(ip):
             pid = _get_pid(conn, ip)
             if not pid:
                 _print(f'[{ip}]  wifiagent is already stopped')
-                return
+                return True
             _run(conn, ip, 'killall wifiagent 2>/dev/null || pkill -x wifiagent 2>/dev/null || true')
             time.sleep(1)
             pid = _get_pid(conn, ip)
             if not pid:
                 _print(f'[{ip}]  wifiagent stopped')
-            else:
-                _print(f'[{ip}]  WARNING: wifiagent still running (PID={pid})')
+                return True
+            _print(f'[{ip}]  WARNING: wifiagent still running (PID={pid})')
+            return False
         finally:
             _close(conn)
     except Exception as e:
         _print(f'[{ip}]  ERROR: {e}')
         logging.error(f'[{ip}] stop failed: {e}')
+        return False
 
 
 def action_start(ip):
@@ -506,7 +491,7 @@ def action_start(ip):
             pid = _get_pid(conn, ip)
             if pid:
                 _print(f'[{ip}]  wifiagent already running (PID={pid})')
-                return
+                return True
 
             binOk  = _file_exists(conn, ip, AP_BIN_PATH)
             confOk = _file_exists(conn, ip, AP_CONF_PATH)
@@ -514,19 +499,20 @@ def action_start(ip):
             if not binOk or not confOk:
                 _print(f'[{ip}]  Binary/conf missing – installing wifiagent first')
                 _close(conn)
-                _do_install(ip, force=False, skipRunningCheck=True)
-                return
+                return _do_install(ip, force=False, skipRunningCheck=True)
 
             pid = _start_binary(conn, ip)
             if pid:
                 _print(f'[{ip}]  wifiagent started  PID={pid}')
-            else:
-                _print(f'[{ip}]  WARNING: wifiagent may not have started')
+                return True
+            _print(f'[{ip}]  WARNING: wifiagent may not have started')
+            return False
         finally:
             _close(conn)
     except Exception as e:
         _print(f'[{ip}]  ERROR: {e}')
         logging.error(f'[{ip}] start failed: {e}')
+        return False
 
 
 def action_restart(ip):
@@ -554,19 +540,20 @@ def action_restart(ip):
             if not binOk or not confOk:
                 _print(f'[{ip}]  Binary/conf missing – installing wifiagent first')
                 _close(conn)
-                _do_install(ip, force=False, skipRunningCheck=True)
-                return
+                return _do_install(ip, force=False, skipRunningCheck=True)
 
             pid = _start_binary(conn, ip)
             if pid:
                 _print(f'[{ip}]  wifiagent restarted  PID={pid}')
-            else:
-                _print(f'[{ip}]  WARNING: wifiagent may not have restarted')
+                return True
+            _print(f'[{ip}]  WARNING: wifiagent may not have restarted')
+            return False
         finally:
             _close(conn)
     except Exception as e:
         _print(f'[{ip}]  ERROR: {e}')
         logging.error(f'[{ip}] restart failed: {e}')
+        return False
 
 
 def _do_install(ip, force=True, skipRunningCheck=False):
@@ -585,7 +572,7 @@ def _do_install(ip, force=True, skipRunningCheck=False):
             pid = _get_pid(conn, ip)
             if pid:
                 _print(f'[{ip}]  wifiagent already running (PID={pid}) – skipping install')
-                return
+                return True
             binOk  = _file_exists(conn, ip, AP_BIN_PATH)
             confOk = _file_exists(conn, ip, AP_CONF_PATH)
             if binOk and confOk:
@@ -593,7 +580,8 @@ def _do_install(ip, force=True, skipRunningCheck=False):
                 pid = _start_binary(conn, ip)
                 if pid:
                     _print(f'[{ip}]  wifiagent started  PID={pid}')
-                return
+                    return True
+                return False
         finally:
             _close(conn)
 
@@ -615,8 +603,9 @@ def _do_install(ip, force=True, skipRunningCheck=False):
         pid = _start_binary(conn, ip)
         if pid:
             _print(f'[{ip}]  wifiagent installed and started  PID={pid}')
-        else:
-            _print(f'[{ip}]  WARNING: install done but wifiagent may not have started')
+            return True
+        _print(f'[{ip}]  WARNING: install done but wifiagent may not have started')
+        return False
     finally:
         _close(conn)
 
@@ -632,10 +621,11 @@ def action_install(ip):
     logging.info(f'[{ip}] Installing wifiagent (force)')
     _print(f'\n--- {ip} ---')
     try:
-        _do_install(ip, force=True)
+        return _do_install(ip, force=True)
     except Exception as e:
         _print(f'[{ip}]  ERROR: {e}')
         logging.error(f'[{ip}] install failed: {e}')
+        return False
 
 
 # ===========================================================================
@@ -659,7 +649,7 @@ def action_running(ip):
             pid = _get_pid(conn, ip)
             if pid:
                 _print(f'[{ip}]  wifiagent already running (PID={pid}) – nothing to do')
-                return
+                return True
 
             binOk  = _file_exists(conn, ip, AP_BIN_PATH)
             confOk = _file_exists(conn, ip, AP_CONF_PATH)
@@ -667,19 +657,20 @@ def action_running(ip):
             if not binOk or not confOk:
                 _print(f'[{ip}]  Binary/conf missing – installing wifiagent')
                 _close(conn)
-                _do_install(ip, force=False, skipRunningCheck=True)
-                return
+                return _do_install(ip, force=False, skipRunningCheck=True)
 
             pid = _start_binary(conn, ip)
             if pid:
                 _print(f'[{ip}]  wifiagent was stopped – now started  PID={pid}')
-            else:
-                _print(f'[{ip}]  WARNING: wifiagent may not have started')
+                return True
+            _print(f'[{ip}]  WARNING: wifiagent may not have started')
+            return False
         finally:
             _close(conn)
     except Exception as e:
         _print(f'[{ip}]  ERROR: {e}')
         logging.error(f'[{ip}] running failed: {e}')
+        return False
 
 
 # ===========================================================================
@@ -703,6 +694,7 @@ _EXAMPLES = textwrap.dedent('''\
       wifiagent-manager.py --action restart        # restart agent on all APs
       wifiagent-manager.py --action install        # force reinstall on all APs
       wifiagent-manager.py --ap 10.86.58.139       # only manage a specific AP
+      wifiagent-manager.py --ap 10.86.58.139,10.86.58.140   # manage multiple APs
       wifiagent-manager.py --no-parallel           # run sequentially instead of in parallel
 ''')
 
@@ -722,14 +714,14 @@ def main():
     parser.add_argument(
         '--ap',
         default=None,
-        metavar='AP',
-        help='Specific AP IP to manage (default: manage all APs)',
+        metavar='AP[,AP...]',
+        help='Specific AP IP(s) to manage, comma-separated (default: manage all APs)',
     )
     parser.add_argument(
         '--parallel',
         action=argparse.BooleanOptionalAction,
-        default=False,
-        help='Run operations in parallel (default: False)',
+        default=True,
+        help='Run operations in parallel (default: True; use --no-parallel to run sequentially)',
     )
     parser.add_argument(
         '--logLevel',
@@ -745,11 +737,12 @@ def main():
         stream=sys.stdout,
     )
 
-    # Resolve target AP list
+    # Resolve target AP list (comma-separated: --ap ip1,ip2,...)
     if options.ap:
-        if options.ap not in AP_IPS:
-            print(f'Warning: {options.ap} is not in the AP_IPS list – proceeding anyway')
-        targets = [options.ap]
+        targets = [ip.strip() for ip in options.ap.split(',') if ip.strip()]
+        for ip in targets:
+            if ip not in AP_IPS:
+                print(f'Warning: {ip} is not in the AP_IPS list – proceeding anyway')
     else:
         targets = AP_IPS
 
@@ -757,18 +750,34 @@ def main():
     print(f'Action: {options.action}  |  APs ({len(targets)}): {", ".join(targets)}'
           f'  |  parallel={options.parallel}')
 
+    results = {}   # ip -> True (success) / False (failure)
+
     if options.parallel and len(targets) > 1:
         with ThreadPoolExecutor(max_workers=len(targets)) as pool:
             futures = {pool.submit(actionFn, ip): ip for ip in targets}
             for future in as_completed(futures):
+                ip  = futures[future]
                 exc = future.exception()
                 if exc:
-                    _print(f'[{futures[future]}]  UNHANDLED ERROR: {exc}')
+                    _print(f'[{ip}]  UNHANDLED ERROR: {exc}')
+                    results[ip] = False
+                else:
+                    results[ip] = bool(future.result())
     else:
         for ip in targets:
-            actionFn(ip)
+            try:
+                results[ip] = bool(actionFn(ip))
+            except Exception as exc:
+                _print(f'[{ip}]  UNHANDLED ERROR: {exc}')
+                results[ip] = False
+
+    failed = [ip for ip in targets if not results.get(ip)]
 
     print('\nDone.')
+    if failed:
+        print(f'Failed APs ({len(failed)}/{len(targets)}): {", ".join(failed)}')
+    else:
+        print(f'All {len(targets)} AP(s) succeeded.')
 
 
 if __name__ == '__main__':

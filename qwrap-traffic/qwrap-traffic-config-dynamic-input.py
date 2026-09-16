@@ -128,6 +128,13 @@ AP_CONFIG: dict[str, dict] = {
 #         }
 #     },
 
+"10.86.60.4": {
+    "bands": {
+            # 0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "ip"},
+            # 1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+        }
+    },
 }
 
 # ─── Discovery URLs / connection settings ────────────────────────────────

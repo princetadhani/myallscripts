@@ -33,24 +33,22 @@ tail -f monitor.log
 
 # Standard Library Modules
 import argparse
+import json
 import logging
-import os
 import sys
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 # Third-Party Modules
 import pexpect
 import requests
 import urllib3
-from dotenv import load_dotenv
 
-load_dotenv()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _print_lock  = threading.Lock()
-_portal_lock = threading.Lock()   # one portal request at a time to avoid auth conflicts
 
 
 def _print(msg=''):
@@ -86,28 +84,26 @@ AP_IPS: list[str] = [
 '10.87.169.243'
 ]
 # ---------------------------------------------------------------------------
-# Portal credentials for OTP challenge-response  (loaded from .env)
+# Wifi OTP signing endpoint used by the arista-ssh-agent Response[...] challenge/
+# response prompt (same as SWAT's otpLib.getWifiOTP(), and qwrap-manager.py).
 # ---------------------------------------------------------------------------
-CACHE_FILE    = '/tmp/nssh.txt'
-ONELOGIN_USER = os.environ["ONELOGIN_USER"]
-ONELOGIN_PASS = os.environ["ONELOGIN_PASS"]
-PORTAL_LOGIN  = 'https://license.aristanetworks.com/api-auth/login/'
-PORTAL_OTP    = 'https://license.aristanetworks.com/sign/wifi_otp/'
+WIFI_OTP_URL = 'https://license.aristanetworks.com/sign/wifi-otp/'
+WIFI_OTP_KEY = 'd9ca932a4bc8fbaaa5021b00e14dd453d469eaaf'
 
 # ---------------------------------------------------------------------------
-# AP SSH credentials  (loaded from .env)
+# AP SSH credentials
 # ---------------------------------------------------------------------------
 CONFIG_USER = 'config'
-CONFIG_PASS = os.environ["CONFIG_PASS"]
+CONFIG_PASS = 'Config@123'
 ROOT_USER   = 'root'
+DEBUG_ROOT_PASS = 'arastra'   # plain root password accepted on debug builds (no OTP)
 
 # ---------------------------------------------------------------------------
 # SSH / pexpect constants
 # ---------------------------------------------------------------------------
 SSH_TIMEOUT   = 30
 CONFIG_PROMPT = r']\$\s*'          # e.g. "hostname]$ "
-ROOT_PROMPT   = r' # '             # root shell " # " (space-hash-space)
-CHALLENGE_RE  = r'Response\[([^\]]{54})\]'
+ROOT_PROMPT   = r'~ # '            # root shell prompt, e.g. "~ # " (consume the leading "~" too)
 SSH_OPTS      = (
     '-o StrictHostKeyChecking=no '
     '-o UserKnownHostsFile=/dev/null '
@@ -138,106 +134,68 @@ DEFAULT_MAX_RETRIES = 2         # Max retries per AP before moving to next
 
 
 # ===========================================================================
-# OTP helpers  –  cache-first, then portal
+# OTP helper – stateless token-based signing (same as qwrap-manager.py)
 # ===========================================================================
 
-def check_cache(challenge):
-    '''Return cached OTP response for a challenge, or None.'''
-    if not os.path.exists(CACHE_FILE):
-        return None
-    with open(CACHE_FILE) as f:
-        lines = f.read().splitlines()
-    for i, line in enumerate(lines):
-        if line == challenge and i + 1 < len(lines):
-            return lines[i + 1]
-    return None
-
-
-def save_cache(challenge, response):
-    '''Append challenge/response pair; trim file if > 200 lines.'''
-    with open(CACHE_FILE, 'a') as f:
-        f.write(f'{challenge}\n{response}\n')
-    with open(CACHE_FILE) as f:
-        lines = f.readlines()
-    if len(lines) > 200:
-        with open(CACHE_FILE, 'w') as f:
-            f.writelines(lines[2:])
-
-
-def get_portal_response(challenge):
-    '''Fetch OTP response from the Arista license portal. Retries up to 3 times.'''
-    for attempt in range(1, 4):
-        try:
-            session = requests.Session()
-            session.verify = False
-
-            # Grab CSRF token from login page
-            session.get(PORTAL_LOGIN, timeout=15)
-            csrf = session.cookies.get('csrftoken', '')
-
-            # Log in
-            session.post(
-                PORTAL_LOGIN,
-                data={
-                    'username':            ONELOGIN_USER,
-                    'password':            ONELOGIN_PASS,
-                    'submit':              'Log in',
-                    'csrfmiddlewaretoken': csrf,
-                },
-                headers={'Referer': PORTAL_LOGIN},
-                timeout=15,
-            )
-            csrf = session.cookies.get('csrftoken', csrf)
-
-            # Request OTP signature
-            r = session.post(
-                PORTAL_OTP,
-                data={'message': challenge, 'csrfmiddlewaretoken': csrf},
-                headers={'Referer': PORTAL_LOGIN},
-                timeout=15,
-            )
-
-            sig = r.json().get('signature', '')
-            if sig:
-                return sig
-            logging.warning(f'Portal attempt {attempt}: empty signature – retrying')
-
-        except Exception as exc:
-            logging.warning(f'Portal attempt {attempt} failed: {exc}')
-
-        if attempt < 3:
-            time.sleep(2 * attempt)
-
-    return ''
-
-
-def get_response(challenge):
-    '''Cache-first lookup, then hit the portal (serialized to avoid concurrent auth conflicts).'''
-    cached = check_cache(challenge)
-    if cached:
-        logging.info(f'   [cache] Challenge {challenge[:12]}... -> using cached response')
-        return cached
-
-    with _portal_lock:
-        # Re-check cache inside lock: another thread may have just fetched this challenge
-        cached = check_cache(challenge)
-        if cached:
-            logging.info(f'   [cache] Challenge {challenge[:12]}... -> using cached response')
-            return cached
-
-        logging.info(f'   [portal] Fetching response for challenge: {challenge[:12]}...')
-        response = get_portal_response(challenge)
-        if response:
-            save_cache(challenge, response)
-            return response
-
-    logging.error('[ERROR] Could not get OTP response from portal.')
-    return ''
+def getWifiOtp(challenge):
+    '''Sign an arista-ssh-agent Response[...] challenge via the Wifi OTP
+    endpoint. Stateless (no session/login), so it is safe to call from any
+    number of threads at once.'''
+    header = {
+        'Authorization': f'Token {WIFI_OTP_KEY}',
+        'Content-Type':  'application/json',
+    }
+    payload = json.dumps({'message': challenge})
+    response = requests.post(WIFI_OTP_URL, headers=header, data=payload, allow_redirects=True)
+    if response.status_code != 201:
+        raise RuntimeError(f'Wifi OTP request failed ({response.status_code}) for challenge {challenge}')
+    return response.json()['signature']
 
 
 # ===========================================================================
 # SSH helpers
 # ===========================================================================
+
+def _authenticate(child, password, host, promptPattern=None, timeout=SSH_TIMEOUT):
+    '''Shared login challenge/response loop (host-key/password/OTP), same as
+    qwrap-manager.py's _authenticate() / SWAT's cliLib._createSshSession().
+    Used for both interactive SSH sessions (where promptPattern is the shell
+    prompt to land on) and one-shot commands (where promptPattern is None and
+    we just wait for EOF once authenticated).'''
+    patterns = ['continue connecting', '[Pp]assword:', r'Response\[([^\]]{54})', 'Enter .*code',
+                pexpect.EOF, pexpect.TIMEOUT]
+    if promptPattern:
+        patterns = [promptPattern] + patterns
+        offset   = 1
+    else:
+        offset = 0
+
+    while True:
+        result = child.expect(patterns, timeout=timeout)
+        if promptPattern and result == 0:
+            return
+        idx = result - offset
+        if idx == 0:                        # host-key prompt
+            child.sendline('yes')
+        elif idx == 1:                      # password prompt
+            child.sendline(password)
+        elif idx == 2:
+            # arista-ssh-agent challenge/response prompt. Sign the challenge
+            # via the Wifi OTP endpoint and send the resulting one-time
+            # password back.
+            challenge = child.match.group(1)
+            child.sendline(getWifiOtp(challenge))
+        elif idx == 3:
+            raise RuntimeError(f'{host}: MFA/OTP prompt received but not supported by this script')
+        elif idx == 4:
+            # EOF: fine for one-shot commands (finished after auth), an error
+            # if we were still waiting to land on an interactive shell prompt.
+            if promptPattern:
+                raise RuntimeError(f'Failed to connect/login to {host}')
+            return
+        else:
+            raise RuntimeError(f'Failed to connect/login to {host}')
+
 
 def _unlock_rootuser(ip):
     '''
@@ -249,22 +207,7 @@ def _unlock_rootuser(ip):
     conn = pexpect.spawn(cmd, timeout=SSH_TIMEOUT, encoding='utf-8')
 
     try:
-        idx = conn.expect(
-            ['continue connecting', r'[Pp]assword:', pexpect.EOF, pexpect.TIMEOUT],
-            timeout=SSH_TIMEOUT,
-        )
-        if idx == 0:                        # host-key prompt
-            conn.sendline('yes')
-            conn.expect(r'[Pp]assword:', timeout=SSH_TIMEOUT)
-            conn.sendline(CONFIG_PASS)
-        elif idx == 1:                      # password prompt directly
-            conn.sendline(CONFIG_PASS)
-        elif idx == 2:
-            raise RuntimeError(f'[{ip}] config SSH: connection closed unexpectedly')
-        else:
-            raise RuntimeError(f'[{ip}] config SSH: timed out waiting for password prompt')
-
-        conn.expect(CONFIG_PROMPT, timeout=SSH_TIMEOUT)
+        _authenticate(conn, CONFIG_PASS, ip, promptPattern=CONFIG_PROMPT, timeout=SSH_TIMEOUT)
         conn.sendline('privilege access')
         conn.expect(CONFIG_PROMPT, timeout=SSH_TIMEOUT)
         conn.sendline('rootuser unlock')
@@ -281,42 +224,74 @@ def _unlock_rootuser(ip):
     logging.info(f'[{ip}] Rootuser unlocked')
 
 
+def _try_root_direct(ip, timeout=SSH_TIMEOUT):
+    '''
+    Attempt SSH login directly as root, skipping the config-user unlock hop.
+    Handles three cases seen in the field:
+      - Normal case: arista-ssh-agent Response[...] challenge -> sign with
+        the Wifi OTP endpoint and reply.
+      - Debug build: root accepts a plain password ("arastra"), no OTP.
+      - Rootuser locked: a password prompt appears but any password is
+        rejected (re-prompted, or the connection is closed) -> rootuser
+        needs to be unlocked via the config hop first.
+
+    Returns an open pexpect conn sitting at the root prompt on success, or
+    None if the config-hop fallback is required.
+    '''
+    logging.info(f'[{ip}] Trying direct root login (no config hop)')
+    cmd = f'ssh {SSH_OPTS} {ROOT_USER}@{ip}'
+    conn = pexpect.spawn(cmd, timeout=timeout, encoding='utf-8')
+    patterns = [ROOT_PROMPT, 'continue connecting', r'[Pp]assword:',
+                r'Response\[([^\]]{54})', pexpect.EOF, pexpect.TIMEOUT]
+    triedDebugPassword = False
+
+    while True:
+        idx = conn.expect(patterns, timeout=timeout)
+        if idx == 0:                        # root prompt reached
+            logging.info(f'[{ip}] Direct root login succeeded')
+            return conn
+        elif idx == 1:                      # host-key prompt
+            conn.sendline('yes')
+        elif idx == 2:                      # password prompt
+            if triedDebugPassword:
+                # Debug password rejected too -> rootuser is locked.
+                logging.info(f'[{ip}] Root password rejected – rootuser is locked')
+                conn.close(force=True)
+                return None
+            triedDebugPassword = True
+            conn.sendline(DEBUG_ROOT_PASS)
+        elif idx == 3:                      # OTP challenge
+            challenge = conn.match.group(1)
+            conn.sendline(getWifiOtp(challenge))
+        elif idx == 4:                      # EOF – closed before a shell prompt
+            logging.info(f'[{ip}] Direct root SSH closed early – rootuser likely locked')
+            return None
+        else:                                # TIMEOUT
+            conn.close(force=True)
+            return None
+
+
 def _ssh_root(ip):
     '''
-    Unlock rootuser then SSH as root with OTP challenge-response.
+    SSH as root. Tries a direct root login first (OTP challenge, or on debug
+    builds a plain password) to avoid the slower config-user unlock hop on
+    every call. Falls back to unlocking rootuser via the config shell only
+    when the direct attempt shows rootuser is locked.
     Returns an open pexpect session sitting at the root shell prompt.
     '''
+    conn = _try_root_direct(ip)
+    if conn:
+        return conn
+
+    logging.info(f'[{ip}] Falling back to config-user unlock + root login')
     _unlock_rootuser(ip)
 
     logging.info(f'[{ip}] Connecting as root')
     cmd = f'ssh {SSH_OPTS} {ROOT_USER}@{ip}'
     conn = pexpect.spawn(cmd, timeout=SSH_TIMEOUT, encoding='utf-8')
-
-    while True:
-        idx = conn.expect(
-            [ROOT_PROMPT, 'continue connecting', r'[Pp]assword:', CHALLENGE_RE,
-             pexpect.EOF, pexpect.TIMEOUT],
-            timeout=SSH_TIMEOUT,
-        )
-        if idx == 0:
-            logging.info(f'[{ip}] Root shell ready')
-            return conn
-        elif idx == 1:                      # host-key prompt
-            conn.sendline('yes')
-        elif idx == 2:                      # password prompt (unexpected)
-            conn.sendline('')
-        elif idx == 3:                      # OTP challenge
-            challenge = conn.match.group(1)
-            otp = get_response(challenge)
-            if not otp:
-                conn.close(force=True)
-                raise RuntimeError(f'[{ip}] Failed to obtain OTP from portal')
-            conn.sendline(otp)
-        elif idx == 4:
-            raise RuntimeError(f'[{ip}] SSH connection closed unexpectedly')
-        else:
-            conn.close(force=True)
-            raise RuntimeError(f'[{ip}] SSH timed out waiting for root prompt')
+    _authenticate(conn, '', ip, promptPattern=ROOT_PROMPT, timeout=SSH_TIMEOUT)
+    logging.info(f'[{ip}] Root shell ready')
+    return conn
 
 
 def _close(conn):
@@ -419,8 +394,15 @@ def _start_binary(conn, ip):
     _print(f'[{ip}]  {launchCmd}')
     _run(conn, ip, launchCmd, timeout=10)
 
-    time.sleep(2)
-    pid = _get_pid(conn, ip)
+    # Poll for the process instead of a single fixed sleep+check: on a slow/busy
+    # AP the binary can take longer than 2s to appear in `ps`, which otherwise
+    # causes intermittent false "may not have started" warnings.
+    pid = None
+    for _ in range(5):
+        time.sleep(1)
+        pid = _get_pid(conn, ip)
+        if pid:
+            break
 
     if not pid:
         # Show any error output the binary wrote before it died
@@ -558,33 +540,74 @@ def check_and_fix_agent(ip, max_retries=DEFAULT_MAX_RETRIES):
     return False
 
 
-def monitor_cycle(ap_list, max_retries):
+def monitor_cycle(ap_list, max_retries, parallel=True):
     '''
     Run one complete monitoring cycle across all APs in the list.
     Each AP is checked independently; failures don't stop the cycle.
+
+    Inputs:
+      ap_list      - list of AP IPs to check this cycle
+      max_retries  - max retry attempts per AP (passed to check_and_fix_agent)
+      parallel     - if True (default) and there is more than one AP, check
+                     all APs concurrently via a thread pool; otherwise check
+                     them one at a time.
+
+    Per-AP state is tracked in a dict keyed by IP so that every AP submitted
+    is guaranteed to have a recorded result (True/False) once the cycle
+    finishes, regardless of execution order or thread completion order –
+    none can be silently skipped.
     '''
     cycle_start = datetime.now()
     _print(f'\n{"="*80}')
     _print(f'Monitoring Cycle Started: {cycle_start.strftime("%Y-%m-%d %H:%M:%S")}')
-    _print(f'APs to monitor: {len(ap_list)}')
+    _print(f'APs to monitor: {len(ap_list)}  |  parallel={parallel}')
     _print(f'{"="*80}\n')
-    
-    results = {'ok': 0, 'failed': 0}
-    
-    for ip in ap_list:
-        _print(f'\n--- Checking {ip} ---')
-        success = check_and_fix_agent(ip, max_retries=max_retries)
-        if success:
-            results['ok'] += 1
-        else:
-            results['failed'] += 1
-    
+
+    apResults = {}   # ip -> True (ok) / False (failed) – one entry per AP, no exceptions
+
+    if parallel and len(ap_list) > 1:
+        with ThreadPoolExecutor(max_workers=len(ap_list)) as pool:
+            futures = {
+                pool.submit(check_and_fix_agent, ip, max_retries): ip
+                for ip in ap_list
+            }
+            for future in as_completed(futures):
+                ip  = futures[future]
+                exc = future.exception()
+                if exc:
+                    _print(f'[{ip}]  ✗ UNHANDLED ERROR: {exc}')
+                    logging.error(f'[{ip}] monitor_cycle unhandled exception: {exc}')
+                    apResults[ip] = False
+                else:
+                    apResults[ip] = bool(future.result())
+    else:
+        for ip in ap_list:
+            _print(f'\n--- Checking {ip} ---')
+            try:
+                apResults[ip] = bool(check_and_fix_agent(ip, max_retries=max_retries))
+            except Exception as exc:
+                _print(f'[{ip}]  ✗ UNHANDLED ERROR: {exc}')
+                logging.error(f'[{ip}] monitor_cycle unhandled exception: {exc}')
+                apResults[ip] = False
+
+    # Guard against any AP somehow missing a recorded result (should not
+    # happen given the above, but keeps the summary accurate either way).
+    missing = [ip for ip in ap_list if ip not in apResults]
+    for ip in missing:
+        _print(f'[{ip}]  ✗ No result recorded – treating as failed')
+        apResults[ip] = False
+
+    okCount     = sum(1 for ip in ap_list if apResults.get(ip))
+    failedIps   = [ip for ip in ap_list if not apResults.get(ip)]
+
     cycle_end = datetime.now()
     duration = (cycle_end - cycle_start).total_seconds()
-    
+
     _print(f'\n{"="*80}')
     _print(f'Cycle Completed: {cycle_end.strftime("%Y-%m-%d %H:%M:%S")}')
-    _print(f'Duration: {duration:.1f}s  |  Success: {results["ok"]}/{len(ap_list)}  |  Failed: {results["failed"]}/{len(ap_list)}')
+    _print(f'Duration: {duration:.1f}s  |  Success: {okCount}/{len(ap_list)}  |  Failed: {len(failedIps)}/{len(ap_list)}')
+    if failedIps:
+        _print(f'Failed APs: {", ".join(failedIps)}')
     _print(f'{"="*80}\n')
 
 
@@ -599,6 +622,7 @@ Examples:
   ./wifiagent_monitor.py --interval 180       # Check every 3 minutes
   ./wifiagent_monitor.py --max-retries 3      # 3 retries per AP per cycle
   ./wifiagent_monitor.py --once               # Run only one cycle (for testing)
+  ./wifiagent_monitor.py --no-parallel        # Check APs sequentially instead of in parallel
 
 Press Ctrl+C to stop monitoring.
         '''
@@ -627,6 +651,13 @@ Press Ctrl+C to stop monitoring.
     )
 
     parser.add_argument(
+        '--parallel',
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help='Check all APs concurrently each cycle (default: True; use --no-parallel to check sequentially)',
+    )
+
+    parser.add_argument(
         '--logLevel',
         default='WARNING',
         metavar='LEVEL',
@@ -652,6 +683,7 @@ Press Ctrl+C to stop monitoring.
     print(f'\nMonitoring interval: {options.interval}s ({options.interval/60:.1f} minutes)')
     print(f'Max retries per AP: {options.max_retries}')
     print(f'Mode: {"Single cycle" if options.once else "Continuous monitoring"}')
+    print(f'Execution: {"Parallel" if options.parallel else "Sequential"}')
     print('\nPress Ctrl+C to stop monitoring')
     print('='*80 + '\n')
 
@@ -666,7 +698,7 @@ Press Ctrl+C to stop monitoring.
             cycle_count += 1
 
             # Run monitoring cycle
-            monitor_cycle(AP_IPS, max_retries=options.max_retries)
+            monitor_cycle(AP_IPS, max_retries=options.max_retries, parallel=options.parallel)
 
             # Exit if running only once
             if options.once:
