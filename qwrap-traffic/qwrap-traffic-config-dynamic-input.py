@@ -11,7 +11,7 @@ Radio -> veth mapping (fixed, do not change):
     radio 2 -> 6 GHz    -> veth_in_2_*
 
 Usage:
-  python3 qwrap-traffic-config-dynamic-input.py [--dry-run] [--workers N] [--debug]
+  python3 qwrap-traffic-config-dynamic-input.py [--ap HOST[,HOST...]] [--dry-run] [--workers N] [--debug]
 """
 
 import argparse
@@ -553,15 +553,38 @@ def build_clients(ap_bands: dict[int, dict]) -> list[dict]:
 
 # ─── CLI ────────────────────────────────────────────────────────────────────
 
+class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def __init__(self, prog):
+        super().__init__(prog, max_help_position=40, width=200)
+
+
+_EPILOG = '''\
+All AP / radio / session-count / ip_mode settings are controlled in the 'Traffic configuration'
+block at the top of this file (DEFAULT_MODE, DEFAULT_BAND_CFG, AP_LIST, AP_CONFIG) — no CLI flags
+for those.
+
+examples:
+  python3 qwrap-traffic-config-dynamic-input.py
+  python3 qwrap-traffic-config-dynamic-input.py --ap 10.86.205.157
+  python3 qwrap-traffic-config-dynamic-input.py --ap 10.86.205.157,10.86.205.158
+  python3 qwrap-traffic-config-dynamic-input.py --dry-run
+  python3 qwrap-traffic-config-dynamic-input.py --dry-run --out payloads.json
+  python3 qwrap-traffic-config-dynamic-input.py --ap 10.86.205.157 --dry-run
+  python3 qwrap-traffic-config-dynamic-input.py --workers 10
+  python3 qwrap-traffic-config-dynamic-input.py --debug
+'''
+
+
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
+        prog="qwrap-traffic-config-dynamic-input.py",
+        usage=argparse.SUPPRESS,
         description="Configure WifiAgent stress traffic on Qwrap APs (fully script-configured)",
-        epilog=(
-            "All AP / radio / session-count / ip_mode settings are controlled in the "
-            "'Traffic configuration' block at the top of this file (DEFAULT_MODE, "
-            "DEFAULT_BAND_CFG, AP_LIST, AP_CONFIG) — no CLI flags for those."
-        ),
+        epilog=_EPILOG,
+        formatter_class=_HelpFormatter,
     )
+    p.add_argument("--ap", metavar="HOST[,HOST...]", default=None,
+                   help="Comma-separated list of AP host/IPs to target instead of all APs in AP_LIST or AP_CONFIG.")
     p.add_argument("--workers", type=int, default=5, help="Parallel worker threads (default: 5)")
     p.add_argument("--dry-run", action="store_true",
                    help="Build payloads and write them to --out instead of POSTing to APs")
@@ -585,6 +608,15 @@ def main() -> None:
     if not ap_config:
         log.error("No APs resolved — check AP_LIST/AP_CONFIG and DEFAULT_MODE.")
         sys.exit(1)
+
+    if args.ap:
+        requested_hosts = {h.strip() for h in args.ap.split(",") if h.strip()}
+        missing_hosts = requested_hosts - ap_config.keys()
+        if missing_hosts:
+            log.error("Host(s) not found in AP_LIST/AP_CONFIG: %s", sorted(missing_hosts))
+            sys.exit(1)
+        ap_config = {ip: cfg for ip, cfg in ap_config.items() if ip in requested_hosts}
+        log.info("Targeting %d AP(s): %s", len(ap_config), sorted(ap_config))
 
     ap_clients: dict[str, list[dict]] = {}
     ap_bands_map: dict[str, dict[int, dict]] = {}
