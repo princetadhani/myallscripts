@@ -31,8 +31,8 @@ for _noisyLogger in ('urllib3', 'requests'):
 
 # Path to the qwrap config file (AP_LIST, DEFAULT_CLI_USERNAME/PASSWORD) to
 # use for this run, 
-# EG: config_file_path = "/Users/prince.tadhani/git/swat/qwrap-configuration-script/qwrap-config.py"
-config_file_path = "/Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-config.py"
+# EG: config_file_path = "/Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-config-file.py"
+config_file_path = "/Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-config-file.py"
 
 AP_LIST              = None
 DEFAULT_CLI_USERNAME = None

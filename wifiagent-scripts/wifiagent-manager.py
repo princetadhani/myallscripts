@@ -688,22 +688,30 @@ ACTIONS = {
 
 _EXAMPLES = textwrap.dedent('''\
     examples:
-      wifiagent-manager.py                         # ensure agent is running on all APs
-      wifiagent-manager.py --action status         # check status on all APs
-      wifiagent-manager.py --action start          # start agent on all APs
-      wifiagent-manager.py --action restart        # restart agent on all APs
-      wifiagent-manager.py --action install        # force reinstall on all APs
-      wifiagent-manager.py --ap 10.86.58.139       # only manage a specific AP
+      wifiagent-manager.py                                  # ensure agent is running on all APs
+      wifiagent-manager.py --action status                  # check status on all APs
+      wifiagent-manager.py --action start                   # start agent on all APs
+      wifiagent-manager.py --action restart                 # restart agent on all APs
+      wifiagent-manager.py --action install                 # force reinstall on all APs
+      wifiagent-manager.py --action stop                    # stop agent on all APs
+      wifiagent-manager.py --ap 10.86.58.139                # only manage a specific AP
       wifiagent-manager.py --ap 10.86.58.139,10.86.58.140   # manage multiple APs
-      wifiagent-manager.py --no-parallel           # run sequentially instead of in parallel
+      wifiagent-manager.py --no-parallel                    # run sequentially instead of in parallel
 ''')
+
+
+class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def __init__(self, prog):
+        super().__init__(prog, max_help_position=40, width=200)
 
 
 def main():
     parser = argparse.ArgumentParser(
+        prog='wifiagent-manager.py',
+        usage=argparse.SUPPRESS,
         description='Manage WiFi agents on Access Points via SSH',
         epilog=_EXAMPLES,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=_HelpFormatter,
     )
     parser.add_argument(
         '--action',
