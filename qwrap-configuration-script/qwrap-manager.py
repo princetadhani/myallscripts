@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 '''
-Standalone, non-interactive QWRAP AP configure/deconfigure tool.
+* Standalone, non-interactive QWRAP AP configure/deconfigure tool.
 
-Drives the QWRAP AP CLI directly over SSH (via pexpect), with no SWAT library
-dependency. AP list/params come from the file named in config_file_path below.
+* Drives the QWRAP AP CLI directly over SSH (via pexpect), with no SWAT library dependency. AP list/params come from the file named in config_file_path below.
 
-All APs are processed concurrently (ThreadPoolExecutor). Within a single AP,
-its own radios are configured sequentially (few CLI commands per AP).
+* All APs are processed concurrently (ThreadPoolExecutor). Within a single AP, its own radios are configured sequentially (few CLI commands per AP).
 '''
 
 import argparse
@@ -733,18 +731,18 @@ def runConcurrently(func, apList, actionName):
 
 EPILOG = '''\
 actions:
-  configure             Configure radios and add clients (full setup)
-  deconfigure           Remove clients and deconfigure radios (full teardown)
-  radio-configure       Configure radios only, skip adding clients
-  client-add            Add clients only (radios must already be configured)
-  client-remove         Remove all clients only, radios stay configured
-  client-remove-count   Remove last N clients only, requires --count N
-  client-disassociate   Disassociate all currently-connected clients
-  client-reassociate      Reassociate all currently-connected clients, optionally with --reacquire-ip
-  config-persist-enable   Enable QWRAP config persistence (survives reboot), typically run once after an AP image upgrade
-  config-persist-disable  Disable QWRAP config persistence (deletes saved config, stops writing to disk)
-  save-qwrap-config-yaml   Save /opt/qwrap/qwrap_config.yaml from each AP to ./qwrap-config-yaml-files/<Model>-<IP>-<MAC>.yaml
-  apply-qwrap-config-yaml  Apply a saved yaml (matched by the AP's live MAC) back to /opt/qwrap/qwrap_config.yaml on the AP, then reboot (fire-and-forget)
+  configure                 Configure radios and add clients (full setup)
+  deconfigure               Remove clients and deconfigure radios (full teardown)
+  radio-configure           Configure radios only, skip adding clients
+  client-add                Add clients only (radios must already be configured)
+  client-remove             Remove all clients only, radios stay configured
+  client-remove-count       Remove last N clients only, requires --count N
+  client-disassociate       Disassociate all currently-connected clients
+  client-reassociate        Reassociate all currently-connected clients, optionally with --reacquire-ip
+  config-persist-enable     Enable QWRAP config persistence (survives reboot), typically run once after an AP image upgrade
+  config-persist-disable    Disable QWRAP config persistence (deletes saved config, stops writing to disk)
+  save-qwrap-config-yaml    Save /opt/qwrap/qwrap_config.yaml from each AP to ./qwrap-config-yaml-files/<Model>-<IP>-<MAC>.yaml
+  apply-qwrap-config-yaml   Apply a saved yaml (matched by the AP's live MAC) back to /opt/qwrap/qwrap_config.yaml on the AP, then reboot (fire-and-forget)
 
 examples:
   python3 qwrap-manager.py --action configure
@@ -779,6 +777,7 @@ class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
 def parseArgs():
     parser = argparse.ArgumentParser(
         prog='qwrap-manager.py',
+        usage=argparse.SUPPRESS,
         description=__doc__,
         epilog=EPILOG,
         formatter_class=_HelpFormatter,
