@@ -3,7 +3,7 @@
 Standalone, non-interactive QWRAP AP configure/deconfigure tool.
 
 Drives the QWRAP AP CLI directly over SSH (via pexpect), with no SWAT library
-dependency. AP list/params come from qwrap_config.py (AP_LIST) in this folder.
+dependency. AP list/params come from the file named in config_file_path below.
 
 All APs are processed concurrently (ThreadPoolExecutor). Within a single AP,
 its own radios are configured sequentially (few CLI commands per AP).
@@ -11,6 +11,7 @@ its own radios are configured sequentially (few CLI commands per AP).
 
 import argparse
 import glob
+import importlib.util
 import json
 import logging
 import os
@@ -30,7 +31,34 @@ warnings.filterwarnings('ignore', message='.*OpenSSL.*')
 for _noisyLogger in ('urllib3', 'requests'):
     logging.getLogger(_noisyLogger).setLevel(logging.WARNING)
 
-from qwrap_config import AP_LIST, DEFAULT_CLI_USERNAME, DEFAULT_CLI_PASSWORD
+# Path to the qwrap config file (AP_LIST, DEFAULT_CLI_USERNAME/PASSWORD) to
+# use for this run, 
+# EG: config_file_path = "/Users/prince.tadhani/git/swat/qwrap-configuration-script/qwrap_config.py"
+config_file_path = "/Users/prince.tadhani/git/swat/qwrap-configuration-script/qwrap_config.py"
+
+AP_LIST              = None
+DEFAULT_CLI_USERNAME = None
+DEFAULT_CLI_PASSWORD = None
+
+
+def loadConfig():
+    '''Load AP_LIST/DEFAULT_CLI_USERNAME/DEFAULT_CLI_PASSWORD from
+    config_file_path and store them as this module's globals for the rest of
+    the script to use.'''
+    global AP_LIST, DEFAULT_CLI_USERNAME, DEFAULT_CLI_PASSWORD
+
+    path = os.path.abspath(config_file_path)
+    if not os.path.isfile(path):
+        log.error(f'config_file_path {path!r} does not exist')
+        sys.exit(1)
+    spec   = importlib.util.spec_from_file_location('qwrap_config_user', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    log.info(f'Loaded AP config from {path}')
+
+    AP_LIST              = module.AP_LIST
+    DEFAULT_CLI_USERNAME = module.DEFAULT_CLI_USERNAME
+    DEFAULT_CLI_PASSWORD = module.DEFAULT_CLI_PASSWORD
 
 # Wifi OTP signing endpoint used by the arista-ssh-agent Response[...] challenge/
 # response prompt (same as SWAT's otpLib.getWifiOTP()).
@@ -479,8 +507,9 @@ def configureAp(apInfo, addClients=True, persistOption=None):
 
 
 def deconfigureAp(apInfo, persistOption=None):
-    '''Remove all clients on each radio, then deconfigure the radios (used by
-    --action deconfigure). Client removal is implicit qwrap behavior. If
+    '''Deconfigure the radios directly (used by --action deconfigure). Mirrors
+    CueApQwrap.deconfigureQwrapRadios() - no separate client removal step is
+    needed first; deconfiguring a radio implicitly removes its clients. If
     persistOption is 'enable'/'disable', toggles QWRAP config persistence on
     this AP before doing anything else (see --persist).'''
     host                = apInfo['host']
@@ -492,17 +521,6 @@ def deconfigureAp(apInfo, persistOption=None):
         if not radios:
             log.info(f'{host}: no radios configured in params, skipping')
             return
-
-        # Remove all clients on each radio first, mirroring rmAllQwrapClients():
-        # query actual client IDs and remove only those (blind "id 1-28" causes
-        # the AP to print "error in removing client with id X" for every empty
-        # slot, which would false-trigger our error check below).
-        for radioId in radios:
-            clientIds = getCurrentClientIds(session, radioId)
-            if not clientIds:
-                continue
-            idRange = collapseRange(clientIds)
-            session.configSend(f'qwrap client remove id {idRange} radio {radioId}', timeout=300)
 
         # Deconfigure the radios
         radioStr = ','.join(str(r) for r in radios)
@@ -809,7 +827,7 @@ def parseArgs():
 
 def resolveApList(args):
     if not AP_LIST:
-        log.error('AP_LIST in qwrap_config.py is empty. Nothing to do.')
+        log.error('AP_LIST in the config file is empty. Nothing to do.')
         sys.exit(1)
 
     if not args.ap:
@@ -819,7 +837,7 @@ def resolveApList(args):
     apByHost       = {ap['host']: ap for ap in AP_LIST}
     missingHosts   = requestedHosts - apByHost.keys()
     if missingHosts:
-        log.error(f'Host(s) not found in qwrap_config.py AP_LIST: {sorted(missingHosts)}')
+        log.error(f'Host(s) not found in config file AP_LIST: {sorted(missingHosts)}')
         sys.exit(1)
 
     apList = [apByHost[host] for host in requestedHosts]
@@ -833,6 +851,7 @@ def main():
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
+    loadConfig()
     apList = resolveApList(args)
 
     if args.action == 'configure':
