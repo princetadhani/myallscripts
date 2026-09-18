@@ -1,0 +1,343 @@
+qwrapConfigPersistReboot: true
+radios:
+  0:
+    radioId: 0
+    ssid: S1-GPSK
+    protocol: 5
+    channelWidth: 2
+    securityCli: wpa2
+    passphrase: welcome3005
+    keyMgmt: WPA-PSK FT-PSK WPA-PSK-SHA256
+    pairwise: CCMP
+    group: CCMP
+    clients:
+      1:
+        clientId: 1
+        mac: 36:b6:2d:00:7e:00
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      2:
+        clientId: 2
+        mac: 36:b6:2d:00:7e:01
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      3:
+        clientId: 3
+        mac: 36:b6:2d:00:7e:02
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      4:
+        clientId: 4
+        mac: 36:b6:2d:00:7e:03
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      5:
+        clientId: 5
+        mac: 36:b6:2d:00:7e:04
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      6:
+        clientId: 6
+        mac: 36:b6:2d:00:7e:05
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      7:
+        clientId: 7
+        mac: 36:b6:2d:00:7e:06
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      8:
+        clientId: 8
+        mac: 36:b6:2d:00:7e:07
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      9:
+        clientId: 9
+        mac: 36:b6:2d:00:7e:08
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      10:
+        clientId: 10
+        mac: 36:b6:2d:00:7e:09
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      11:
+        clientId: 11
+        mac: 36:b6:2d:00:7e:0a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      12:
+        clientId: 12
+        mac: 36:b6:2d:00:7e:0b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      13:
+        clientId: 13
+        mac: 36:b6:2d:00:7e:0c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      14:
+        clientId: 14
+        mac: 36:b6:2d:00:7e:0d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      15:
+        clientId: 15
+        mac: 36:b6:2d:00:7e:0e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      16:
+        clientId: 16
+        mac: 36:b6:2d:00:7e:0f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      17:
+        clientId: 17
+        mac: 36:b6:2d:00:7e:10
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      18:
+        clientId: 18
+        mac: 36:b6:2d:00:7e:11
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      19:
+        clientId: 19
+        mac: 36:b6:2d:00:7e:12
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      20:
+        clientId: 20
+        mac: 36:b6:2d:00:7e:13
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      21:
+        clientId: 21
+        mac: 36:b6:2d:00:7e:14
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      22:
+        clientId: 22
+        mac: 36:b6:2d:00:7e:15
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      23:
+        clientId: 23
+        mac: 36:b6:2d:00:7e:16
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      24:
+        clientId: 24
+        mac: 36:b6:2d:00:7e:17
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      25:
+        clientId: 25
+        mac: 36:b6:2d:00:7e:18
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      26:
+        clientId: 26
+        mac: 36:b6:2d:00:7e:19
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      27:
+        clientId: 27
+        mac: 36:b6:2d:00:7e:1a
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      28:
+        clientId: 28
+        mac: 36:b6:2d:00:7e:1b
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+  1:
+    radioId: 1
+    ssid: S1-GPSK
+    protocol: 5
+    channelWidth: 4
+    securityCli: wpa2
+    passphrase: welcome3006
+    keyMgmt: WPA-PSK FT-PSK WPA-PSK-SHA256
+    pairwise: CCMP
+    group: CCMP
+    clients:
+      1:
+        clientId: 1
+        mac: 36:b6:2d:00:7e:aa
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      2:
+        clientId: 2
+        mac: 36:b6:2d:00:7e:ab
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      3:
+        clientId: 3
+        mac: 36:b6:2d:00:7e:ac
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      4:
+        clientId: 4
+        mac: 36:b6:2d:00:7e:ad
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      5:
+        clientId: 5
+        mac: 36:b6:2d:00:7e:ae
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      6:
+        clientId: 6
+        mac: 36:b6:2d:00:7e:af
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      7:
+        clientId: 7
+        mac: 36:b6:2d:00:7e:b0
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      8:
+        clientId: 8
+        mac: 36:b6:2d:00:7e:b1
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      9:
+        clientId: 9
+        mac: 36:b6:2d:00:7e:b2
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      10:
+        clientId: 10
+        mac: 36:b6:2d:00:7e:b3
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      11:
+        clientId: 11
+        mac: 36:b6:2d:00:7e:b4
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      12:
+        clientId: 12
+        mac: 36:b6:2d:00:7e:b5
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      13:
+        clientId: 13
+        mac: 36:b6:2d:00:7e:b6
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      14:
+        clientId: 14
+        mac: 36:b6:2d:00:7e:b7
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      15:
+        clientId: 15
+        mac: 36:b6:2d:00:7e:b8
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      16:
+        clientId: 16
+        mac: 36:b6:2d:00:7e:b9
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      17:
+        clientId: 17
+        mac: 36:b6:2d:00:7e:ba
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      18:
+        clientId: 18
+        mac: 36:b6:2d:00:7e:bb
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      19:
+        clientId: 19
+        mac: 36:b6:2d:00:7e:bc
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      20:
+        clientId: 20
+        mac: 36:b6:2d:00:7e:bd
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      21:
+        clientId: 21
+        mac: 36:b6:2d:00:7e:be
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      22:
+        clientId: 22
+        mac: 36:b6:2d:00:7e:bf
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      23:
+        clientId: 23
+        mac: 36:b6:2d:00:7e:c0
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      24:
+        clientId: 24
+        mac: 36:b6:2d:00:7e:c1
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      25:
+        clientId: 25
+        mac: 36:b6:2d:00:7e:c2
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      26:
+        clientId: 26
+        mac: 36:b6:2d:00:7e:c3
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      27:
+        clientId: 27
+        mac: 36:b6:2d:00:7e:c4
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+      28:
+        clientId: 28
+        mac: 36:b6:2d:00:7e:c5
+        ipv6Enabled: true
+        hostnamePrefix: GPSK-R1-Vlan3005
+  2:
+    radioId: 2
+    ssid: S1-Vxlan-VlanPool
+    protocol: 5
+    channelWidth: 6
+    securityCli: wpa3-dot1x
+    eapType: peap
+    username: vxlanvlanpool
+    password: vxlanvlanpool
+    keyMgmt: FT-EAP
+    pairwise: CCMP
+    group: CCMP
+    ieee80211w: "2"

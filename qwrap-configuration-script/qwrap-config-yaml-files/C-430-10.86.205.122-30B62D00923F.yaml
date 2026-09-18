@@ -1,0 +1,483 @@
+qwrapConfigPersistReboot: true
+radios:
+  0:
+    radioId: 0
+    ssid: S1-Agni-Corp
+    protocol: 5
+    channelWidth: 2
+    securityCli: wpa3-dot1x
+    eapType: tls
+    username: qwrapAP3003@qwrap.com
+    caCertPath: /root/qwrapAP3003@qwrap.com/ca.pem
+    clientCertPath: /root/qwrapAP3003@qwrap.com/client.pem
+    privateKeyPath: /root/qwrapAP3003@qwrap.com/key.pem
+    keyMgmt: FT-EAP
+    pairwise: CCMP
+    group: CCMP
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: 22:b6:2d:00:92:00
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      2:
+        clientId: 2
+        mac: 22:b6:2d:00:92:01
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      3:
+        clientId: 3
+        mac: 22:b6:2d:00:92:02
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      4:
+        clientId: 4
+        mac: 22:b6:2d:00:92:03
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      5:
+        clientId: 5
+        mac: 22:b6:2d:00:92:04
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      6:
+        clientId: 6
+        mac: 22:b6:2d:00:92:05
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      7:
+        clientId: 7
+        mac: 22:b6:2d:00:92:06
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      8:
+        clientId: 8
+        mac: 22:b6:2d:00:92:07
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      9:
+        clientId: 9
+        mac: 22:b6:2d:00:92:08
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      10:
+        clientId: 10
+        mac: 22:b6:2d:00:92:09
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      11:
+        clientId: 11
+        mac: 22:b6:2d:00:92:0a
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      12:
+        clientId: 12
+        mac: 22:b6:2d:00:92:0b
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      13:
+        clientId: 13
+        mac: 22:b6:2d:00:92:0c
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      14:
+        clientId: 14
+        mac: 22:b6:2d:00:92:0d
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      15:
+        clientId: 15
+        mac: 22:b6:2d:00:92:0e
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      16:
+        clientId: 16
+        mac: 22:b6:2d:00:92:0f
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      17:
+        clientId: 17
+        mac: 22:b6:2d:00:92:10
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      18:
+        clientId: 18
+        mac: 22:b6:2d:00:92:11
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      19:
+        clientId: 19
+        mac: 22:b6:2d:00:92:12
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      20:
+        clientId: 20
+        mac: 22:b6:2d:00:92:13
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      21:
+        clientId: 21
+        mac: 22:b6:2d:00:92:14
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      22:
+        clientId: 22
+        mac: 22:b6:2d:00:92:15
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      23:
+        clientId: 23
+        mac: 22:b6:2d:00:92:16
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      24:
+        clientId: 24
+        mac: 22:b6:2d:00:92:17
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      25:
+        clientId: 25
+        mac: 22:b6:2d:00:92:18
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      26:
+        clientId: 26
+        mac: 22:b6:2d:00:92:19
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      27:
+        clientId: 27
+        mac: 22:b6:2d:00:92:1a
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+      28:
+        clientId: 28
+        mac: 22:b6:2d:00:92:1b
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3003-qwrap-com
+  1:
+    radioId: 1
+    ssid: S1-Agni-Corp
+    protocol: 5
+    channelWidth: 4
+    securityCli: wpa3-dot1x
+    eapType: tls
+    username: qwrapAP3004@qwrap.com
+    caCertPath: /root/qwrapAP3004@qwrap.com/ca.pem
+    clientCertPath: /root/qwrapAP3004@qwrap.com/client.pem
+    privateKeyPath: /root/qwrapAP3004@qwrap.com/key.pem
+    keyMgmt: FT-EAP
+    pairwise: CCMP
+    group: CCMP
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: 22:b6:2d:00:92:aa
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      2:
+        clientId: 2
+        mac: 22:b6:2d:00:92:ab
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      3:
+        clientId: 3
+        mac: 22:b6:2d:00:92:ac
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      4:
+        clientId: 4
+        mac: 22:b6:2d:00:92:ad
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      5:
+        clientId: 5
+        mac: 22:b6:2d:00:92:ae
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      6:
+        clientId: 6
+        mac: 22:b6:2d:00:92:af
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      7:
+        clientId: 7
+        mac: 22:b6:2d:00:92:b0
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      8:
+        clientId: 8
+        mac: 22:b6:2d:00:92:b1
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      9:
+        clientId: 9
+        mac: 22:b6:2d:00:92:b2
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      10:
+        clientId: 10
+        mac: 22:b6:2d:00:92:b3
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      11:
+        clientId: 11
+        mac: 22:b6:2d:00:92:b4
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      12:
+        clientId: 12
+        mac: 22:b6:2d:00:92:b5
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      13:
+        clientId: 13
+        mac: 22:b6:2d:00:92:b6
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      14:
+        clientId: 14
+        mac: 22:b6:2d:00:92:b7
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      15:
+        clientId: 15
+        mac: 22:b6:2d:00:92:b8
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      16:
+        clientId: 16
+        mac: 22:b6:2d:00:92:b9
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      17:
+        clientId: 17
+        mac: 22:b6:2d:00:92:ba
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      18:
+        clientId: 18
+        mac: 22:b6:2d:00:92:bb
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      19:
+        clientId: 19
+        mac: 22:b6:2d:00:92:bc
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      20:
+        clientId: 20
+        mac: 22:b6:2d:00:92:bd
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      21:
+        clientId: 21
+        mac: 22:b6:2d:00:92:be
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      22:
+        clientId: 22
+        mac: 22:b6:2d:00:92:bf
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      23:
+        clientId: 23
+        mac: 22:b6:2d:00:92:c0
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      24:
+        clientId: 24
+        mac: 22:b6:2d:00:92:c1
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      25:
+        clientId: 25
+        mac: 22:b6:2d:00:92:c2
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      26:
+        clientId: 26
+        mac: 22:b6:2d:00:92:c3
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      27:
+        clientId: 27
+        mac: 22:b6:2d:00:92:c4
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+      28:
+        clientId: 28
+        mac: 22:b6:2d:00:92:c5
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com1
+  2:
+    radioId: 2
+    ssid: S1-Agni-Corp
+    protocol: 5
+    channelWidth: 6
+    securityCli: wpa3-dot1x
+    eapType: tls
+    username: qwrapAP3004@qwrap.com
+    caCertPath: /root/qwrapAP3004@qwrap.com/ca.pem
+    clientCertPath: /root/qwrapAP3004@qwrap.com/client.pem
+    privateKeyPath: /root/qwrapAP3004@qwrap.com/key.pem
+    keyMgmt: FT-EAP
+    pairwise: CCMP
+    group: CCMP
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: 22:b6:2d:00:93:54
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      2:
+        clientId: 2
+        mac: 22:b6:2d:00:93:55
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      3:
+        clientId: 3
+        mac: 22:b6:2d:00:93:56
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      4:
+        clientId: 4
+        mac: 22:b6:2d:00:93:57
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      5:
+        clientId: 5
+        mac: 22:b6:2d:00:93:58
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      6:
+        clientId: 6
+        mac: 22:b6:2d:00:93:59
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      7:
+        clientId: 7
+        mac: 22:b6:2d:00:93:5a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      8:
+        clientId: 8
+        mac: 22:b6:2d:00:93:5b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      9:
+        clientId: 9
+        mac: 22:b6:2d:00:93:5c
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      10:
+        clientId: 10
+        mac: 22:b6:2d:00:93:5d
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      11:
+        clientId: 11
+        mac: 22:b6:2d:00:93:5e
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      12:
+        clientId: 12
+        mac: 22:b6:2d:00:93:5f
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      13:
+        clientId: 13
+        mac: 22:b6:2d:00:93:60
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      14:
+        clientId: 14
+        mac: 22:b6:2d:00:93:61
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      15:
+        clientId: 15
+        mac: 22:b6:2d:00:93:62
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      16:
+        clientId: 16
+        mac: 22:b6:2d:00:93:63
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      17:
+        clientId: 17
+        mac: 22:b6:2d:00:93:64
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      18:
+        clientId: 18
+        mac: 22:b6:2d:00:93:65
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      19:
+        clientId: 19
+        mac: 22:b6:2d:00:93:66
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      20:
+        clientId: 20
+        mac: 22:b6:2d:00:93:67
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      21:
+        clientId: 21
+        mac: 22:b6:2d:00:93:68
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      22:
+        clientId: 22
+        mac: 22:b6:2d:00:93:69
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      23:
+        clientId: 23
+        mac: 22:b6:2d:00:93:6a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      24:
+        clientId: 24
+        mac: 22:b6:2d:00:93:6b
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      25:
+        clientId: 25
+        mac: 22:b6:2d:00:93:6c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      26:
+        clientId: 26
+        mac: 22:b6:2d:00:93:6d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      27:
+        clientId: 27
+        mac: 22:b6:2d:00:93:6e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2
+      28:
+        clientId: 28
+        mac: 22:b6:2d:00:93:6f
+        ipv6Enabled: true
+        hostnamePrefix: qwrapAP3004-qwrap-com2

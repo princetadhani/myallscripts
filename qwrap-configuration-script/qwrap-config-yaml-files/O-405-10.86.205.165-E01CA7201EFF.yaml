@@ -1,0 +1,539 @@
+qwrapConfigPersistReboot: true
+radios:
+  0:
+    radioId: 0
+    ssid: S1-NAT-PSK
+    protocol: 5
+    channelWidth: 2
+    securityCli: wpa2
+    passphrase: Hello@123
+    keyMgmt: WPA-PSK FT-PSK WPA-PSK-SHA256
+    pairwise: CCMP
+    group: CCMP
+    clients:
+      1:
+        clientId: 1
+        mac: ee:1c:a7:20:1e:00
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      2:
+        clientId: 2
+        mac: ee:1c:a7:20:1e:01
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      3:
+        clientId: 3
+        mac: ee:1c:a7:20:1e:02
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      4:
+        clientId: 4
+        mac: ee:1c:a7:20:1e:03
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      5:
+        clientId: 5
+        mac: ee:1c:a7:20:1e:04
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      6:
+        clientId: 6
+        mac: ee:1c:a7:20:1e:05
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      7:
+        clientId: 7
+        mac: ee:1c:a7:20:1e:06
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      8:
+        clientId: 8
+        mac: ee:1c:a7:20:1e:07
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      9:
+        clientId: 9
+        mac: ee:1c:a7:20:1e:08
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      10:
+        clientId: 10
+        mac: ee:1c:a7:20:1e:09
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      11:
+        clientId: 11
+        mac: ee:1c:a7:20:1e:0a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      12:
+        clientId: 12
+        mac: ee:1c:a7:20:1e:0b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      13:
+        clientId: 13
+        mac: ee:1c:a7:20:1e:0c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      14:
+        clientId: 14
+        mac: ee:1c:a7:20:1e:0d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      15:
+        clientId: 15
+        mac: ee:1c:a7:20:1e:0e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      16:
+        clientId: 16
+        mac: ee:1c:a7:20:1e:0f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      17:
+        clientId: 17
+        mac: ee:1c:a7:20:1e:10
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      18:
+        clientId: 18
+        mac: ee:1c:a7:20:1e:11
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      19:
+        clientId: 19
+        mac: ee:1c:a7:20:1e:12
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      20:
+        clientId: 20
+        mac: ee:1c:a7:20:1e:13
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      21:
+        clientId: 21
+        mac: ee:1c:a7:20:1e:14
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      22:
+        clientId: 22
+        mac: ee:1c:a7:20:1e:15
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      23:
+        clientId: 23
+        mac: ee:1c:a7:20:1e:16
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      24:
+        clientId: 24
+        mac: ee:1c:a7:20:1e:17
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      25:
+        clientId: 25
+        mac: ee:1c:a7:20:1e:18
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      26:
+        clientId: 26
+        mac: ee:1c:a7:20:1e:19
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      27:
+        clientId: 27
+        mac: ee:1c:a7:20:1e:1a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+      28:
+        clientId: 28
+        mac: ee:1c:a7:20:1e:1b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R0
+  1:
+    radioId: 1
+    ssid: S1-NAT-PSK
+    protocol: 5
+    channelWidth: 4
+    securityCli: wpa2
+    passphrase: Hello@123
+    keyMgmt: WPA-PSK FT-PSK WPA-PSK-SHA256
+    pairwise: CCMP
+    group: CCMP
+    clients:
+      1:
+        clientId: 1
+        mac: ee:1c:a7:20:1e:aa
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      2:
+        clientId: 2
+        mac: ee:1c:a7:20:1e:ab
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      3:
+        clientId: 3
+        mac: ee:1c:a7:20:1e:ac
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      4:
+        clientId: 4
+        mac: ee:1c:a7:20:1e:ad
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      5:
+        clientId: 5
+        mac: ee:1c:a7:20:1e:ae
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      6:
+        clientId: 6
+        mac: ee:1c:a7:20:1e:af
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      7:
+        clientId: 7
+        mac: ee:1c:a7:20:1e:b0
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      8:
+        clientId: 8
+        mac: ee:1c:a7:20:1e:b1
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      9:
+        clientId: 9
+        mac: ee:1c:a7:20:1e:b2
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      10:
+        clientId: 10
+        mac: ee:1c:a7:20:1e:b3
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      11:
+        clientId: 11
+        mac: ee:1c:a7:20:1e:b4
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      12:
+        clientId: 12
+        mac: ee:1c:a7:20:1e:b5
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      13:
+        clientId: 13
+        mac: ee:1c:a7:20:1e:b6
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      14:
+        clientId: 14
+        mac: ee:1c:a7:20:1e:b7
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      15:
+        clientId: 15
+        mac: ee:1c:a7:20:1e:b8
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      16:
+        clientId: 16
+        mac: ee:1c:a7:20:1e:b9
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      17:
+        clientId: 17
+        mac: ee:1c:a7:20:1e:ba
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      18:
+        clientId: 18
+        mac: ee:1c:a7:20:1e:bb
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      19:
+        clientId: 19
+        mac: ee:1c:a7:20:1e:bc
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      20:
+        clientId: 20
+        mac: ee:1c:a7:20:1e:bd
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      21:
+        clientId: 21
+        mac: ee:1c:a7:20:1e:be
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      22:
+        clientId: 22
+        mac: ee:1c:a7:20:1e:bf
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      23:
+        clientId: 23
+        mac: ee:1c:a7:20:1e:c0
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      24:
+        clientId: 24
+        mac: ee:1c:a7:20:1e:c1
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      25:
+        clientId: 25
+        mac: ee:1c:a7:20:1e:c2
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      26:
+        clientId: 26
+        mac: ee:1c:a7:20:1e:c3
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      27:
+        clientId: 27
+        mac: ee:1c:a7:20:1e:c4
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+      28:
+        clientId: 28
+        mac: ee:1c:a7:20:1e:c5
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: NAT-R1
+  2:
+    radioId: 2
+    ssid: S1-APHP-WPA3-SAE
+    protocol: 5
+    channelWidth: 6
+    securityCli: wpa3
+    passphrase: Hello@123
+    keyMgmt: SAE FT-SAE
+    pairwise: GCMP-256 CCMP
+    group: GCMP-256 CCMP
+    ieee80211w: "2"
+    portalType: internal
+    clients:
+      1:
+        clientId: 1
+        mac: ee:1c:a7:20:1f:54
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      2:
+        clientId: 2
+        mac: ee:1c:a7:20:1f:55
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      3:
+        clientId: 3
+        mac: ee:1c:a7:20:1f:56
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      4:
+        clientId: 4
+        mac: ee:1c:a7:20:1f:57
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      5:
+        clientId: 5
+        mac: ee:1c:a7:20:1f:58
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      6:
+        clientId: 6
+        mac: ee:1c:a7:20:1f:59
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      7:
+        clientId: 7
+        mac: ee:1c:a7:20:1f:5a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      8:
+        clientId: 8
+        mac: ee:1c:a7:20:1f:5b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      9:
+        clientId: 9
+        mac: ee:1c:a7:20:1f:5c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      10:
+        clientId: 10
+        mac: ee:1c:a7:20:1f:5d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      11:
+        clientId: 11
+        mac: ee:1c:a7:20:1f:5e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      12:
+        clientId: 12
+        mac: ee:1c:a7:20:1f:5f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      13:
+        clientId: 13
+        mac: ee:1c:a7:20:1f:60
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      14:
+        clientId: 14
+        mac: ee:1c:a7:20:1f:61
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      15:
+        clientId: 15
+        mac: ee:1c:a7:20:1f:62
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      16:
+        clientId: 16
+        mac: ee:1c:a7:20:1f:63
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      17:
+        clientId: 17
+        mac: ee:1c:a7:20:1f:64
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      18:
+        clientId: 18
+        mac: ee:1c:a7:20:1f:65
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      19:
+        clientId: 19
+        mac: ee:1c:a7:20:1f:66
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      20:
+        clientId: 20
+        mac: ee:1c:a7:20:1f:67
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      21:
+        clientId: 21
+        mac: ee:1c:a7:20:1f:68
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      22:
+        clientId: 22
+        mac: ee:1c:a7:20:1f:69
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      23:
+        clientId: 23
+        mac: ee:1c:a7:20:1f:6a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      24:
+        clientId: 24
+        mac: ee:1c:a7:20:1f:6b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      25:
+        clientId: 25
+        mac: ee:1c:a7:20:1f:6c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      26:
+        clientId: 26
+        mac: ee:1c:a7:20:1f:6d
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      27:
+        clientId: 27
+        mac: ee:1c:a7:20:1f:6e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      28:
+        clientId: 28
+        mac: ee:1c:a7:20:1f:6f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal

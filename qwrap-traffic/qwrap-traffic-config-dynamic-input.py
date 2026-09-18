@@ -12,6 +12,13 @@ Radio -> veth mapping (fixed, do not change):
 
 Usage:
   python3 qwrap-traffic-config-dynamic-input.py [--ap HOST[,HOST...]] [--dry-run] [--workers N] [--debug]
+
+
+py /Users/prince.tadhani/myallscripts/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+
+py /Users/prince.tadhani/myallscripts/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+
+py /Users/prince.tadhani/myallscripts/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243
 """
 
 import argparse
@@ -82,10 +89,28 @@ MAX_VETH_PER_RADIO = 28
 # ─── AP_LIST (used only when DEFAULT_MODE = 1) ──────────────────────────
 # Plain list of AP IPs — add/remove/comment out lines as needed.
 AP_LIST: list[str] = [
-    "10.86.205.157"
-    # "10.86.204.204",
-    # "10.86.205.60",
-    # '10.86.204.227'
+#S1 qwrap:
+'10.86.205.122',
+'10.86.204.204',
+'10.86.205.60',
+'10.86.205.223',
+'10.86.204.227',
+'10.86.205.165',
+# For S2 QWRAP
+'10.86.205.82',
+'10.86.205.240',
+'10.86.205.157',
+'10.86.205.90',
+'10.86.205.88',
+'10.86.205.49',
+# For S3 Qwrap - ABZ
+'10.87.169.175',
+'10.87.169.130',
+'10.87.169.87',
+'10.87.169.17',
+'10.87.169.113',
+'10.87.169.112',
+'10.87.169.243'
 ]
 
 """
@@ -112,27 +137,110 @@ Copy from here and paste it:
 
 """
 AP_CONFIG: dict[str, dict] = {
-"10.86.205.157": {
+# AP-1 1-C430--00923F--S1-QWRAP 
+"10.86.205.122": {
     "bands": {
-            0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "ip"},
-            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
         }
     },
 
-# "10.86.205.90": {
-#     "bands": {
-#             0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
-#             1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
-#             2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
-#         }
-#     },
-
-"10.86.60.4": {
+# AP-2: 2-C430--007F7F--S1-QWRAP
+"10.86.204.204": {
     "bands": {
-            # 0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "ip"},
-            # 1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+        }
+    },
+
+# AP-3 3-C430--00978F--S1-QWRAP
+"10.86.205.60": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+        }
+    },
+
+# AP-4 1-C460D--C2755F--S1-QWRAP
+"10.86.205.223": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+        }
+    },
+
+# AP-5 2-C460D--C2714F--S1-QWRAP
+"10.86.204.227": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+        }
+    },
+# AP-6 1-O405--201EFF--S1-QWRAP
+"10.86.205.165": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+        }
+    },
+#========================================================================================================================
+# AP-1 1-C400--F031BF--S2-QWRAP
+"10.86.205.82": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+        }
+    },
+
+# AP-2 1-C430--05D47F--S2-QWRAP
+"10.86.205.240": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
+        }
+    },
+
+# Ap-3 1-C460D--C2750F--S2-QWRAP
+"10.86.205.157": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+        }
+    },
+
+# AP-4 2-C460D--C274BF--S2-QWRAP
+"10.86.205.90": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+        }
+    },
+
+# AP-5 3-C460D--C27D2F--S2-QWRAP
+"10.86.205.88": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 5, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 5, "ip_mode": "IPv6", "target_type": "hostname"},
+        }
+    },
+
+# AP-6 1-O405--20203F--S2-QWRAP
+"10.86.205.49": {
+    "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 4, "ip_mode": "IPv6", "target_type": "hostname"},
         }
     },
 }
@@ -235,14 +343,6 @@ def fetch_endpoints(discovery_url: str) -> dict:
     except Exception as exc:
         log.error("Discovery failed for %s: %s", discovery_url, exc)
         sys.exit(1)
-
-    try:
-        from urllib.parse import urlparse
-        host = urlparse(discovery_url).hostname or "discovery"
-        with open(f"discovery_raw_{host}.json", "w") as fh:
-            json.dump(raw, fh, indent=2)
-    except Exception as exc:
-        log.debug("Could not write discovery json: %s", exc)
 
     containers = raw.get("containers", []) if isinstance(raw, dict) else []
     if not containers:

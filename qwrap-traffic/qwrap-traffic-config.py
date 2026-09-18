@@ -32,12 +32,28 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ─── AP inventory ─────────────────────────────────────────────────────────────
 
 AP_IPS: list[str] = [
-'10.86.204.227'
-# '10.86.204.204',
-# '10.86.205.60',
-# '10.86.205.223',
-# '10.86.204.227',
-# '10.86.205.165'
+#S1 qwrap:
+'10.86.205.122',
+'10.86.204.204',
+'10.86.205.60',
+'10.86.205.223',
+'10.86.204.227',
+'10.86.205.165',
+# For S2 QWRAP
+'10.86.205.82',
+'10.86.205.240',
+'10.86.205.157',
+'10.86.205.90',
+'10.86.205.88',
+'10.86.205.49',
+# For S3 Qwrap - ABZ
+'10.87.169.175',
+'10.87.169.130',
+'10.87.169.87',
+'10.87.169.17',
+'10.87.169.113',
+'10.87.169.112',
+'10.87.169.243'
 ]
 
 # Discovery endpoint is chosen per-AP based on the AP IP's leading octets.
@@ -182,17 +198,6 @@ def fetch_endpoints(discovery_url: str) -> dict[str, list[dict]]:
     except Exception as exc:
         log.error("Discovery failed for %s: %s", discovery_url, exc)
         sys.exit(1)
-
-    # Use a sanitized hostname so multiple sites don't clobber each other.
-    try:
-        from urllib.parse import urlparse
-        host = urlparse(discovery_url).hostname or "discovery"
-        raw_path = f"discovery_raw_{host}.json"
-        with open(raw_path, "w") as fh:
-            json.dump(raw, fh, indent=2)
-        log.info("Raw discovery response written to %s", raw_path)
-    except Exception as exc:
-        log.debug("Could not write discovery raw json: %s", exc)
 
     containers = raw.get("containers", []) if isinstance(raw, dict) else []
     if not containers:

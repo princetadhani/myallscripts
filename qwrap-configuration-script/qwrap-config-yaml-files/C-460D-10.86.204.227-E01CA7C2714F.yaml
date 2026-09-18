@@ -1,0 +1,489 @@
+qwrapConfigPersistReboot: true
+radios:
+  0:
+    radioId: 0
+    ssid: S1-EoGRE
+    protocol: 5
+    channelWidth: 2
+    securityCli: wpa2-dot1x
+    eapType: peap
+    username: eogre3013
+    password: eogre3013
+    keyMgmt: FT-EAP
+    pairwise: GCMP-256 CCMP
+    group: GCMP-256 CCMP
+    clients:
+      1:
+        clientId: 1
+        mac: f6:1c:a7:c2:70:00
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      2:
+        clientId: 2
+        mac: f6:1c:a7:c2:70:01
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      3:
+        clientId: 3
+        mac: f6:1c:a7:c2:70:02
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      4:
+        clientId: 4
+        mac: f6:1c:a7:c2:70:03
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      5:
+        clientId: 5
+        mac: f6:1c:a7:c2:70:04
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      6:
+        clientId: 6
+        mac: f6:1c:a7:c2:70:05
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      7:
+        clientId: 7
+        mac: f6:1c:a7:c2:70:06
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      8:
+        clientId: 8
+        mac: f6:1c:a7:c2:70:07
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      9:
+        clientId: 9
+        mac: f6:1c:a7:c2:70:08
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      10:
+        clientId: 10
+        mac: f6:1c:a7:c2:70:09
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      11:
+        clientId: 11
+        mac: f6:1c:a7:c2:70:0a
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      12:
+        clientId: 12
+        mac: f6:1c:a7:c2:70:0b
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      13:
+        clientId: 13
+        mac: f6:1c:a7:c2:70:0c
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      14:
+        clientId: 14
+        mac: f6:1c:a7:c2:70:0d
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      15:
+        clientId: 15
+        mac: f6:1c:a7:c2:70:0e
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      16:
+        clientId: 16
+        mac: f6:1c:a7:c2:70:0f
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      17:
+        clientId: 17
+        mac: f6:1c:a7:c2:70:10
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      18:
+        clientId: 18
+        mac: f6:1c:a7:c2:70:11
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      19:
+        clientId: 19
+        mac: f6:1c:a7:c2:70:12
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      20:
+        clientId: 20
+        mac: f6:1c:a7:c2:70:13
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      21:
+        clientId: 21
+        mac: f6:1c:a7:c2:70:14
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      22:
+        clientId: 22
+        mac: f6:1c:a7:c2:70:15
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      23:
+        clientId: 23
+        mac: f6:1c:a7:c2:70:16
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      24:
+        clientId: 24
+        mac: f6:1c:a7:c2:70:17
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      25:
+        clientId: 25
+        mac: f6:1c:a7:c2:70:18
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      26:
+        clientId: 26
+        mac: f6:1c:a7:c2:70:19
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      27:
+        clientId: 27
+        mac: f6:1c:a7:c2:70:1a
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      28:
+        clientId: 28
+        mac: f6:1c:a7:c2:70:1b
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+  1:
+    radioId: 1
+    ssid: S1-EoGRE
+    protocol: 5
+    channelWidth: 4
+    securityCli: wpa2-dot1x
+    eapType: peap
+    username: role-EoGRE-11W
+    password: role-EoGRE-11W
+    keyMgmt: FT-EAP
+    pairwise: GCMP-256 CCMP
+    group: GCMP-256 CCMP
+    clients:
+      1:
+        clientId: 1
+        mac: f6:1c:a7:c2:70:aa
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      2:
+        clientId: 2
+        mac: f6:1c:a7:c2:70:ab
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      3:
+        clientId: 3
+        mac: f6:1c:a7:c2:70:ac
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      4:
+        clientId: 4
+        mac: f6:1c:a7:c2:70:ad
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      5:
+        clientId: 5
+        mac: f6:1c:a7:c2:70:ae
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      6:
+        clientId: 6
+        mac: f6:1c:a7:c2:70:af
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      7:
+        clientId: 7
+        mac: f6:1c:a7:c2:70:b0
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      8:
+        clientId: 8
+        mac: f6:1c:a7:c2:70:b1
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      9:
+        clientId: 9
+        mac: f6:1c:a7:c2:70:b2
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      10:
+        clientId: 10
+        mac: f6:1c:a7:c2:70:b3
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      11:
+        clientId: 11
+        mac: f6:1c:a7:c2:70:b4
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      12:
+        clientId: 12
+        mac: f6:1c:a7:c2:70:b5
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      13:
+        clientId: 13
+        mac: f6:1c:a7:c2:70:b6
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      14:
+        clientId: 14
+        mac: f6:1c:a7:c2:70:b7
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      15:
+        clientId: 15
+        mac: f6:1c:a7:c2:70:b8
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      16:
+        clientId: 16
+        mac: f6:1c:a7:c2:70:b9
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      17:
+        clientId: 17
+        mac: f6:1c:a7:c2:70:ba
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      18:
+        clientId: 18
+        mac: f6:1c:a7:c2:70:bb
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      19:
+        clientId: 19
+        mac: f6:1c:a7:c2:70:bc
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      20:
+        clientId: 20
+        mac: f6:1c:a7:c2:70:bd
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      21:
+        clientId: 21
+        mac: f6:1c:a7:c2:70:be
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      22:
+        clientId: 22
+        mac: f6:1c:a7:c2:70:bf
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      23:
+        clientId: 23
+        mac: f6:1c:a7:c2:70:c0
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      24:
+        clientId: 24
+        mac: f6:1c:a7:c2:70:c1
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      25:
+        clientId: 25
+        mac: f6:1c:a7:c2:70:c2
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      26:
+        clientId: 26
+        mac: f6:1c:a7:c2:70:c3
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      27:
+        clientId: 27
+        mac: f6:1c:a7:c2:70:c4
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+      28:
+        clientId: 28
+        mac: f6:1c:a7:c2:70:c5
+        ipv6Enabled: true
+        hostnamePrefix: eogre3013
+  2:
+    radioId: 2
+    ssid: S1-APHP-WPA3-SAE
+    protocol: 5
+    channelWidth: 6
+    securityCli: wpa3
+    passphrase: Hello@123
+    keyMgmt: SAE FT-SAE
+    pairwise: GCMP-256 CCMP
+    group: GCMP-256 CCMP
+    ieee80211w: "2"
+    portalType: internal
+    clients:
+      1:
+        clientId: 1
+        mac: f6:1c:a7:c2:71:54
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      2:
+        clientId: 2
+        mac: f6:1c:a7:c2:71:55
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      3:
+        clientId: 3
+        mac: f6:1c:a7:c2:71:56
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      4:
+        clientId: 4
+        mac: f6:1c:a7:c2:71:57
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      5:
+        clientId: 5
+        mac: f6:1c:a7:c2:71:58
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      6:
+        clientId: 6
+        mac: f6:1c:a7:c2:71:59
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      7:
+        clientId: 7
+        mac: f6:1c:a7:c2:71:5a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      8:
+        clientId: 8
+        mac: f6:1c:a7:c2:71:5b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      9:
+        clientId: 9
+        mac: f6:1c:a7:c2:71:5c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      10:
+        clientId: 10
+        mac: f6:1c:a7:c2:71:5d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      11:
+        clientId: 11
+        mac: f6:1c:a7:c2:71:5e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      12:
+        clientId: 12
+        mac: f6:1c:a7:c2:71:5f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      13:
+        clientId: 13
+        mac: f6:1c:a7:c2:71:60
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      14:
+        clientId: 14
+        mac: f6:1c:a7:c2:71:61
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      15:
+        clientId: 15
+        mac: f6:1c:a7:c2:71:62
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      16:
+        clientId: 16
+        mac: f6:1c:a7:c2:71:63
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      17:
+        clientId: 17
+        mac: f6:1c:a7:c2:71:64
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      18:
+        clientId: 18
+        mac: f6:1c:a7:c2:71:65
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      19:
+        clientId: 19
+        mac: f6:1c:a7:c2:71:66
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      20:
+        clientId: 20
+        mac: f6:1c:a7:c2:71:67
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      21:
+        clientId: 21
+        mac: f6:1c:a7:c2:71:68
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      22:
+        clientId: 22
+        mac: f6:1c:a7:c2:71:69
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      23:
+        clientId: 23
+        mac: f6:1c:a7:c2:71:6a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      24:
+        clientId: 24
+        mac: f6:1c:a7:c2:71:6b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      25:
+        clientId: 25
+        mac: f6:1c:a7:c2:71:6c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      26:
+        clientId: 26
+        mac: f6:1c:a7:c2:71:6d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      27:
+        clientId: 27
+        mac: f6:1c:a7:c2:71:6e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal
+      28:
+        clientId: 28
+        mac: f6:1c:a7:c2:71:6f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: 2-C460D--C2714F-Portal

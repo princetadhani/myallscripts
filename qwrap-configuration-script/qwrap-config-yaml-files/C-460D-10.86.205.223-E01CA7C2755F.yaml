@@ -1,0 +1,522 @@
+qwrapConfigPersistReboot: true
+radios:
+  0:
+    radioId: 0
+    ssid: S1-Vxlan-OWE
+    protocol: 5
+    channelWidth: 2
+    securityCli: owe
+    keyMgmt: OWE
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: f6:1c:a7:c2:74:00
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      2:
+        clientId: 2
+        mac: f6:1c:a7:c2:74:01
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      3:
+        clientId: 3
+        mac: f6:1c:a7:c2:74:02
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      4:
+        clientId: 4
+        mac: f6:1c:a7:c2:74:03
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      5:
+        clientId: 5
+        mac: f6:1c:a7:c2:74:04
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      6:
+        clientId: 6
+        mac: f6:1c:a7:c2:74:05
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      7:
+        clientId: 7
+        mac: f6:1c:a7:c2:74:06
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      8:
+        clientId: 8
+        mac: f6:1c:a7:c2:74:07
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      9:
+        clientId: 9
+        mac: f6:1c:a7:c2:74:08
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      10:
+        clientId: 10
+        mac: f6:1c:a7:c2:74:09
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      11:
+        clientId: 11
+        mac: f6:1c:a7:c2:74:0a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      12:
+        clientId: 12
+        mac: f6:1c:a7:c2:74:0b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      13:
+        clientId: 13
+        mac: f6:1c:a7:c2:74:0c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      14:
+        clientId: 14
+        mac: f6:1c:a7:c2:74:0d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      15:
+        clientId: 15
+        mac: f6:1c:a7:c2:74:0e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      16:
+        clientId: 16
+        mac: f6:1c:a7:c2:74:0f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      17:
+        clientId: 17
+        mac: f6:1c:a7:c2:74:10
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      18:
+        clientId: 18
+        mac: f6:1c:a7:c2:74:11
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      19:
+        clientId: 19
+        mac: f6:1c:a7:c2:74:12
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      20:
+        clientId: 20
+        mac: f6:1c:a7:c2:74:13
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      21:
+        clientId: 21
+        mac: f6:1c:a7:c2:74:14
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      22:
+        clientId: 22
+        mac: f6:1c:a7:c2:74:15
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      23:
+        clientId: 23
+        mac: f6:1c:a7:c2:74:16
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      24:
+        clientId: 24
+        mac: f6:1c:a7:c2:74:17
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      25:
+        clientId: 25
+        mac: f6:1c:a7:c2:74:18
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      26:
+        clientId: 26
+        mac: f6:1c:a7:c2:74:19
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      27:
+        clientId: 27
+        mac: f6:1c:a7:c2:74:1a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      28:
+        clientId: 28
+        mac: f6:1c:a7:c2:74:1b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+  1:
+    radioId: 1
+    ssid: S1-Vxlan-OWE
+    protocol: 5
+    channelWidth: 4
+    securityCli: owe
+    keyMgmt: OWE
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: f6:1c:a7:c2:74:aa
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      2:
+        clientId: 2
+        mac: f6:1c:a7:c2:74:ab
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      3:
+        clientId: 3
+        mac: f6:1c:a7:c2:74:ac
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      4:
+        clientId: 4
+        mac: f6:1c:a7:c2:74:ad
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      5:
+        clientId: 5
+        mac: f6:1c:a7:c2:74:ae
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      6:
+        clientId: 6
+        mac: f6:1c:a7:c2:74:af
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      7:
+        clientId: 7
+        mac: f6:1c:a7:c2:74:b0
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      8:
+        clientId: 8
+        mac: f6:1c:a7:c2:74:b1
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      9:
+        clientId: 9
+        mac: f6:1c:a7:c2:74:b2
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      10:
+        clientId: 10
+        mac: f6:1c:a7:c2:74:b3
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      11:
+        clientId: 11
+        mac: f6:1c:a7:c2:74:b4
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      12:
+        clientId: 12
+        mac: f6:1c:a7:c2:74:b5
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      13:
+        clientId: 13
+        mac: f6:1c:a7:c2:74:b6
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      14:
+        clientId: 14
+        mac: f6:1c:a7:c2:74:b7
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      15:
+        clientId: 15
+        mac: f6:1c:a7:c2:74:b8
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      16:
+        clientId: 16
+        mac: f6:1c:a7:c2:74:b9
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      17:
+        clientId: 17
+        mac: f6:1c:a7:c2:74:ba
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      18:
+        clientId: 18
+        mac: f6:1c:a7:c2:74:bb
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      19:
+        clientId: 19
+        mac: f6:1c:a7:c2:74:bc
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      20:
+        clientId: 20
+        mac: f6:1c:a7:c2:74:bd
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      21:
+        clientId: 21
+        mac: f6:1c:a7:c2:74:be
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      22:
+        clientId: 22
+        mac: f6:1c:a7:c2:74:bf
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      23:
+        clientId: 23
+        mac: f6:1c:a7:c2:74:c0
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      24:
+        clientId: 24
+        mac: f6:1c:a7:c2:74:c1
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      25:
+        clientId: 25
+        mac: f6:1c:a7:c2:74:c2
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      26:
+        clientId: 26
+        mac: f6:1c:a7:c2:74:c3
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      27:
+        clientId: 27
+        mac: f6:1c:a7:c2:74:c4
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      28:
+        clientId: 28
+        mac: f6:1c:a7:c2:74:c5
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+  2:
+    radioId: 2
+    ssid: S1-Vxlan-OWE
+    protocol: 5
+    channelWidth: 6
+    securityCli: owe
+    keyMgmt: OWE
+    ieee80211w: "2"
+    clients:
+      1:
+        clientId: 1
+        mac: f6:1c:a7:c2:75:54
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      2:
+        clientId: 2
+        mac: f6:1c:a7:c2:75:55
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      3:
+        clientId: 3
+        mac: f6:1c:a7:c2:75:56
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      4:
+        clientId: 4
+        mac: f6:1c:a7:c2:75:57
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      5:
+        clientId: 5
+        mac: f6:1c:a7:c2:75:58
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      6:
+        clientId: 6
+        mac: f6:1c:a7:c2:75:59
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      7:
+        clientId: 7
+        mac: f6:1c:a7:c2:75:5a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      8:
+        clientId: 8
+        mac: f6:1c:a7:c2:75:5b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      9:
+        clientId: 9
+        mac: f6:1c:a7:c2:75:5c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      10:
+        clientId: 10
+        mac: f6:1c:a7:c2:75:5d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      11:
+        clientId: 11
+        mac: f6:1c:a7:c2:75:5e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      12:
+        clientId: 12
+        mac: f6:1c:a7:c2:75:5f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      13:
+        clientId: 13
+        mac: f6:1c:a7:c2:75:60
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      14:
+        clientId: 14
+        mac: f6:1c:a7:c2:75:61
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      15:
+        clientId: 15
+        mac: f6:1c:a7:c2:75:62
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      16:
+        clientId: 16
+        mac: f6:1c:a7:c2:75:63
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      17:
+        clientId: 17
+        mac: f6:1c:a7:c2:75:64
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      18:
+        clientId: 18
+        mac: f6:1c:a7:c2:75:65
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      19:
+        clientId: 19
+        mac: f6:1c:a7:c2:75:66
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      20:
+        clientId: 20
+        mac: f6:1c:a7:c2:75:67
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      21:
+        clientId: 21
+        mac: f6:1c:a7:c2:75:68
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      22:
+        clientId: 22
+        mac: f6:1c:a7:c2:75:69
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      23:
+        clientId: 23
+        mac: f6:1c:a7:c2:75:6a
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      24:
+        clientId: 24
+        mac: f6:1c:a7:c2:75:6b
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      25:
+        clientId: 25
+        mac: f6:1c:a7:c2:75:6c
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      26:
+        clientId: 26
+        mac: f6:1c:a7:c2:75:6d
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      27:
+        clientId: 27
+        mac: f6:1c:a7:c2:75:6e
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth
+      28:
+        clientId: 28
+        mac: f6:1c:a7:c2:75:6f
+        hasIp: true
+        ipv6Enabled: true
+        hostnamePrefix: Owe-Mac-Auth

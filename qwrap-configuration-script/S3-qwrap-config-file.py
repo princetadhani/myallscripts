@@ -1,4 +1,12 @@
 """
+
+py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243
+py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+
 QWRAP AP configuration file.
 
 Edit AP_LIST below. Each entry is one standalone QWRAP AP with up to 3 radios
@@ -150,144 +158,5 @@ DEFAULT_CLI_PASSWORD = "arastra"
 #                                             Define the AP's here which need to configure                                              #
 #########################################################################################################################################
 AP_LIST = [
-
-    {
-        "host": "10.86.205.157",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S2-Agni-Office",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
-                "ieee80211w":       "required",
-                "groupCipher":      "GCMP-256",
-                "pairwiseCipher":   "GCMP-256",
-                "clients": {
-                    "count":          2,
-                    "hostnamePrefix": "Radio-0",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S2-Agni-Office",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
-                "ieee80211w":       "required",
-                "groupCipher":      "GCMP-256",
-                "pairwiseCipher":   "GCMP-256",
-                 "clients": {
-                    "count":          2,
-                    "hostnamePrefix": "Radio-1",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S2-Agni-Office",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
-                "ieee80211w":       "required",
-                "groupCipher":      "GCMP-256",
-                "pairwiseCipher":   "GCMP-256",
-                 "clients": {
-                    "count":          2,
-                    "hostnamePrefix": "Radio-2",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-        },
-    },
-
-    {
-        "host": "10.86.205.90",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S2-Agni-Office",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
-                "ieee80211w":       "required",
-                "groupCipher":      "GCMP-256",
-                "pairwiseCipher":   "GCMP-256",
-                "clients": {
-                    "count":          2,
-                    "hostnamePrefix": "Radio-0",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S2-Agni-Office",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
-                "ieee80211w":       "required",
-                "groupCipher":      "GCMP-256",
-                "pairwiseCipher":   "GCMP-256",
-                 "clients": {
-                    "count":          2,
-                    "hostnamePrefix": "Radio-1",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S2-Agni-Office",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
-                "ieee80211w":       "required",
-                "groupCipher":      "GCMP-256",
-                "pairwiseCipher":   "GCMP-256",
-                 "clients": {
-                    "count":          2,
-                    "hostnamePrefix": "Radio-2",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-        },
-    },
-
-    {
-        "host": "10.86.204.227",
-        "radios": {
-            0: { 
-            },
-            1: {  # 5ghz
-                "ssid":             "IGMP",
-                "security":         "owe",
-                "clients": {
-                    "count":          3,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           1,
-                },
-            },
-            2: {  # 6ghz
-            },
-        },
-    },
+    
 ]
