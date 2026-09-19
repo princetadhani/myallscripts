@@ -140,9 +140,10 @@ ROOT_PROMPT = r'#\s*$'
 
 
 def startKickmacOnAp(host, username, password, kickmacArgsLine, timeout=30):
-    '''Open an interactive SSH session and launch kickmac in the background
-    with nohup, redirecting its output to /dev/null, so it keeps running on
-    the AP after the SSH session closes.'''
+    '''Open an interactive SSH session, launch kickmac in the background with
+    nohup (output redirected to /dev/null, so it keeps running on the AP
+    after the SSH session closes), then read back its PID via "echo $!".
+    Returns the PID as a string (or None if it could not be determined).'''
     cmd = f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {username}@{host}'
     child = pexpect.spawn(cmd, env=_sshEnv(), timeout=timeout, encoding='utf-8')
     try:
@@ -152,6 +153,13 @@ def startKickmacOnAp(host, username, password, kickmacArgsLine, timeout=30):
         child.sendline(remoteCmd)
         child.expect(ROOT_PROMPT, timeout=timeout)
         log.debug(f'[{host}] start output: {child.before!r}')
+
+        child.sendline('echo $!')
+        child.expect(ROOT_PROMPT, timeout=timeout)
+        pidOutput = (child.before or '').strip()
+        pid = next((line.strip() for line in pidOutput.splitlines()[::-1] if line.strip().isdigit()), None)
+        log.info(f'[{host}] kickmac started with pid={pid}')
+        return pid
     finally:
         try:
             child.sendline('exit')
@@ -186,13 +194,14 @@ def deployToAp(host, kickmacArgsLine):
     '''Runs the 3 deploy steps in order, tracking per-step status for the
     final summary table. Raises (after recording which step got to) if a
     step fails, so runConcurrently's error handling/logging still applies.'''
-    result = {'ap': host, 'scp': 'FAILED', 'running': 'FAILED'}
+    result = {'ap': host, 'scp': 'FAILED', 'running': 'FAILED', 'pid': '-'}
     try:
         scpToAp(host, CLI_USERNAME, CLI_PASSWORD, LOCAL_KICKMAC_PATH, REMOTE_KICKMAC_PATH)
         result['scp'] = 'ok'
         chmodOnAp(host, CLI_USERNAME, CLI_PASSWORD, REMOTE_KICKMAC_PATH)
-        startKickmacOnAp(host, CLI_USERNAME, CLI_PASSWORD, kickmacArgsLine)
+        pid = startKickmacOnAp(host, CLI_USERNAME, CLI_PASSWORD, kickmacArgsLine)
         result['running'] = 'ok'
+        result['pid'] = pid or '-'
     except Exception as e:
         e.deployResult = result
         raise
@@ -217,7 +226,8 @@ def runConcurrently(func, apList, actionName):
                 errors.append(host)
                 partial = getattr(e, 'deployResult', {})
                 results[host] = {'ap': host, 'scp': partial.get('scp', 'FAILED'),
-                                  'running': partial.get('running', 'FAILED')}
+                                  'running': partial.get('running', 'FAILED'),
+                                  'pid': partial.get('pid', '-')}
     if errors:
         log.error(f'{actionName} failed on: {errors}')
     return results, errors
@@ -317,24 +327,25 @@ def main():
     print('-' * 40)
     apList = resolveApList(args)
 
-    print('-' * 40)
+    print('\n' + '-' * 40)
     print('kickmac options')
     print('-' * 40)
     kickmacArgsLine = promptForKickmacArgsLine()
 
-    print('-' * 40)
+    print('\n' + '-' * 40)
     print('Deploy + start kickmac on AP(s)')
     print('-' * 40)
     results, errors = runConcurrently(lambda host: deployToAp(host, kickmacArgsLine), apList, 'deploy')
 
     W = 20
-    print("\n" + "-" * (W * 2 + 12))
-    print(f"{'AP IP':<{W}}  {'SCP':<{W}}  {'Running'}")
-    print("-" * (W * 2 + 12))
+    ruleWidth = W * 4 + 6   # 4 fixed-width columns + 3 two-space separators
+    print('\n' + '=' * ruleWidth)
+    print(f"{'AP IP':<{W}}  {'SCP':<{W}}  {'Running':<{W}}  {'PID':<{W}}")
+    print('=' * ruleWidth)
     for host in sorted(results):
         r = results[host]
-        print(f"{host:<{W}}  {r['scp']:<{W}}  {r['running']}")
-    print("-" * (W * 2 + 12) + "\n")
+        print(f"{host:<{W}}  {r['scp']:<{W}}  {r['running']:<{W}}  {str(r['pid']):<{W}}")
+    print('=' * ruleWidth + '\n')
 
     if errors:
         sys.exit(1)

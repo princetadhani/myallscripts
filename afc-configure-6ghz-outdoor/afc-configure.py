@@ -268,7 +268,7 @@ def main():
     print('-' * 40)
     apList = resolveApList(args)
 
-    print('-' * 40)
+    print('\n' + '-' * 40)
     print('Configure AFC 6GHz on AP(s)')
     print('-' * 40)
     results, errors = runConcurrently(
@@ -278,13 +278,15 @@ def main():
     )
 
     W = 20
-    print("\n" + "-" * (W * 3 + 2))
-    print(f"{'AP IP':<{W}}  {'Config File':<{W}}  {'Trigger'}")
-    print("-" * (W * 3 + 2))
+    numCols = 3
+    ruleWidth = W * numCols + (numCols - 1) * 2
+    print("\n" + "=" * ruleWidth)
+    print(f"{'AP IP':<{W}}  {'Config File':<{W}}  {'Trigger':<{W}}")
+    print("=" * ruleWidth)
     for host in sorted(results):
         r = results[host]
-        print(f"{host:<{W}}  {r['confFile']:<{W}}  {r['trigger']}")
-    print("-" * (W * 3 + 2) + "\n")
+        print(f"{host:<{W}}  {r['confFile']:<{W}}  {r['trigger']:<{W}}")
+    print("=" * ruleWidth + "\n")
 
     if errors:
         sys.exit(1)

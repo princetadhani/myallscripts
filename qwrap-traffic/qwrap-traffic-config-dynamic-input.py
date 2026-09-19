@@ -749,7 +749,7 @@ def main() -> None:
 
     ap_config = resolveApList(args, ap_config)
 
-    print('-' * 40)
+    print('\n' + '-' * 40)
     print('Build client payloads')
     print('-' * 40)
     ap_clients: dict[str, list[dict]] = {}
@@ -810,7 +810,7 @@ def main() -> None:
         log.info("Wrote %d AP payload(s) -> %s", len(bundle), args.out)
         return
 
-    print('-' * 40)
+    print('\n' + '-' * 40)
     print('Push config to AP(s) concurrently')
     print('-' * 40)
     log.info("Configuring %d APs ...", len(ap_clients))
@@ -823,12 +823,14 @@ def main() -> None:
     summary: list[dict] = [results[ip] for ip in apIpList]
 
     W = 20
-    print("\n" + "-" * (W * 3 + 2))
-    print(f"{'AP IP':<{W}}  {'FileOp':<{W}}  {'Client'}")
-    print("-" * (W * 3 + 2))
+    numCols = 3
+    ruleWidth = W * numCols + (numCols - 1) * 2
+    print("\n" + "=" * ruleWidth)
+    print(f"{'AP IP':<{W}}  {'FileOp':<{W}}  {'Client':<{W}}")
+    print("=" * ruleWidth)
     for r in sorted(summary, key=lambda x: x["ap"]):
-        print(f"{r['ap']:<{W}}  {r.get('fileop', '-'):<{W}}  {r.get('client', '-')}")
-    print("-" * (W * 3 + 2) + "\n")
+        print(f"{r['ap']:<{W}}  {r.get('fileop', '-'):<{W}}  {r.get('client', '-'):<{W}}")
+    print("=" * ruleWidth + "\n")
 
 
 if __name__ == "__main__":

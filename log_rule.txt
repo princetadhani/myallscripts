@@ -46,12 +46,21 @@ banner using print() (not log), so it doesn't get a timestamp/level prefix:
     print('-' * 40)
     apIps = resolveApList(args)
 
+    print('\n' + '-' * 40)
+    print('kickmac options')
+    print('-' * 40)
+    kickmacArgsLine = promptForKickmacArgsLine()
+
 Rules:
   - Use print(), never log.info(), for the separator lines themselves.
   - Keep the header short (3-5 words, Title Case first word only).
   - Put the separator BEFORE any code/log lines belonging to that phase —
     including the very first log.info() of that phase. Double check nothing
     that logically belongs to phase N is left above phase N's separator.
+  - Except for the very first separator in the script, prefix every phase
+    separator with a blank line (`print('\n' + '-' * 40)`), so each phase
+    reads as its own visually distinct block instead of running together.
+    The first separator doesn't need it (nothing above it yet).
   - Do NOT add separators to scripts that run AP actions CONCURRENTLY across
     multiple hosts (e.g. qwrap-manager.py). Concurrent runs interleave
     log lines from different hosts in real time, so a banner would falsely
@@ -71,26 +80,35 @@ LINE format when a table doesn't fit (single value per AP, or highly
 variable/free-text results that would break column alignment).
 
 Table format (preferred, when applicable) — fixed-width columns, header,
-top/bottom rules made of '-' matching the total row width:
+top/bottom rules made of '=' (visually distinguishes the final summary from
+the '-' phase separators used during the run), and a leading blank line so
+it stands apart as its own block:
 
     W = 20
-    print("\n" + "-" * (W * 3 + 2))
-    print(f"{'AP IP':<{W}}  {'FileOp':<{W}}  {'Client'}")
-    print("-" * (W * 3 + 2))
+    numCols = 3
+    ruleWidth = W * numCols + (numCols - 1) * 2   # fixed-width cols + 2-space gaps
+    print("\n" + "=" * ruleWidth)
+    print(f"{'AP IP':<{W}}  {'FileOp':<{W}}  {'Client':<{W}}")
+    print("=" * ruleWidth)
     for r in sorted(summary, key=lambda x: x["ap"]):
-        print(f"{r['ap']:<{W}}  {r.get('fileop', '-'):<{W}}  {r.get('client', '-')}")
-    print("-" * (W * 3 + 2) + "\n")
+        print(f"{r['ap']:<{W}}  {r.get('fileop', '-'):<{W}}  {r.get('client', '-'):<{W}}")
+    print("=" * ruleWidth + "\n")
 
     # Example output:
-    # --------------------------------------------------------------
+    # ================================================================
     # AP IP                 FileOp                Client
-    # --------------------------------------------------------------
+    # ================================================================
     # 10.86.204.227         ok (252 sessions)     ok (280 sessions)
-    # --------------------------------------------------------------
+    # ================================================================
 
-  - Add columns as needed (radio breakdown, error reason, etc.) — keep each
-    column fixed-width (`W`) so rows stay aligned regardless of value length
-    variance; truncate or widen `W` if a value is expected to overflow.
+  - Add columns as needed (radio breakdown, error reason, PID, etc.) — keep
+    each column fixed-width (`W`), INCLUDING the last column, so rows stay
+    aligned regardless of value length variance; truncate or widen `W` if a
+    value is expected to overflow.
+  - The '=' rule length MUST match the row width exactly: for N columns it's
+    `N * W + (N - 1) * 2` (2-space gaps between columns). Don't hardcode this
+    — compute it from the actual column count, or the bars will be shorter
+    than the rows and the table will look broken/misaligned.
   - Sort rows (usually by AP IP) so output is stable across runs.
 
 Line format (fallback, when a table doesn't make sense) — one line per AP,
