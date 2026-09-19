@@ -11,7 +11,7 @@ Radio -> veth mapping (fixed, do not change):
     radio 2 -> 6 GHz    -> veth_in_2_*
 
 Usage:
-  python3 qwrap-traffic-config-dynamic-input.py [--ap HOST[,HOST...]] [--dry-run] [--workers N] [--debug]
+  python3 qwrap-traffic-config-dynamic-input.py [--ap HOST[,HOST...]] [--dry-run] [--debug]
 
 
 py /Users/prince.tadhani/myallscripts/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
@@ -587,6 +587,29 @@ def _breakdown_str(counts_by_radio: dict[int, int], ap_bands: dict[int, dict], p
     return ", ".join(parts) + f"  (total={total})" if parts else "(total=0)"
 
 
+def runConcurrently(func, apList: list[str], actionName: str) -> dict:
+    '''Run func(ip) concurrently across apList (one worker per AP), same
+    pattern as qwrap-manager.py's runConcurrently(). Exits the process if any
+    AP fails.'''
+    errors = []
+    results = {}
+    with ThreadPoolExecutor(max_workers=len(apList)) as executor:
+        futureToHost = {executor.submit(func, ip): ip for ip in apList}
+        for future in as_completed(futureToHost):
+            host = futureToHost[future]
+            try:
+                results[host] = future.result()
+                log.info(f'{host}: {actionName} succeeded')
+            except Exception as e:
+                log.error(f'{host}: {actionName} FAILED: {e}')
+                errors.append(host)
+
+    if errors:
+        log.error(f'{actionName} failed on: {errors}')
+        sys.exit(1)
+    return results
+
+
 def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_bands: dict[int, dict]) -> dict:
     result = {"ap": ap_ip}
     fileop_payload, client_payload, fileop_by_radio, client_by_radio = build_ap_payloads(clients, endpoints)
@@ -670,7 +693,6 @@ examples:
   python3 qwrap-traffic-config-dynamic-input.py --dry-run
   python3 qwrap-traffic-config-dynamic-input.py --dry-run --out payloads.json
   python3 qwrap-traffic-config-dynamic-input.py --ap 10.86.205.157 --dry-run
-  python3 qwrap-traffic-config-dynamic-input.py --workers 10
   python3 qwrap-traffic-config-dynamic-input.py --debug
 '''
 
@@ -685,7 +707,6 @@ def _parse_args() -> argparse.Namespace:
     )
     p.add_argument("--ap", metavar="HOST[,HOST...]", default=None,
                    help="Comma-separated list of AP host/IPs to target instead of all APs in AP_LIST or AP_CONFIG.")
-    p.add_argument("--workers", type=int, default=5, help="Parallel worker threads (default: 5)")
     p.add_argument("--dry-run", action="store_true",
                    help="Build payloads and write them to --out instead of POSTing to APs")
     p.add_argument("--out", default="traffic_payloads.json", metavar="FILE",
@@ -695,6 +716,20 @@ def _parse_args() -> argparse.Namespace:
 
 
 # ─── Main ───────────────────────────────────────────────────────────────────
+
+def resolveApList(args: argparse.Namespace, ap_config: dict) -> dict:
+    '''Turn --ap into a filtered ap_config dict, hard-exiting on unknown host(s).'''
+    if not args.ap:
+        return ap_config
+    requested_hosts = {h.strip() for h in args.ap.split(",") if h.strip()}
+    missing_hosts = requested_hosts - ap_config.keys()
+    if missing_hosts:
+        log.error("Host(s) not found in AP_LIST/AP_CONFIG: %s", sorted(missing_hosts))
+        sys.exit(1)
+    ap_config = {ip: cfg for ip, cfg in ap_config.items() if ip in requested_hosts}
+    log.info("Targeting %d AP(s): %s", len(ap_config), sorted(ap_config))
+    return ap_config
+
 
 def main() -> None:
     args = _parse_args()
@@ -709,14 +744,7 @@ def main() -> None:
         log.error("No APs resolved — check AP_LIST/AP_CONFIG and DEFAULT_MODE.")
         sys.exit(1)
 
-    if args.ap:
-        requested_hosts = {h.strip() for h in args.ap.split(",") if h.strip()}
-        missing_hosts = requested_hosts - ap_config.keys()
-        if missing_hosts:
-            log.error("Host(s) not found in AP_LIST/AP_CONFIG: %s", sorted(missing_hosts))
-            sys.exit(1)
-        ap_config = {ip: cfg for ip, cfg in ap_config.items() if ip in requested_hosts}
-        log.info("Targeting %d AP(s): %s", len(ap_config), sorted(ap_config))
+    ap_config = resolveApList(args, ap_config)
 
     ap_clients: dict[str, list[dict]] = {}
     ap_bands_map: dict[str, dict[int, dict]] = {}
@@ -776,19 +804,14 @@ def main() -> None:
         log.info("Wrote %d AP payload(s) -> %s", len(bundle), args.out)
         return
 
-    log.info("Configuring %d APs (workers=%d) ...", len(ap_clients), args.workers)
-    summary: list[dict] = []
-    with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        futures = {
-            pool.submit(configure_ap, ip, ap_clients[ip], ap_endpoints[ip], ap_bands_map[ip]): ip
-            for ip in ap_clients
-        }
-        for fut in as_completed(futures):
-            try:
-                summary.append(fut.result())
-            except Exception as exc:
-                ip = futures[fut]
-                summary.append({"ap": ip, "fileop": f"ERROR: {exc}", "client": f"ERROR: {exc}"})
+    log.info("Configuring %d APs ...", len(ap_clients))
+    apIpList = list(ap_clients)
+    results = runConcurrently(
+        lambda ip: configure_ap(ip, ap_clients[ip], ap_endpoints[ip], ap_bands_map[ip]),
+        apIpList,
+        "configure",
+    )
+    summary: list[dict] = [results[ip] for ip in apIpList]
 
     W = 20
     print("\n" + "-" * (W * 3 + 2))

@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import re
@@ -5,9 +6,7 @@ import shutil
 import subprocess
 import requests
 import urllib3
-from dotenv import load_dotenv
 
-load_dotenv()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- Configuration ---
@@ -25,11 +24,12 @@ REMOTE_DIR    = "/root/"
 # Export it from AGNI and set the path here.
 AGNI_SERVER_CA = "AGNI_Root_CA.pem"
 
-CACHE_FILE    = "/tmp/nssh.txt"
-ONELOGIN_USER = os.environ["ONELOGIN_USER"]
-ONELOGIN_PASS = os.environ["ONELOGIN_PASS"]
-PORTAL_LOGIN  = "https://license.aristanetworks.com/api-auth/login/"
-PORTAL_OTP    = "https://license.aristanetworks.com/sign/wifi_otp/"
+# ---------------------------------------------------------------------------
+# Wifi OTP signing endpoint used by the arista-ssh-agent Response[...] challenge/
+# response prompt (same as SWAT's otpLib.getWifiOTP(), and qwrap-manager.py).
+# ---------------------------------------------------------------------------
+WIFI_OTP_URL = "https://license.aristanetworks.com/sign/wifi-otp/"
+WIFI_OTP_KEY = "d9ca932a4bc8fbaaa5021b00e14dd453d469eaaf"
 
 
 # ---------------------------------------------------------------------------
@@ -54,79 +54,33 @@ def run_command(cmd, capture=True):
 # Challenge-response helpers  (mirrors conn.sh logic)
 # ---------------------------------------------------------------------------
 
-def check_cache(challenge):
-    """Return cached OTP response for a challenge, or None."""
-    if not os.path.exists(CACHE_FILE):
-        return None
-    with open(CACHE_FILE) as f:
-        lines = f.read().splitlines()
-    for i, line in enumerate(lines):
-        if line == challenge and i + 1 < len(lines):
-            return lines[i + 1]
-    return None
+def get_response(challenge):
+    """
+    Sign an arista-ssh-agent Response[...] challenge via the Wifi OTP
+    endpoint. Stateless (no session/login required).
+    """
+    print(f"   [otp] Fetching response for challenge: {challenge} ...")
 
-
-def save_cache(challenge, response):
-    """Append challenge/response pair; trim file if > 200 lines."""
-    with open(CACHE_FILE, "a") as f:
-        f.write(f"{challenge}\n{response}\n")
-    with open(CACHE_FILE) as f:
-        lines = f.readlines()
-    if len(lines) > 200:
-        with open(CACHE_FILE, "w") as f:
-            f.writelines(lines[2:])
-
-
-def get_portal_response(challenge):
-    """Fetch OTP response from the Arista license portal (same flow as conn.sh)."""
-    session = requests.Session()
-    session.verify = False
-
-    # Grab CSRF token from login page
-    session.get(PORTAL_LOGIN)
-    csrf = session.cookies.get("csrftoken", "")
-
-    # Log in
-    session.post(
-        PORTAL_LOGIN,
-        data={
-            "username": ONELOGIN_USER,
-            "password": ONELOGIN_PASS,
-            "submit": "Log in",
-            "csrfmiddlewaretoken": csrf,
-        },
-        headers={"Referer": PORTAL_LOGIN},
-    )
-    csrf = session.cookies.get("csrftoken", csrf)
-
-    # Request OTP signature
-    r = session.post(
-        PORTAL_OTP,
-        data={"message": challenge, "csrfmiddlewaretoken": csrf},
-        headers={"Referer": PORTAL_OTP},
-    )
+    header = {
+        "Authorization": f"Token {WIFI_OTP_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = json.dumps({"message": challenge})
 
     try:
-        return r.json().get("signature", "")
-    except Exception:
+        r = requests.post(WIFI_OTP_URL, headers=header, data=payload, allow_redirects=True, timeout=30)
+    except requests.RequestException as e:
+        print(f"[ERROR] Wifi OTP request failed: {e}")
         return ""
 
+    if r.status_code != 201:
+        print(f"[ERROR] Wifi OTP request failed ({r.status_code}) for challenge {challenge}")
+        return ""
 
-def get_response(challenge):
-    """Cache-first lookup, then hit the portal."""
-    cached = check_cache(challenge)
-    if cached:
-        print(f"   [cache] Challenge {challenge[:12]}... → using cached response")
-        return cached
-
-    print(f"   [portal] Fetching response for challenge: {challenge} ...")
-    response = get_portal_response(challenge)
-    if response:
-        save_cache(challenge, response)
-        return response
-
-    print("[ERROR] Could not get OTP response from portal.")
-    return ""
+    signature = r.json().get("signature", "")
+    if not signature:
+        print("[ERROR] Wifi OTP response did not contain 'signature'.")
+    return signature
 
 
 # ---------------------------------------------------------------------------

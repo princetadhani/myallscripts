@@ -611,21 +611,45 @@ def monitor_cycle(ap_list, max_retries, parallel=True):
     _print(f'{"="*80}\n')
 
 
+_EXAMPLES = '''\
+examples:
+  ./wifiagent-monitor.py                      # Start monitoring with defaults (5min interval)
+  ./wifiagent-monitor.py --interval 180       # Check every 3 minutes
+  ./wifiagent-monitor.py --max-retries 3      # 3 retries per AP per cycle
+  ./wifiagent-monitor.py --once               # Run only one cycle (for testing)
+  ./wifiagent-monitor.py --no-parallel        # Check APs sequentially instead of in parallel
+  ./wifiagent-monitor.py --ap 10.86.58.139    # Monitor a specific AP
+  ./wifiagent-monitor.py --ap 10.86.58.139,10.86.58.140
+
+Press Ctrl+C to stop monitoring.
+'''
+
+
+class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def __init__(self, prog):
+        super().__init__(prog, max_help_position=40, width=200)
+
+
+def resolveApList(options) -> list[str]:
+    '''Turn --ap into a filtered AP_IPS list. Warns (does not exit) on unknown
+    host(s), matching this script's existing lenient behavior.'''
+    if not options.ap:
+        return AP_IPS
+    apIps = [ip.strip() for ip in options.ap.split(',') if ip.strip()]
+    for ip in apIps:
+        if ip not in AP_IPS:
+            print(f'Warning: {ip} is not in the AP_IPS list – proceeding anyway')
+    return apIps
+
+
 def main():
     '''Main entry point for the monitoring script.'''
     parser = argparse.ArgumentParser(
+        prog='wifiagent-monitor.py',
+        usage=argparse.SUPPRESS,
         description='WiFi Agent Monitoring Script - Continuously monitors and maintains WiFi Agent on APs',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
-Examples:
-  ./wifiagent_monitor.py                      # Start monitoring with defaults (5min interval)
-  ./wifiagent_monitor.py --interval 180       # Check every 3 minutes
-  ./wifiagent_monitor.py --max-retries 3      # 3 retries per AP per cycle
-  ./wifiagent_monitor.py --once               # Run only one cycle (for testing)
-  ./wifiagent_monitor.py --no-parallel        # Check APs sequentially instead of in parallel
-
-Press Ctrl+C to stop monitoring.
-        '''
+        epilog=_EXAMPLES,
+        formatter_class=_HelpFormatter,
     )
 
     parser.add_argument(
@@ -664,7 +688,16 @@ Press Ctrl+C to stop monitoring.
         help='Logging level: DEBUG, INFO, WARNING, ERROR (default: WARNING)',
     )
 
+    parser.add_argument(
+        '--ap',
+        metavar='AP[,AP...]',
+        default=None,
+        help='Specific AP IP(s) to monitor, comma-separated (default: monitor all APs)',
+    )
+
     options = parser.parse_args()
+
+    apIps = resolveApList(options)
 
     # Configure logging
     logging.basicConfig(
@@ -677,8 +710,8 @@ Press Ctrl+C to stop monitoring.
     print('\n' + '='*80)
     print('WiFi Agent Monitoring Script')
     print('='*80)
-    print(f'Monitoring {len(AP_IPS)} Access Points:')
-    for ip in AP_IPS:
+    print(f'Monitoring {len(apIps)} Access Points:')
+    for ip in apIps:
         print(f'  • {ip}')
     print(f'\nMonitoring interval: {options.interval}s ({options.interval/60:.1f} minutes)')
     print(f'Max retries per AP: {options.max_retries}')
@@ -687,7 +720,7 @@ Press Ctrl+C to stop monitoring.
     print('\nPress Ctrl+C to stop monitoring')
     print('='*80 + '\n')
 
-    if not AP_IPS:
+    if not apIps:
         print('ERROR: AP_IPS list is empty. Please configure APs in wifiagent.py')
         return 1
 
@@ -698,7 +731,7 @@ Press Ctrl+C to stop monitoring.
             cycle_count += 1
 
             # Run monitoring cycle
-            monitor_cycle(AP_IPS, max_retries=options.max_retries, parallel=options.parallel)
+            monitor_cycle(apIps, max_retries=options.max_retries, parallel=options.parallel)
 
             # Exit if running only once
             if options.once:

@@ -12,7 +12,7 @@ RADIO_6G_CLIENTS constants below — each 0..28 — which expand into
 veth_in_<radio>_<index> interfaces (radio 0 = 2.4G, 1 = 5G, 2 = 6G).
 
 Usage:
-  python3 QwrapApTrafficConfigure.py [--dry-run] [--workers N] [--debug]
+  python3 QwrapApTrafficConfigure.py [--dry-run] [--ap HOST[,HOST...]] [--debug]
 """
 
 import argparse
@@ -513,21 +513,60 @@ def build_clients() -> list[dict]:
         for c in range(1, n + 1)
     ]
 
+def runConcurrently(func, apList: list[str], actionName: str) -> dict:
+    '''Run func(ip) concurrently across apList (one worker per AP), same
+    pattern as qwrap-manager.py's runConcurrently(). Exits the process if any
+    AP fails.'''
+    errors = []
+    results = {}
+    with ThreadPoolExecutor(max_workers=len(apList)) as executor:
+        futureToHost = {executor.submit(func, ip): ip for ip in apList}
+        for future in as_completed(futureToHost):
+            host = futureToHost[future]
+            try:
+                results[host] = future.result()
+                log.info(f'{host}: {actionName} succeeded')
+            except Exception as e:
+                log.error(f'{host}: {actionName} FAILED: {e}')
+                errors.append(host)
+
+    if errors:
+        log.error(f'{actionName} failed on: {errors}')
+        sys.exit(1)
+    return results
+
 # ─── CLI ──────────────────────────────────────────────────────────────────────
+
+_EXAMPLES = '''\
+examples:
+  python3 qwrap-traffic-config.py
+  python3 qwrap-traffic-config.py --ap 10.86.205.157
+  python3 qwrap-traffic-config.py --ap 10.86.205.157,10.86.205.158
+  python3 qwrap-traffic-config.py --dry-run --out payloads.json
+  python3 qwrap-traffic-config.py --debug
+
+Virtual-client selection is controlled by the RADIO_2_4G_CLIENTS,
+RADIO_5G_CLIENTS and RADIO_6G_CLIENTS constants at the top of this file
+(each 0..28). Radio 0 -> 2.4G, radio 1 -> 5G, radio 2 -> 6G.
+'''
+
+
+class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def __init__(self, prog):
+        super().__init__(prog, max_help_position=40, width=200)
+
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
+        prog="qwrap-traffic-config.py",
+        usage=argparse.SUPPRESS,
         description="Configure WifiAgent stress traffic on Qwrap APs",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=(
-            "Virtual-client selection is controlled by the RADIO_2_4G_CLIENTS, "
-            "RADIO_5G_CLIENTS and RADIO_6G_CLIENTS constants at the top of this "
-            "file (each 0..28). Radio 0 → 2.4G, radio 1 → 5G, radio 2 → 6G."
-        ),
+        epilog=_EXAMPLES,
+        formatter_class=_HelpFormatter,
     )
     p.add_argument(
-        "--workers", type=int, default=5,
-        help="Parallel worker threads (default: 5)",
+        "--ap", metavar="HOST[,HOST...]", default=None,
+        help="Comma-separated list of AP host/IPs to target instead of all APs in AP_IPS",
     )
     p.add_argument(
         "--dry-run", action="store_true",
@@ -540,12 +579,27 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--debug", action="store_true", help="Enable debug logging")
     return p.parse_args()
 
+
+def resolveApList(args: argparse.Namespace) -> list[str]:
+    '''Turn --ap into a filtered AP_IPS list, hard-exiting on unknown host(s).'''
+    if not args.ap:
+        return AP_IPS
+    requested_hosts = [h.strip() for h in args.ap.split(",") if h.strip()]
+    missing_hosts = sorted(set(requested_hosts) - set(AP_IPS))
+    if missing_hosts:
+        log.error("Host(s) not found in AP_IPS: %s", missing_hosts)
+        sys.exit(1)
+    log.info("Targeting %d AP(s): %s", len(requested_hosts), requested_hosts)
+    return requested_hosts
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     args = _parse_args()
     if args.debug:
         log.setLevel(logging.DEBUG)
+
+    apIps = resolveApList(args)
 
     clients = build_clients()
     if not clients:
@@ -558,11 +612,11 @@ def main() -> None:
         min(RADIO_5G_CLIENTS,   MAX_CLIENTS_PER_RADIO),
         min(RADIO_6G_CLIENTS,   MAX_CLIENTS_PER_RADIO),
     )
-    ap_clients: dict[str, list[dict]] = {ip: clients for ip in AP_IPS}
+    ap_clients: dict[str, list[dict]] = {ip: clients for ip in apIps}
 
     # Resolve discovery URL per AP and fetch each unique URL only once.
     ap_url: dict[str, str] = {}
-    for ip in AP_IPS:
+    for ip in apIps:
         url = _discovery_url_for(ip)
         if not url:
             log.error("No discovery URL configured for AP %s — add its prefix to DISCOVERY_URLS", ip)
@@ -573,10 +627,10 @@ def main() -> None:
     for url in sorted(set(ap_url.values())):
         endpoints_cache[url] = fetch_endpoints(url)
 
-    ap_endpoints: dict[str, dict[str, list]] = {ip: endpoints_cache[ap_url[ip]] for ip in AP_IPS}
+    ap_endpoints: dict[str, dict[str, list]] = {ip: endpoints_cache[ap_url[ip]] for ip in apIps}
 
     # Show per-AP client counts + which discovery endpoint feeds it
-    for ip in AP_IPS:
+    for ip in apIps:
         log.info("  %-18s  %d virtual client(s)  via %s",
                  ip, len(ap_clients[ip]), ap_url[ip])
 
@@ -584,7 +638,7 @@ def main() -> None:
     if args.dry_run:
         log.info("DRY-RUN: building payloads, will write to %s", args.out)
         bundle: dict[str, dict] = {}
-        for ip in AP_IPS:
+        for ip in apIps:
             fileop_payload, client_payload = build_ap_payloads(ap_clients[ip], ap_endpoints[ip])
             bundle[ip] = {
                 "fileop_url": f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/fileop/config",
@@ -603,29 +657,14 @@ def main() -> None:
         log.info("Wrote %d AP payload(s) → %s", len(bundle), args.out)
         return
 
-    log.info("Configuring %d APs (workers=%d) …", len(AP_IPS), args.workers)
-    summary: list[dict] = []
+    log.info("Configuring %d APs …", len(apIps))
 
-    with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        futures = {
-            pool.submit(
-                configure_ap,
-                ip,
-                ap_clients[ip],
-                ap_endpoints[ip],
-            ): ip
-            for ip in AP_IPS
-        }
-        for fut in as_completed(futures):
-            try:
-                summary.append(fut.result())
-            except Exception as exc:
-                ip = futures[fut]
-                summary.append({
-                    "ap":     ip,
-                    "fileop": f"ERROR: {exc}",
-                    "client": f"ERROR: {exc}",
-                })
+    results = runConcurrently(
+        lambda ip: configure_ap(ip, ap_clients[ip], ap_endpoints[ip]),
+        apIps,
+        "configure",
+    )
+    summary: list[dict] = list(results.values())
 
     # ── Summary table ──────────────────────────────────────────────────
     W = 20

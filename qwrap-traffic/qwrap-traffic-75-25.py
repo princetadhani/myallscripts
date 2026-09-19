@@ -16,7 +16,7 @@ Additional features vs original:
   - 75/25 download/upload weighting on all fileop and clientop sessions
 
 Usage:
-  python3 qwrap-traffic-75-25.py [--dry-run] [--workers N] [--debug]
+  python3 qwrap-traffic-75-25.py [--dry-run] [--ap HOST[,HOST...]] [--debug]
 """
 
 import argparse
@@ -546,20 +546,76 @@ def build_clients() -> list[dict]:
 
 # --- CLI ----------------------------------------------------------------------
 
+_EXAMPLES = '''\
+examples:
+  python3 qwrap-traffic-75-25.py
+  python3 qwrap-traffic-75-25.py --ap 10.86.205.240
+  python3 qwrap-traffic-75-25.py --ap 10.86.205.240,10.86.205.157
+  python3 qwrap-traffic-75-25.py --dry-run --out payloads.json
+  python3 qwrap-traffic-75-25.py --debug
+
+Per active client: 2 HTTPS GETs + 1 QUICT/TCPT + 1 fileop, scheduled 9AM-9PM.
+25% of clients are fully idle. Band ip_mode: 2.4G=IPv4, 5G=IPv6, 6G=Dual.
+'''
+
+
+class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    def __init__(self, prog):
+        super().__init__(prog, max_help_position=40, width=200)
+
+
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
+        prog="qwrap-traffic-75-25.py",
+        usage=argparse.SUPPRESS,
         description="Configure reduced-load WifiAgent traffic on Qwrap APs",
-        epilog=(
-            "Per active client: 2 HTTPS GETs + 1 QUICT/TCPT + 1 fileop, scheduled 9AM-9PM. "
-            "25% of clients are fully idle. Band ip_mode: 2.4G=IPv4, 5G=IPv6, 6G=Dual."
-        ),
+        epilog=_EXAMPLES,
+        formatter_class=_HelpFormatter,
     )
-    p.add_argument("--workers", type=int, default=5)
+    p.add_argument("--ap", metavar="HOST[,HOST...]", default=None,
+                   help="Comma-separated list of AP host/IPs to target instead of all APs in AP_CONFIG")
     p.add_argument("--dry-run", action="store_true",
                    help="Build payloads and write to --out without POSTing")
     p.add_argument("--out", default="traffic_payloads_claude.json", metavar="FILE")
     p.add_argument("--debug", action="store_true")
     return p.parse_args()
+
+
+def resolveApList(args: argparse.Namespace) -> dict:
+    '''Turn --ap into a filtered AP_CONFIG dict, hard-exiting on unknown host(s).'''
+    if not args.ap:
+        return AP_CONFIG
+    requested_hosts = [h.strip() for h in args.ap.split(",") if h.strip()]
+    missing_hosts = sorted(set(requested_hosts) - set(AP_CONFIG))
+    if missing_hosts:
+        log.error("Host(s) not found in AP_CONFIG: %s", missing_hosts)
+        sys.exit(1)
+    ap_config = {ip: AP_CONFIG[ip] for ip in requested_hosts}
+    log.info("Targeting %d AP(s): %s", len(ap_config), sorted(ap_config))
+    return ap_config
+
+
+def runConcurrently(func, apList: list[str], actionName: str) -> dict:
+    '''Run func(ip) concurrently across apList (one worker per AP), same
+    pattern as qwrap-manager.py's runConcurrently(). Exits the process if any
+    AP fails.'''
+    errors = []
+    results = {}
+    with ThreadPoolExecutor(max_workers=len(apList)) as executor:
+        futureToHost = {executor.submit(func, ip): ip for ip in apList}
+        for future in as_completed(futureToHost):
+            host = futureToHost[future]
+            try:
+                results[host] = future.result()
+                log.info(f'{host}: {actionName} succeeded')
+            except Exception as e:
+                log.error(f'{host}: {actionName} FAILED: {e}')
+                errors.append(host)
+
+    if errors:
+        log.error(f'{actionName} failed on: {errors}')
+        sys.exit(1)
+    return results
 
 
 # --- Main ---------------------------------------------------------------------
@@ -568,6 +624,8 @@ def main() -> None:
     args = _parse_args()
     if args.debug:
         log.setLevel(logging.DEBUG)
+
+    ap_config = resolveApList(args)
 
     clients = build_clients()
     if not clients:
@@ -582,7 +640,7 @@ def main() -> None:
     log.info("Per-AP band config set in AP_CONFIG (bands dict per AP)")
 
     ap_url: dict[str, str] = {}
-    for ip in AP_CONFIG:
+    for ip in ap_config:
         url = _discovery_url_for(ip)
         if not url:
             log.error("No discovery URL for AP %s — add prefix to DISCOVERY_URLS", ip)
@@ -593,12 +651,12 @@ def main() -> None:
     for url in sorted(set(ap_url.values())):
         endpoints_cache[url] = fetch_endpoints(url)
 
-    ap_endpoints = {ip: endpoints_cache[ap_url[ip]] for ip in AP_CONFIG}
+    ap_endpoints = {ip: endpoints_cache[ap_url[ip]] for ip in ap_config}
 
     if args.dry_run:
         log.info("DRY-RUN: writing payloads to %s", args.out)
         bundle: dict[str, dict] = {}
-        for ip, ap_cfg in AP_CONFIG.items():
+        for ip, ap_cfg in ap_config.items():
             fileop_payload, client_payload, idle_count = build_ap_payloads(
                 clients, ap_endpoints[ip], ap_cfg["bands"])
             bundle[ip] = {
@@ -620,20 +678,14 @@ def main() -> None:
         log.info("Wrote %d AP payload(s) -> %s", len(bundle), args.out)
         return
 
-    log.info("Configuring %d APs (workers=%d) ...", len(AP_CONFIG), args.workers)
-    summary: list[dict] = []
+    log.info("Configuring %d APs ...", len(ap_config))
 
-    with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        futures = {
-            pool.submit(configure_ap, ip, clients, ap_endpoints[ip], ap_cfg): ip
-            for ip, ap_cfg in AP_CONFIG.items()
-        }
-        for fut in as_completed(futures):
-            try:
-                summary.append(fut.result())
-            except Exception as exc:
-                ip = futures[fut]
-                summary.append({"ap": ip, "fileop": f"ERROR: {exc}", "client": f"ERROR: {exc}"})
+    results = runConcurrently(
+        lambda ip: configure_ap(ip, clients, ap_endpoints[ip], ap_config[ip]),
+        list(ap_config),
+        "configure",
+    )
+    summary: list[dict] = list(results.values())
 
     W = 20
     print("\n" + "\u2500" * (W * 3 + 2))

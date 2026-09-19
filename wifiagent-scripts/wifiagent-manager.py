@@ -194,6 +194,35 @@ def _authenticate(child, password, host, promptPattern=None, timeout=SSH_TIMEOUT
             raise RuntimeError(f'Failed to connect/login to {host}')
 
 
+def runConcurrently(func, apList, actionName):
+    '''Run func(ip) concurrently across apList (one worker per AP), same
+    pattern as qwrap-manager.py's runConcurrently(). A raised exception or a
+    falsy return value both count as a per-AP failure. Exits the process if
+    any AP fails.'''
+    errors  = []
+    results = {}
+    with ThreadPoolExecutor(max_workers=len(apList)) as executor:
+        futureToHost = {executor.submit(func, ip): ip for ip in apList}
+        for future in as_completed(futureToHost):
+            host = futureToHost[future]
+            try:
+                result = future.result()
+                results[host] = result
+                if result:
+                    logging.info(f'{host}: {actionName} succeeded')
+                else:
+                    logging.error(f'{host}: {actionName} FAILED')
+                    errors.append(host)
+            except Exception as e:
+                logging.error(f'{host}: {actionName} FAILED: {e}')
+                results[host] = False
+                errors.append(host)
+    if errors:
+        logging.error(f'{actionName} failed on: {errors}')
+        sys.exit(1)
+    return results
+
+
 def _unlock_rootuser(ip):
     '''
     Open a config-user SSH session and run "rootuser unlock" so that a
@@ -711,6 +740,18 @@ class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
         super().__init__(prog, max_help_position=40, width=200)
 
 
+def resolveApList(options) -> list[str]:
+    '''Turn --ap into a filtered AP_IPS list. Warns (does not exit) on unknown
+    host(s), matching this script's existing lenient behavior.'''
+    if not options.ap:
+        return AP_IPS
+    targets = [ip.strip() for ip in options.ap.split(',') if ip.strip()]
+    for ip in targets:
+        if ip not in AP_IPS:
+            print(f'Warning: {ip} is not in the AP_IPS list – proceeding anyway')
+    return targets
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog='wifiagent-manager.py',
@@ -752,46 +793,28 @@ def main():
     )
 
     # Resolve target AP list (comma-separated: --ap ip1,ip2,...)
-    if options.ap:
-        targets = [ip.strip() for ip in options.ap.split(',') if ip.strip()]
-        for ip in targets:
-            if ip not in AP_IPS:
-                print(f'Warning: {ip} is not in the AP_IPS list – proceeding anyway')
-    else:
-        targets = AP_IPS
+    targets = resolveApList(options)
 
     actionFn = ACTIONS[options.action]
     print(f'Action: {options.action}  |  APs ({len(targets)}): {", ".join(targets)}'
           f'  |  parallel={options.parallel}')
 
-    results = {}   # ip -> True (success) / False (failure)
-
     if options.parallel and len(targets) > 1:
-        with ThreadPoolExecutor(max_workers=len(targets)) as pool:
-            futures = {pool.submit(actionFn, ip): ip for ip in targets}
-            for future in as_completed(futures):
-                ip  = futures[future]
-                exc = future.exception()
-                if exc:
-                    _print(f'[{ip}]  UNHANDLED ERROR: {exc}')
-                    results[ip] = False
-                else:
-                    results[ip] = bool(future.result())
+        runConcurrently(actionFn, targets, options.action)
     else:
+        results = {}
         for ip in targets:
             try:
                 results[ip] = bool(actionFn(ip))
             except Exception as exc:
                 _print(f'[{ip}]  UNHANDLED ERROR: {exc}')
                 results[ip] = False
+        failed = [ip for ip in targets if not results.get(ip)]
+        if failed:
+            print(f'\nFailed APs ({len(failed)}/{len(targets)}): {", ".join(failed)}')
+            sys.exit(1)
 
-    failed = [ip for ip in targets if not results.get(ip)]
-
-    print('\nDone.')
-    if failed:
-        print(f'Failed APs ({len(failed)}/{len(targets)}): {", ".join(failed)}')
-    else:
-        print(f'All {len(targets)} AP(s) succeeded.')
+    print(f'\nAll {len(targets)} AP(s) succeeded.')
 
 
 if __name__ == '__main__':
