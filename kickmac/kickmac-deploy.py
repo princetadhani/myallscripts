@@ -2,10 +2,13 @@
 '''
 * Standalone kickmac distribution + launch tool.
 
-* SCPs the local kickmac binary (in this same folder) to /root/kickmac on
-each AP in AP_LIST below (or the --ap-filtered subset), using the same
-SSH/OTP login logic as qwrap-manager.py / wifiagent-manager.py
-(arista-ssh-agent Response[...] challenge signed via the Wifi OTP endpoint).
+* Kills any already-running kickmac process on the AP (pkill -f), then SCPs
+the local kickmac binary (in this same folder) to /root/kickmac on each AP
+in AP_LIST below (or the --ap-filtered subset), using the same SSH/OTP
+login logic as qwrap-manager.py / wifiagent-manager.py (arista-ssh-agent
+Response[...] challenge signed via the Wifi OTP endpoint). The kill step
+avoids "scp: /root/kickmac: Text file busy" when redeploying over a
+binary that a previous run still has open.
 
 * After the binary is copied, prompts once for the kickmac options to run
 (e.g. "--stateless --mode RANDOM --sleep-seconds 90") and starts kickmac in
@@ -190,12 +193,50 @@ def chmodOnAp(host, username, password, remotePath, timeout=30):
             child.close(force=True)
 
 
+def killExistingKickmacOnAp(host, username, password, remotePath, timeout=30):
+    '''Kill any already-running kickmac process on the AP before we SCP a
+    fresh binary over it. Without this, a previous run still holding the
+    binary open causes "scp: /root/kickmac: Text file busy" on redeploy.
+    Looks up the PID(s) via pgrep first (so they can be logged/tracked),
+    then kills them if any were found; logs "no existing process" otherwise.'''
+    cmd = f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {username}@{host}'
+    child = pexpect.spawn(cmd, env=_sshEnv(), timeout=timeout, encoding='utf-8')
+    try:
+        _authenticate(child, password, host, promptPattern=ROOT_PROMPT, timeout=timeout)
+        log.info(f'[{host}] [ROOT] Checking for existing kickmac process')
+        child.sendline(f'pgrep -f {remotePath}')
+        child.expect(ROOT_PROMPT, timeout=timeout)
+        pgrepOutput = child.before or ''
+        log.debug(f'[{host}] pgrep output: {pgrepOutput!r}')
+        pids = [line.strip() for line in pgrepOutput.splitlines() if line.strip().isdigit()]
+
+        if not pids:
+            log.info(f'[{host}] No existing kickmac process found')
+            return
+
+        log.info(f'[{host}] Found existing kickmac process(es) pid={",".join(pids)} — killing')
+        killCmd = f'kill -9 {" ".join(pids)}'
+        log.info(f'[{host}] [ROOT] {killCmd}')
+        child.sendline(killCmd)
+        child.expect(ROOT_PROMPT, timeout=timeout)
+        log.debug(f'[{host}] kill output: {child.before!r}')
+        log.info(f'[{host}] Killed old kickmac pid={",".join(pids)}')
+    finally:
+        try:
+            child.sendline('exit')
+        except Exception:
+            pass
+        if child.isalive():
+            child.close(force=True)
+
+
 def deployToAp(host, kickmacArgsLine):
     '''Runs the 3 deploy steps in order, tracking per-step status for the
     final summary table. Raises (after recording which step got to) if a
     step fails, so runConcurrently's error handling/logging still applies.'''
     result = {'ap': host, 'scp': 'FAILED', 'running': 'FAILED', 'pid': '-'}
     try:
+        killExistingKickmacOnAp(host, CLI_USERNAME, CLI_PASSWORD, REMOTE_KICKMAC_PATH)
         scpToAp(host, CLI_USERNAME, CLI_PASSWORD, LOCAL_KICKMAC_PATH, REMOTE_KICKMAC_PATH)
         result['scp'] = 'ok'
         chmodOnAp(host, CLI_USERNAME, CLI_PASSWORD, REMOTE_KICKMAC_PATH)
