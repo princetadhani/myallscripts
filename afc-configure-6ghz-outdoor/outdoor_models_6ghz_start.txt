@@ -1,6 +1,6 @@
 To Start 6GHz on Outdoor Models
 
-Create a file named
+Create a file named below in /root/
 ap.conf.diff.afc.12345
 
 [ RADIO_START=4 F_MOD ]

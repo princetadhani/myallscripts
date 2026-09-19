@@ -32,7 +32,7 @@ log = logging.getLogger('kickmac-deploy')
 # AP IP List  –  edit this list to target different APs
 # ---------------------------------------------------------------------------
 AP_LIST: list[str] = [
-'10.86.205.78',
+# '10.86.205.78',
 '10.86.205.42'
 ]
 
@@ -183,19 +183,30 @@ def chmodOnAp(host, username, password, remotePath, timeout=30):
 
 
 def deployToAp(host, kickmacArgsLine):
-    scpToAp(host, CLI_USERNAME, CLI_PASSWORD, LOCAL_KICKMAC_PATH, REMOTE_KICKMAC_PATH)
-    chmodOnAp(host, CLI_USERNAME, CLI_PASSWORD, REMOTE_KICKMAC_PATH)
-    startKickmacOnAp(host, CLI_USERNAME, CLI_PASSWORD, kickmacArgsLine)
-    return host
+    '''Runs the 3 deploy steps in order, tracking per-step status for the
+    final summary table. Raises (after recording which step got to) if a
+    step fails, so runConcurrently's error handling/logging still applies.'''
+    result = {'ap': host, 'scp': 'FAILED', 'running': 'FAILED'}
+    try:
+        scpToAp(host, CLI_USERNAME, CLI_PASSWORD, LOCAL_KICKMAC_PATH, REMOTE_KICKMAC_PATH)
+        result['scp'] = 'ok'
+        chmodOnAp(host, CLI_USERNAME, CLI_PASSWORD, REMOTE_KICKMAC_PATH)
+        startKickmacOnAp(host, CLI_USERNAME, CLI_PASSWORD, kickmacArgsLine)
+        result['running'] = 'ok'
+    except Exception as e:
+        e.deployResult = result
+        raise
+    return result
 
 
 def runConcurrently(func, apList, actionName):
     '''Run func(host) concurrently across apList (one worker per AP), same
-    pattern as qwrap-manager.py's runConcurrently().'''
+    pattern as qwrap-manager.py's runConcurrently(). Returns (results, errors)
+    so the caller can print a final summary table before deciding to exit.'''
     errors = []
+    results = {}
     with ThreadPoolExecutor(max_workers=len(apList)) as executor:
         futureToHost = {executor.submit(func, host): host for host in apList}
-        results = {}
         for future in as_completed(futureToHost):
             host = futureToHost[future]
             try:
@@ -204,10 +215,12 @@ def runConcurrently(func, apList, actionName):
             except Exception as e:
                 log.error(f'{host}: {actionName} FAILED: {e}')
                 errors.append(host)
+                partial = getattr(e, 'deployResult', {})
+                results[host] = {'ap': host, 'scp': partial.get('scp', 'FAILED'),
+                                  'running': partial.get('running', 'FAILED')}
     if errors:
         log.error(f'{actionName} failed on: {errors}')
-        sys.exit(1)
-    return results
+    return results, errors
 
 
 _EXAMPLES = '''\
@@ -276,13 +289,15 @@ def promptForKickmacArgsLine():
 
 
 def resolveApList(args):
+    '''Prefer --ap if given (accepts any host, no AP_LIST membership check);
+    otherwise fall back to AP_LIST defined in this file.'''
     if not args.ap:
+        log.info(f'Targeting {len(AP_LIST)} AP(s) from AP_LIST: {AP_LIST}')
         return list(AP_LIST)
     requestedHosts = [h.strip() for h in args.ap.split(',') if h.strip()]
-    unknown = sorted(set(requestedHosts) - set(AP_LIST))
-    if unknown:
-        log.error(f'Host(s) not found in AP_LIST: {unknown}')
-        sys.exit(1)
+    for host in requestedHosts:
+        if host not in AP_LIST:
+            log.warning(f'{host} not present in AP_LIST — proceeding anyway')
     log.info(f'Targeting {len(requestedHosts)} AP(s): {requestedHosts}')
     return requestedHosts
 
@@ -310,7 +325,19 @@ def main():
     print('-' * 40)
     print('Deploy + start kickmac on AP(s)')
     print('-' * 40)
-    runConcurrently(lambda host: deployToAp(host, kickmacArgsLine), apList, 'deploy')
+    results, errors = runConcurrently(lambda host: deployToAp(host, kickmacArgsLine), apList, 'deploy')
+
+    W = 20
+    print("\n" + "-" * (W * 2 + 12))
+    print(f"{'AP IP':<{W}}  {'SCP':<{W}}  {'Running'}")
+    print("-" * (W * 2 + 12))
+    for host in sorted(results):
+        r = results[host]
+        print(f"{host:<{W}}  {r['scp']:<{W}}  {r['running']}")
+    print("-" * (W * 2 + 12) + "\n")
+
+    if errors:
+        sys.exit(1)
     log.info(f'kickmac deployed and started successfully on all {len(apList)} AP(s)')
 
 

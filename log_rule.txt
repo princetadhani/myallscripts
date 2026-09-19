@@ -6,7 +6,7 @@ so all scripts stay consistent and easy to read/grep.
 1. Logger setup (put this near the top, after imports)
 -------------------------------------------------------
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(levelname)-9s%(message)s', datefmt='%H:%M:%S')
-log = logging.getLogger('<script-name>')   # e.g. 'kickmac-deploy'
+log = logging.getLogger('<script-name>')   # e.g. 'kickmac-deploy, qwrap-traffic-config-dynamic-input.py'
 
 - Always via the `log` object (log.info / log.warning / log.error / log.debug).
   Never use bare print() for actual log messages — print() is reserved ONLY

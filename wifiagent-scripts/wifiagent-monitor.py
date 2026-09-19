@@ -638,7 +638,7 @@ def resolveApList(options) -> list[str]:
     apIps = [ip.strip() for ip in options.ap.split(',') if ip.strip()]
     for ip in apIps:
         if ip not in AP_IPS:
-            print(f'Warning: {ip} is not in the AP_IPS list – proceeding anyway')
+            logging.warning(f'{ip} not present in AP_IPS — proceeding anyway')
     return apIps
 
 
