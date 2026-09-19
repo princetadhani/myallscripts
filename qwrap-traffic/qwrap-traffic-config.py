@@ -599,8 +599,14 @@ def main() -> None:
     if args.debug:
         log.setLevel(logging.DEBUG)
 
+    print('-' * 40)
+    print('Resolve target AP(s)')
+    print('-' * 40)
     apIps = resolveApList(args)
 
+    print('-' * 40)
+    print('Build client payloads')
+    print('-' * 40)
     clients = build_clients()
     if not clients:
         log.error("All RADIO_*_CLIENTS are 0 — nothing to configure.")
@@ -629,10 +635,18 @@ def main() -> None:
 
     ap_endpoints: dict[str, dict[str, list]] = {ip: endpoints_cache[ap_url[ip]] for ip in apIps}
 
-    # Show per-AP client counts + which discovery endpoint feeds it
+    # Show per-AP, per-radio client breakdown + which discovery endpoint feeds it
+    radioCounts = {
+        0: max(0, min(RADIO_2_4G_CLIENTS, MAX_CLIENTS_PER_RADIO)),
+        1: max(0, min(RADIO_5G_CLIENTS,   MAX_CLIENTS_PER_RADIO)),
+        2: max(0, min(RADIO_6G_CLIENTS,   MAX_CLIENTS_PER_RADIO)),
+    }
+    radioBreakdown = ", ".join(
+        f"{_RADIO_LABEL[radio]}={n}v/{n * 2}f/{n * 3}c"
+        for radio, n in radioCounts.items() if n > 0
+    )
     for ip in apIps:
-        log.info("  %-18s  %d virtual client(s)  via %s",
-                 ip, len(ap_clients[ip]), ap_url[ip])
+        log.info("[%s] %s via %s", ip, radioBreakdown, ap_url[ip])
 
     # ── Dry-run: build payloads and dump to file, no API calls ─────────
     if args.dry_run:
@@ -657,6 +671,9 @@ def main() -> None:
         log.info("Wrote %d AP payload(s) → %s", len(bundle), args.out)
         return
 
+    print('-' * 40)
+    print('Push config to AP(s) concurrently')
+    print('-' * 40)
     log.info("Configuring %d APs …", len(apIps))
 
     results = runConcurrently(

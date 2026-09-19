@@ -736,6 +736,9 @@ def main() -> None:
     if args.debug:
         log.setLevel(logging.DEBUG)
 
+    print('-' * 40)
+    print('Resolve target AP(s) + band config')
+    print('-' * 40)
     log.info("DEFAULT_MODE = %d (%s)", DEFAULT_MODE,
               "AP_LIST + DEFAULT_BAND_CFG" if DEFAULT_MODE == 1 else "AP_CONFIG")
 
@@ -746,6 +749,9 @@ def main() -> None:
 
     ap_config = resolveApList(args, ap_config)
 
+    print('-' * 40)
+    print('Build client payloads')
+    print('-' * 40)
     ap_clients: dict[str, list[dict]] = {}
     ap_bands_map: dict[str, dict[int, dict]] = {}
     for ip, cfg in ap_config.items():
@@ -804,6 +810,9 @@ def main() -> None:
         log.info("Wrote %d AP payload(s) -> %s", len(bundle), args.out)
         return
 
+    print('-' * 40)
+    print('Push config to AP(s) concurrently')
+    print('-' * 40)
     log.info("Configuring %d APs ...", len(ap_clients))
     apIpList = list(ap_clients)
     results = runConcurrently(

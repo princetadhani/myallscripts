@@ -625,8 +625,14 @@ def main() -> None:
     if args.debug:
         log.setLevel(logging.DEBUG)
 
+    print('-' * 40)
+    print('Resolve target AP(s)')
+    print('-' * 40)
     ap_config = resolveApList(args)
 
+    print('-' * 40)
+    print('Build client payloads')
+    print('-' * 40)
     clients = build_clients()
     if not clients:
         log.error("All RADIO_*_CLIENTS are 0 — nothing to configure.")
@@ -678,6 +684,9 @@ def main() -> None:
         log.info("Wrote %d AP payload(s) -> %s", len(bundle), args.out)
         return
 
+    print('-' * 40)
+    print('Push config to AP(s) concurrently')
+    print('-' * 40)
     log.info("Configuring %d APs ...", len(ap_config))
 
     results = runConcurrently(

@@ -1,0 +1,134 @@
+myallscripts — Logging & Output Conventions
+=============================================
+Reference this file when writing/updating any script under myallscripts,
+so all scripts stay consistent and easy to read/grep.
+
+1. Logger setup (put this near the top, after imports)
+-------------------------------------------------------
+logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(levelname)-9s%(message)s', datefmt='%H:%M:%S')
+log = logging.getLogger('<script-name>')   # e.g. 'kickmac-deploy'
+
+- Always via the `log` object (log.info / log.warning / log.error / log.debug).
+  Never use bare print() for actual log messages — print() is reserved ONLY
+  for phase separators and final summary tables/banners (see sections 3 & 4).
+- `--debug` CLI flag should call `log.setLevel(logging.DEBUG)`.
+- Timestamps: %H:%M:%S (short, no date — these are short-lived interactive runs).
+
+2. Per-host / per-action tags: [SCP] / [CLI] / [ROOT]
+-------------------------------------------------------
+When a log line represents a command/transfer being executed on a specific
+AP, prefix it with the AP host, then the execution-path tag:
+
+    log.info(f'[{host}] [SCP] {localPath} -> {remoteDst}')
+    log.info(f'[{host}] [CLI] {cmd}')
+    log.info(f'[{host}] [ROOT] {cmd}')
+
+Tag meaning (pick based on how the command is ACTUALLY executed — verify,
+don't assume):
+  [SCP]  - file transfer (scp) to/from the AP.
+  [CLI]  - command run inside the "config" user shell (su - config / cli -c "...").
+            Used for all qwrap/wifiagent business commands.
+  [ROOT] - command run in a root shell (ssh root@host, or su - after root login).
+            Used for filesystem-level ops (mkdir, chmod, nohup launch, etc).
+
+Do NOT mix tags — if a script only ever uses one execution path, it can skip
+tagging non-ambiguous internal steps, but any AP-targeted command should still
+show [host] for readability in concurrent (multi-AP) runs.
+
+3. Phase separators (linear / single-threaded scripts only)
+-------------------------------------------------------
+For scripts that run through distinct sequential phases (parse args -> resolve
+targets -> build config -> push), wrap each phase's start with a plain-text
+banner using print() (not log), so it doesn't get a timestamp/level prefix:
+
+    print('-' * 40)
+    print('Resolve target AP(s)')
+    print('-' * 40)
+    apIps = resolveApList(args)
+
+Rules:
+  - Use print(), never log.info(), for the separator lines themselves.
+  - Keep the header short (3-5 words, Title Case first word only).
+  - Put the separator BEFORE any code/log lines belonging to that phase —
+    including the very first log.info() of that phase. Double check nothing
+    that logically belongs to phase N is left above phase N's separator.
+  - Do NOT add separators to scripts that run AP actions CONCURRENTLY across
+    multiple hosts (e.g. qwrap-manager.py). Concurrent runs interleave
+    log lines from different hosts in real time, so a banner would falsely
+    imply a phase boundary that doesn't exist for all hosts at once. Rely on
+    the [host] tag instead — it's grep/filter-safe regardless of interleaving.
+  - Good candidates: one-shot deploy/config scripts where phases genuinely
+    run to completion in order before the next starts (kickmac-deploy.py,
+    qwrap-traffic-config.py, qwrap-traffic-config-dynamic-input.py,
+    qwrap-traffic-75-25.py).
+
+4. Final summary (end of run)
+-------------------------------------------------------
+If a script processes multiple APs, always end with a final summary —
+prefer TABLE format whenever the result has 2+ uniform columns across all
+APs (e.g. AP IP + one or more status columns). Only fall back to plain
+LINE format when a table doesn't fit (single value per AP, or highly
+variable/free-text results that would break column alignment).
+
+Table format (preferred, when applicable) — fixed-width columns, header,
+top/bottom rules made of '-' matching the total row width:
+
+    W = 20
+    print("\n" + "-" * (W * 3 + 2))
+    print(f"{'AP IP':<{W}}  {'FileOp':<{W}}  {'Client'}")
+    print("-" * (W * 3 + 2))
+    for r in sorted(summary, key=lambda x: x["ap"]):
+        print(f"{r['ap']:<{W}}  {r.get('fileop', '-'):<{W}}  {r.get('client', '-')}")
+    print("-" * (W * 3 + 2) + "\n")
+
+    # Example output:
+    # --------------------------------------------------------------
+    # AP IP                 FileOp                Client
+    # --------------------------------------------------------------
+    # 10.86.204.227         ok (252 sessions)     ok (280 sessions)
+    # --------------------------------------------------------------
+
+  - Add columns as needed (radio breakdown, error reason, etc.) — keep each
+    column fixed-width (`W`) so rows stay aligned regardless of value length
+    variance; truncate or widen `W` if a value is expected to overflow.
+  - Sort rows (usually by AP IP) so output is stable across runs.
+
+Line format (fallback, when a table doesn't make sense) — one line per AP,
+same style as section 5:
+
+    log.info("%s: configure succeeded", ip)
+    log.error("%s: configure failed — %s", ip, err)
+
+  - Use this when there's only one result value per AP (no extra columns to
+    justify a table), or when messages are free-text/variable-length and
+    would break table alignment.
+
+5. Per-AP status/result lines
+-------------------------------------------------------
+Use a consistent, single-line, greppable format per AP, e.g.:
+
+    log.info("%s: configure succeeded", ip)
+    log.error("%s: configure failed — %s", ip, err)
+
+Prefer %s-style lazy formatting in log.info/error/debug calls (not f-strings)
+for these — it's the existing convention across scripts and avoids doing
+string work when the log level is filtered out.
+
+6. Concise per-AP breakdown lines (band/radio config, counts, etc.)
+-------------------------------------------------------
+When summarizing multi-value config per AP (radios, bands, counts), use a
+single compact line per AP instead of one line per value:
+
+    log.info("[%s] %s via %s", ip, radioBreakdown, ap_url[ip])
+    # -> [10.86.204.227] 2.4G=28v/28f/28c/IPv4/hostname, 5G=28v/28f/28c/... via http://...
+
+7. Do NOT
+-------------------------------------------------------
+  - Don't change the base logging.basicConfig format (timestamp/level style)
+    per-script — keep it identical everywhere.
+  - Don't extract these helpers into a shared common module — every script
+    stays self-contained/standalone. Copy the pattern, not a shared import.
+  - Don't add phase separators to loop-based/continuous scripts (monitors)
+    or to concurrent multi-AP scripts (see section 3).
+  - Don't use print() for anything that should be filterable/greppable by
+    level or host — that always goes through log.

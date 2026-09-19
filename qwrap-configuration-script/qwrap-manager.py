@@ -217,7 +217,7 @@ class QwrapSession:
             self.child.sendline('exit')
             self.child.expect(ROOT_PROMPT)
             self._inConfig = False
-        log.info(f'[{self.host}] [CLI] {cmd}')
+        log.info(f'[{self.host}] [ROOT] {cmd}')
         self.child.sendline(cmd)
         self.child.expect(ROOT_PROMPT, timeout=timeout)
         output = self.child.before
