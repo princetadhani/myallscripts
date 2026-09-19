@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 '''
-* Standalone, non-interactive kickmac distribution tool.
+* Standalone kickmac distribution + launch tool.
 
 * SCPs the local kickmac binary (in this same folder) to /root/kickmac on
-each AP in AP_LIST below, using the same SSH/OTP login logic as
-qwrap-manager.py / wifiagent-manager.py (arista-ssh-agent Response[...]
-challenge signed via the Wifi OTP endpoint).
+each AP in AP_LIST below (or the --ap-filtered subset), using the same
+SSH/OTP login logic as qwrap-manager.py / wifiagent-manager.py
+(arista-ssh-agent Response[...] challenge signed via the Wifi OTP endpoint).
+
+* After the binary is copied, prompts once for the kickmac options to run
+(e.g. "--stateless --mode RANDOM --sleep-seconds 90") and starts kickmac in
+the background on each targeted AP via "nohup ... &", output redirected to
+/dev/null, so it keeps running after the SSH session closes.
 
 * All APs are processed concurrently (ThreadPoolExecutor).
 '''
@@ -131,8 +136,56 @@ def scpToAp(host, username, password, localPath, remoteDst, timeout=60):
             child.close(force=True)
 
 
-def deployToAp(host):
+ROOT_PROMPT = r'#\s*$'
+
+
+def startKickmacOnAp(host, username, password, kickmacArgsLine, timeout=30):
+    '''Open an interactive SSH session and launch kickmac in the background
+    with nohup, redirecting its output to /dev/null, so it keeps running on
+    the AP after the SSH session closes.'''
+    cmd = f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {username}@{host}'
+    child = pexpect.spawn(cmd, env=_sshEnv(), timeout=timeout, encoding='utf-8')
+    try:
+        _authenticate(child, password, host, promptPattern=ROOT_PROMPT, timeout=timeout)
+        remoteCmd = f'nohup {REMOTE_KICKMAC_PATH} {kickmacArgsLine} > /dev/null 2>&1 &'
+        log.info(f'[{host}] [ROOT] {remoteCmd}')
+        child.sendline(remoteCmd)
+        child.expect(ROOT_PROMPT, timeout=timeout)
+        log.debug(f'[{host}] start output: {child.before!r}')
+    finally:
+        try:
+            child.sendline('exit')
+        except Exception:
+            pass
+        if child.isalive():
+            child.close(force=True)
+
+
+def chmodOnAp(host, username, password, remotePath, timeout=30):
+    '''Open an interactive SSH session and chmod +x the just-copied binary
+    (scp does not preserve the executable bit here).'''
+    cmd = f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {username}@{host}'
+    child = pexpect.spawn(cmd, env=_sshEnv(), timeout=timeout, encoding='utf-8')
+    try:
+        _authenticate(child, password, host, promptPattern=ROOT_PROMPT, timeout=timeout)
+        remoteCmd = f'chmod +x {remotePath}'
+        log.info(f'[{host}] [ROOT] {remoteCmd}')
+        child.sendline(remoteCmd)
+        child.expect(ROOT_PROMPT, timeout=timeout)
+        log.debug(f'[{host}] chmod output: {child.before!r}')
+    finally:
+        try:
+            child.sendline('exit')
+        except Exception:
+            pass
+        if child.isalive():
+            child.close(force=True)
+
+
+def deployToAp(host, kickmacArgsLine):
     scpToAp(host, CLI_USERNAME, CLI_PASSWORD, LOCAL_KICKMAC_PATH, REMOTE_KICKMAC_PATH)
+    chmodOnAp(host, CLI_USERNAME, CLI_PASSWORD, REMOTE_KICKMAC_PATH)
+    startKickmacOnAp(host, CLI_USERNAME, CLI_PASSWORD, kickmacArgsLine)
     return host
 
 
@@ -163,6 +216,31 @@ examples:
   python3 kickmac-deploy.py --ap 10.86.205.157
   python3 kickmac-deploy.py --ap 10.86.205.157,10.86.205.158
   python3 kickmac-deploy.py --debug
+
+After the kickmac binary is SCP'd to the targeted AP(s), you will be prompted
+to enter the kickmac options to run on the AP(s) as a single line, e.g.:
+  --stateless --mode RANDOM --sleep-seconds 90
+'''
+
+# Real kickmac usage/options, shown to the user right before the input()
+# prompt so they can build their one-liner.
+KICKMAC_HELP = '''\
+kickmac usage:
+  kickmac (--stateful | --stateless | --kickmac) --mode <RANDOM|ALL> --sleep-seconds <seconds> [--clear-cache] [--check-ping] [--debug] [--cache-yaml path] [--report path]
+
+kickmac options:
+  --stateful               Run kickmac in stateful mode
+  --stateless              Run kickmac in stateless mode
+  --kickmac                Run kickmac in kickmac mode
+  --mode {RANDOM,ALL}      kickmac --mode (RANDOM or ALL)
+  --sleep-seconds SECONDS  kickmac --sleep-seconds
+  --clear-cache            Pass --clear-cache to kickmac
+  --check-ping             Pass --check-ping to kickmac
+  --cache-yaml PATH        Pass --cache-yaml PATH to kickmac
+  --report PATH            Pass --report PATH to kickmac
+  --debug                  Pass --debug to kickmac itself
+
+example: --stateless --mode RANDOM --sleep-seconds 90
 '''
 
 
@@ -175,14 +253,26 @@ def parseArgs():
     parser = argparse.ArgumentParser(
         prog='kickmac-deploy.py',
         usage=argparse.SUPPRESS,
-        description=f'SCP {LOCAL_KICKMAC_PATH} to {REMOTE_KICKMAC_PATH} on all APs in AP_LIST',
+        description=f'SCP {LOCAL_KICKMAC_PATH} to {REMOTE_KICKMAC_PATH} and start it on all APs in AP_LIST',
         epilog=_EXAMPLES,
         formatter_class=_HelpFormatter,
     )
     parser.add_argument('--ap', metavar='HOST[,HOST...]', default=None,
                          help='Comma-separated list of AP host/IPs to target instead of all APs in AP_LIST')
-    parser.add_argument('--debug', action='store_true', help='Enable debug logging (raw scp output)')
+    parser.add_argument('--debug', action='store_true', help='Enable debug logging (raw scp/ssh output)')
     return parser.parse_args()
+
+
+def promptForKickmacArgsLine():
+    '''Show kickmac's own --help options, then prompt the user to enter the
+    kickmac invocation as a single line (e.g. "--stateless --mode RANDOM
+    --sleep-seconds 90"). Hard-exits if left empty.'''
+    print(KICKMAC_HELP)
+    kickmacArgsLine = input('Enter kickmac options to run on the AP(s): ').strip()
+    if not kickmacArgsLine:
+        log.error('No kickmac options entered. Aborting.')
+        sys.exit(1)
+    return kickmacArgsLine
 
 
 def resolveApList(args):
@@ -207,9 +297,21 @@ def main():
         log.error(f'kickmac binary not found at {LOCAL_KICKMAC_PATH}')
         sys.exit(1)
 
+    print('-' * 40)
+    print('Resolve target AP(s)')
+    print('-' * 40)
     apList = resolveApList(args)
-    runConcurrently(deployToAp, apList, 'deploy')
-    log.info(f'kickmac deployed successfully to all {len(apList)} AP(s)')
+
+    print('-' * 40)
+    print('kickmac options')
+    print('-' * 40)
+    kickmacArgsLine = promptForKickmacArgsLine()
+
+    print('-' * 40)
+    print('Deploy + start kickmac on AP(s)')
+    print('-' * 40)
+    runConcurrently(lambda host: deployToAp(host, kickmacArgsLine), apList, 'deploy')
+    log.info(f'kickmac deployed and started successfully on all {len(apList)} AP(s)')
 
 
 if __name__ == '__main__':
