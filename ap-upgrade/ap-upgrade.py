@@ -33,8 +33,53 @@ ROOT_PROMPT = r'#\s*$'
 # AP IP List  –  edit this list to target different APs
 # ---------------------------------------------------------------------------
 AP_LIST: list[str] = [
-# '10.86.205.78',
-'10.86.205.163',
+# C330--50637F--Indus-AP: E4:D1:24:50:63:7F
+'10.86.205.17'
+
+# C360--8014FF--Indus-AP: 30:86:2D:80:14:FF
+'10.86.204.220'
+
+# C400--F02F3F--Tapi-AP: E4:D1:24:F0:2F:3F
+'10.86.204.211'
+
+# C400--F0687F--Indus-AP: E4:D1:24:F0:68:7F
+'10.86.205.74'
+
+# C430--05C9DF--Indus-AP: 30:B6:2D:05:C9:DF
+'10.86.205.176'
+
+# C460D--E0199F--Tapi-AP: E0:1C:A7:E0:19:9F
+'10.86.205.184'
+
+# C460D--E01C6F--Indus-AP: E0:1C:A7:E0:1C:6F
+'10.86.205.86'
+
+# O405--204DBF--Tapi-AP: E0:1C:A7:20:4D:BF
+'10.86.205.131'
+
+# O435--00C4DF--Tapi-AP: 30:B6:2D:00:C4:DF
+'10.86.205.163'
+
+# W318--10257F--Indus-AP: E4:D1:24:10:25:7F
+'10.86.205.232'
+
+# W318--1023FF--Tapi-AP: E4:D1:24:10:23:FF
+'10.86.204.228'
+
+# O405--205D3F--Indus-AP: E0:1C:A7:20:5D:3F
+# '10.86.205.78'
+
+# O435--00CB1F--Indus-AP: 30:B6:2D:00:CB:1F
+# '10.86.205.42'
+
+# C430--05CB6F--Tapi-AP: 30:B6:2D:05:CB:6F
+'10.86.205.159'
+
+# C430--05BEEF--PT-ABZ-AP: 30:B6:2D:05:BE:EF
+'10.87.169.239'
+
+# O405--2055FF--PT-ABZ-AP: E0:1C:A7:20:55:FF
+'10.87.169.221'
 ]
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(levelname)-9s%(message)s', datefmt='%H:%M:%S')

@@ -37,7 +37,7 @@ FILENAME_RE       = re.compile(r'^([0-9A-Fa-f]{12})_(\d{14})\.zip$')
 # ---------------------------------------------------------------------------
 AP_LIST: list[str] = [
 # 'E0:1C:A7:20:5D:3F',
-'30:B6:2D:00:97:8F'
+# '30:B6:2D:00:97:8F'
 ]
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(levelname)-9s%(message)s', datefmt='%H:%M:%S')
