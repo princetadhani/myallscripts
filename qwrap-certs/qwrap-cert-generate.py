@@ -16,7 +16,7 @@ ORG_NAME      = "Arista Networks" #Org name which will goes in client cert
 VALIDITY_DAYS = 1825  # 5 years
 
 AP_SSH_USER   = "root"
-REMOTE_DIR    = "/root/"
+REMOTE_DIR    = "/root/"  # Destination folder on AP for client.pem, key.pem, ca.pem
 
 # CA cert that signed the AGNI EAP server certificate.
 # The client uses this to verify the RADIUS server during mutual TLS.

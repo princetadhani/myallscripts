@@ -16,7 +16,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ============================================================================
 
 AP_SSH_USER = "root"
-REMOTE_DIR = "/root/3027"
+REMOTE_DIR = "/root/"
 
 # ---------------------------------------------------------------------------
 # Wifi OTP signing endpoint used by the arista-ssh-agent Response[...] challenge/
