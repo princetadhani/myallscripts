@@ -15,16 +15,20 @@ Actions:
 
 The AP IP list is hard-coded in AP_IPS at the top of this file.
 
+Targets APs from AP_IPS below by default, or from --ap HOST[,HOST...]
+if given. --ap accepts ANY host/IP (no dependency on AP_IPS — an AP does
+not need to be present in AP_IPS to be targeted via --ap).
+
 Examples:
 ---------
-  ./wifiagent-manager.py                      # Ensure running on all APs
-  ./wifiagent-manager.py --action status      # Check status
-  ./wifiagent-manager.py --action start       # Start
-  ./wifiagent-manager.py --action restart     # Restart
-  ./wifiagent-manager.py --action install     # Force reinstall
-  ./wifiagent-manager.py --ap 10.86.58.139    # Target a single AP
-  ./wifiagent-manager.py --ap 10.86.58.139,10.86.58.140  # Target multiple APs
-  ./wifiagent-manager.py --help               # Show help
+  ./wifiagent-manager.py                                    # Ensure running on all APs
+  ./wifiagent-manager.py --action status                    # Check status
+  ./wifiagent-manager.py --action start                     # Start
+  ./wifiagent-manager.py --action restart                   # Restart
+  ./wifiagent-manager.py --action install                   # Force reinstall
+  ./wifiagent-manager.py --ap 10.86.58.139                  # Target a single AP
+  ./wifiagent-manager.py --ap 10.86.58.139,10.86.58.140     # Target multiple APs
+  ./wifiagent-manager.py --help                             # Show help
 
 Author:  Prince Tadhani
 Created: 2026-06-25

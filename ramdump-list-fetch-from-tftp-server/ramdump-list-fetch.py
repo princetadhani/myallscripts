@@ -9,6 +9,10 @@ TFTP backup_panic directory listing, filtered to a recent time window
 Ramdump files look like:  E01CA7C2755F_20260921122244.zip
                            <MAC-no-colon>_<YYYYMMDDHHMMSS>.zip
 
+Targets APs from AP_LIST below by default, or from --ap MAC[,MAC...]
+if given. --ap accepts ANY MAC (no dependency on AP_LIST — an AP does
+not need to be present in AP_LIST to be targeted via --ap).
+
 Usage:
   ./ramdump-list-fetch.py --ap E0:1C:A7:20:5D:3F
   ./ramdump-list-fetch.py --ap E01CA7205D3F,30B62D00978F

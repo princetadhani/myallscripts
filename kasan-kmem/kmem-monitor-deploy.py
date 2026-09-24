@@ -14,6 +14,10 @@ over a script a previous run still has open.
 background on each targeted AP via "nohup ... &", output redirected to
 /dev/null, so it keeps running after the SSH session closes.
 
+* Targets APs from AP_LIST below by default, or from --ap HOST[,HOST...]
+if given. --ap accepts ANY host/IP (no dependency on AP_LIST — an AP does
+not need to be present in AP_LIST to be targeted via --ap).
+
 * All APs are processed concurrently (ThreadPoolExecutor).
 '''
 

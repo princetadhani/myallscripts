@@ -7,6 +7,10 @@ response auth), determines the platform model/sub ID, and triggers an
 HTTPS-based upgrade to the build matching that platform under the given
 base URL. All APs are processed concurrently (ThreadPoolExecutor).
 
+Targets APs from AP_LIST below by default, or from --ap HOST[,HOST...]
+if given. --ap accepts ANY host/IP (no dependency on AP_LIST — an AP does
+not need to be present in AP_LIST to be targeted via --ap).
+
 Usage:
   ./ap-upgrade.py --ap 10.86.58.139 --url http://10.86.34.204/wifiagent/content/22.3.0F-12-KASAN/
   ./ap-upgrade.py --ap 10.86.58.139,10.86.58.140 --url <base_url> --debug
@@ -291,7 +295,8 @@ def parseArgs():
         description='Connect to AP(s), determine platform Sub ID, and trigger an upgrade via HTTPS.'
     )
     parser.add_argument('--ap', metavar='HOST[,HOST...]',
-                        help='Comma-separated list of AP host/IPs to target (defaults to AP_LIST in this file)')
+                        help='Comma-separated list of AP host/IPs to target instead of AP_LIST '
+                             '(hosts do not need to already be in AP_LIST)')
     parser.add_argument('--url', required=True,
                         help='Base URL containing the build directories (e.g., http://10.86.34.204/wifiagent/content/22.3.0F-12-KASAN/)')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')

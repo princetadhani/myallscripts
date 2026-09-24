@@ -14,6 +14,10 @@ Monitoring Logic:
 
 This is a standalone script with all necessary functionality embedded.
 
+Targets APs from AP_IPS below by default, or from --ap HOST[,HOST...]
+if given. --ap accepts ANY host/IP (no dependency on AP_IPS — an AP does
+not need to be present in AP_IPS to be targeted via --ap).
+
 Usage:
   ./wifiagent_monitor.py                    # Start monitoring with default settings
   ./wifiagent_monitor.py --interval 300     # Custom interval (seconds)
