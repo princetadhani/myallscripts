@@ -54,12 +54,12 @@ Press `Ctrl+C` to stop gracefully.
 
 ## 📋 What It Does
 
-| Scenario | Action Taken |
-|----------|--------------|
-| Agent is **running** | ✓ Do nothing (OK) |
-| Agent is **stopped** | ⚠ Start the agent |
-| Agent is **not installed** | ⚠ Install + start the agent |
-| Start/install **fails** | ✗ Log error, retry in next cycle |
+| Scenario                   | Action Taken                     |
+| -------------------------- | -------------------------------- |
+| Agent is **running**       | ✓ Do nothing (OK)                |
+| Agent is **stopped**       | ⚠ Start the agent                |
+| Agent is **not installed** | ⚠ Install + start the agent      |
+| Start/install **fails**    | ✗ Log error, retry in next cycle |
 
 ---
 
@@ -126,15 +126,18 @@ Next cycle (2) in 300s... (Ctrl+C to stop)
 ## 🔧 Running in Background
 
 ### Option 1: Using nohup
+
 ```bash
 # Restart with unbuffered output
 nohup python3 -u ./wifiagent-monitor.py > monitor.log 2>&1 &
 
+nohup python3 -u ./wifiagent-monitor.py --interval 600 > /dev/null 2>&1 &
 # Now watch logs in real-time
 tail -f monitor.log
 ```
 
 ### Option 2: Using screen
+
 ```bash
 screen -S monitor
 ./wifiagent-monitor.py
@@ -146,12 +149,12 @@ screen -S monitor
 
 ## 🛑 Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| `ModuleNotFoundError: pexpect` | Run: `pip3 install pexpect requests urllib3` |
-| No APs monitored | Check `AP_IPS` list in `wifiagent-monitor.py` is not empty |
-| Auth failures | Verify `ONELOGIN_USER` and `ONELOGIN_PASS` in `wifiagent-monitor.py` |
-| Script crashes | Run with `--logLevel DEBUG` to see details |
+| Problem                        | Solution                                                             |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `ModuleNotFoundError: pexpect` | Run: `pip3 install pexpect requests urllib3`                         |
+| No APs monitored               | Check `AP_IPS` list in `wifiagent-monitor.py` is not empty           |
+| Auth failures                  | Verify `ONELOGIN_USER` and `ONELOGIN_PASS` in `wifiagent-monitor.py` |
+| Script crashes                 | Run with `--logLevel DEBUG` to see details                           |
 
 ---
 
@@ -164,11 +167,11 @@ Every 5 minutes (configurable):
        ├─ Running? → Do nothing ✓
        ├─ Stopped? → Start it ⚠
        └─ Not installed? → Install + start ⚠
-    
+
     2. If action fails:
        ├─ Retry (up to --max-retries times)
        └─ If still fails, log error and continue to next AP
-    
+
   3. Wait for next cycle
 ```
 
