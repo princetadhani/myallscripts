@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 venv/
+qwrap-configuration-script/qwrap-cli-to-config/qwrap-config-command.txt
