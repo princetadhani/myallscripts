@@ -3,8 +3,8 @@
 Stress and stability traffic configuration for WifiAgent Qwrap APs.
 
 Per virtual-client interface this script configures:
-  - 2 File Operation sessions  : random protocol (tftp/ftp/sftp), random op (upload/download)
-  - 3 Client Operation sessions : QUICT + TCPT + one of (HTTP | HTTPS), random op
+  - FILEOP_SESSIONS_PER_CLIENT File Operation sessions  : random protocol (tftp/ftp/sftp), random op (upload/download)
+  - CLIENTOP_SESSIONS_PER_CLIENT Client Operation sessions : random protocol (HTTP/HTTPS/QUICT/TCPT), random op
 
 Endpoints (host, port, credentials) come from the discovery API at runtime.
 Virtual clients per radio are picked via the RADIO_2_4G_CLIENTS / RADIO_5G_CLIENTS /
@@ -66,6 +66,10 @@ DISCOVERY_URLS: dict[str, str] = {
     "10.76": "http://hq-traffic-endpoint.dt1.wifi.arista.cloud/api/discovery",
 }
 
+# ─── Traffic Session Configuration ───────────────────────────────────────────
+FILEOP_SESSIONS_PER_CLIENT = 4
+CLIENTOP_SESSIONS_PER_CLIENT = 4
+
 WIFIAGENT_PORT = 8083
 TIMEOUT = 60  # seconds per request
 
@@ -90,19 +94,11 @@ def _discovery_url_for(ap_ip: str) -> str | None:
 # ─── Traffic variety pools ────────────────────────────────────────────────────
 
 DSCP_VALUES  = [0, 10, 26, 34, 46]               # BE, AF11, AF31, AF41, EF
-PACKET_SIZES = [64, 128, 256, 512, 1024, 1280, 1400, 1500]  # bytes (Ethernet MTU = 1500)
-                                                              # 64   = min Ethernet frame / TCP ACK
-                                                              # 128  = small control / mgmt
-                                                              # 256  = VoIP / small data
-                                                              # 512  = medium data
-                                                              # 1024 = common chunk size
-                                                              # 1280 = IPv6 min MTU
-                                                              # 1400 = common tunnel-safe MTU
-                                                              # 1500 = standard Ethernet MTU
+PACKET_SIZES = [64, 128, 256, 512, 1024, 1280, 1400, 1500, 2048, 4096, 9000]
 FILE_SIZES   = [25, 50, 75, 100, 125]        # MB  (fileop filesize, max 100)
 DATA_SIZES   = [25, 50, 75, 100, 125]        # MB  (client datasize, max 100)
-FILE_IVALS   = [300, 450, 600, 900, 1100]        # seconds  (must be > 120; sized for 25-125 MB transfers)
-CLIENT_IVALS = [180, 300, 450, 600, 900]         # seconds  (must be > 60;  sized for 25-125 MB transfers)
+FILE_IVALS   = [300, 450, 600, 900]        # seconds  (must be > 120; sized for 25-125 MB transfers)
+CLIENT_IVALS = [180, 300, 450, 600, 750]         # seconds  (must be > 60;  sized for 25-125 MB transfers)
 CONN_IVALS   = [0, 30, 60, 120, 300]             # seconds  (keep-alive after transfer; 0 = close immediately)
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
@@ -297,7 +293,7 @@ def _rnd_conn()   -> int: return random.choice(CONN_IVALS)
 
 def build_fileop_sessions(interface: str, endpoints: dict[str, list]) -> list[dict]:
     """
-    Build 2 file-operation sessions for one virtual-client interface.
+    Build FILEOP_SESSIONS_PER_CLIENT file-operation sessions for one virtual-client interface.
     Protocol is chosen randomly from whatever the discovery API provides.
     """
     available = [p for p in ("sftp", "ftp", "tftp") if endpoints[p]]
@@ -306,7 +302,7 @@ def build_fileop_sessions(interface: str, endpoints: dict[str, list]) -> list[di
         return []
 
     sessions: list[dict] = []
-    for _ in range(2):
+    for _ in range(FILEOP_SESSIONS_PER_CLIENT):
         proto = random.choice(available)
         ep    = random.choice(endpoints[proto])
         op    = random.choice(["upload", "download"])
@@ -408,7 +404,7 @@ def _build_http_session(interface: str, proto: str, ep: dict) -> dict:
 
 def build_client_sessions(interface: str, endpoints: dict[str, list]) -> list[dict]:
     """
-    Build 2 client-operation sessions for one virtual-client interface.
+    Build CLIENTOP_SESSIONS_PER_CLIENT client-operation sessions for one virtual-client interface.
     Each session's protocol is picked randomly from whichever of
     {HTTP, HTTPS, QUICT, TCPT} the discovery API exposes.
     """
@@ -418,7 +414,7 @@ def build_client_sessions(interface: str, endpoints: dict[str, list]) -> list[di
         return []
 
     sessions: list[dict] = []
-    for _ in range(2):
+    for _ in range(CLIENTOP_SESSIONS_PER_CLIENT):
         proto = random.choice(available)
         ep    = random.choice(endpoints[proto])
         if proto == "quic":
@@ -642,7 +638,7 @@ def main() -> None:
         2: max(0, min(RADIO_6G_CLIENTS,   MAX_CLIENTS_PER_RADIO)),
     }
     radioBreakdown = ", ".join(
-        f"{_RADIO_LABEL[radio]}={n}v/{n * 2}f/{n * 3}c"
+        f"{_RADIO_LABEL[radio]}={n}v/{n * FILEOP_SESSIONS_PER_CLIENT}f/{n * CLIENTOP_SESSIONS_PER_CLIENT}c"
         for radio, n in radioCounts.items() if n > 0
     )
     for ip in apIps:
