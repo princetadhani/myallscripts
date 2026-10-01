@@ -2,15 +2,17 @@
 """
 Reduced-load traffic configuration for WifiAgent Qwrap APs.
 
-Per virtual-client interface (4 sessions total):
-  - 2 HTTPS GET sessions to random public websites (lightweight browsing simulation)
-  - 1 ClientOp session : randomly QUICT or TCPT (from discovery endpoints)
-  - 1 FileOp session   : randomly sftp / ftp / tftp (from discovery endpoints)
+Per active (non-idle) virtual-client interface:
+  - BROWSING_SESSIONS_PER_CLIENT HTTPS GET sessions to random public websites
+    (lightweight browsing simulation; count set via BROWSING_SESSIONS_PER_CLIENT)
+  - clientop_count ClientOp sessions : randomly QUICT or TCPT (from discovery endpoints)
+  - fileop_count   FileOp sessions   : randomly sftp / ftp / tftp (from discovery endpoints)
 
 Additional features vs original:
-  - 75/25 active/idle split — 25% of virtual clients are idle at any time
-  - Per-AP config dict specifying ip_mode (IPv4/IPv6/Dual) and target_type (hostname/ip)
-  - Band-wise ip_mode defaults: 2.4G -> IPv4, 5G -> IPv6, 6G -> Dual
+  - Configurable active/idle split via per-AP "idle_percent" in AP_CONFIG
+    (falls back to the global IDLE_PERCENT constant if omitted)
+  - Per-AP, per-radio config dict (AP_CONFIG) specifying veth_count, fileop_count,
+    clientop_count, ip_mode (IPv4/IPv6/Dual) and target_type (hostname/ip)
   - Dual-stack endpoint pools (v4 + v6) built from discovery API
   - Time-based scheduling support (weekdays_schedule per session)
   - 75/25 download/upload weighting on all fileop and clientop sessions
@@ -34,21 +36,45 @@ from urllib3.util.retry import Retry
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- AP inventory -------------------------------------------------------------
-# ip_mode    : "IPv4" | "IPv6" | "Dual"
-# target_type: "hostname" | "ip"
-
+# 
 # Per-AP, per-band configuration.
-# Each radio entry sets its own ip_mode and target_type independently.
+# Each radio entry fully controls its own veth count + session counts + IP settings.
 #   radio 0 -> 2.4 GHz   radio 1 -> 5 GHz   radio 2 -> 6 GHz
-# ip_mode    : "IPv4" | "IPv6" | "Dual"
-# target_type: "hostname" | "ip"
+#   veth_count     : how many veth_in_<radio>_* interfaces to configure (1..28, clamped to MAX_VETH_PER_RADIO)
+#   fileop_count   : number of FileOp sessions per active (non-idle) veth interface
+#   clientop_count : number of ClientOp (QUICT/TCPT) sessions per active veth interface
+#                    (in addition to the 2 fixed HTTPS browsing sessions)
+#   ip_mode        : "IPv4" | "IPv6" | "Dual"
+#   target_type    : "hostname" | "ip"
+#
+# "idle_percent" (optional, per-AP): % of this AP's virtual clients that stay
+# fully idle. Falls back to IDLE_PERCENT (below) if omitted.
+#
+# ─── Blank skeleton — copy/paste this per AP and fill in the values ─────
+# Add/remove radio lines (0/1/2) as needed; an omitted radio is skipped.
+# Copy from here and paste it:
+#
+#     "ap_ip": {
+#         "idle_percent": ,
+#         "bands": {
+#             0: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
+#             1: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
+#             2: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
+#         },
+#     },
+#
 AP_CONFIG: dict[str, dict] = {
-    "10.86.205.240": {"bands": {
-        0: {"ip_mode": "IPv6", "target_type": "hostname"},
-        1: {"ip_mode": "IPv6", "target_type": "hostname"},
-        2: {"ip_mode": "IPv6", "target_type": "hostname"},
-    }},
+    "10.86.205.165": {
+        "idle_percent": 80,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
+        },
+    },
 }
+
+MAX_VETH_PER_RADIO = 28
 
 DISCOVERY_URLS: dict[str, str] = {
     "10.87": "http://pune-abz-traffic-enpoint.dt1.wifi.arista.cloud/api/discovery",
@@ -62,14 +88,17 @@ WIFIAGENT_PORT = 8083
 TIMEOUT = 60
 
 # --- Virtual-client selection -------------------------------------------------
+# Per-AP veth/session counts now come from AP_CONFIG (see "bands" above) —
+# no global RADIO_*_CLIENTS constants needed.
 
-RADIO_2_4G_CLIENTS    = 28
-RADIO_5G_CLIENTS      = 28
-RADIO_6G_CLIENTS      = 28
-MAX_CLIENTS_PER_RADIO = 28
+# Default percentage of virtual clients that are idle at any time (0-100),
+# used for any AP whose AP_CONFIG entry doesn't set its own "idle_percent".
+# The remainder (100 - idle_percent) are active. Idle clients are spread
+# evenly across the client list (e.g. idle_percent=25 idles every 4th client).
+IDLE_PERCENT = 25
 
-# 75/25 active/idle split: every 4th client (global_idx % 4 == 3) is idle.
-IDLE_MODULO = 4
+# Number of HTTPS GET "browsing" sessions built per active (non-idle) client.
+BROWSING_SESSIONS_PER_CLIENT = 2
 
 # --- Traffic pools ------------------------------------------------------------
 
@@ -84,7 +113,7 @@ BROWSE_IVALS = [300, 450, 600, 900]
 
 # Daytime active hours (9 AM - 9 PM). Each client gets a 3-hour idle window
 # carved out via IDLE_SHIFTS, giving a 75/25 session-level active/idle split
-# within these hours in addition to the 25% fully-idle clients above.
+# within these hours in addition to the IDLE_PERCENT fully-idle clients above.
 HOURS_BASE  = list(range(9, 21))
 IDLE_SHIFTS = [
     [9, 10, 11],
@@ -279,6 +308,19 @@ def _pool_key(version: str) -> str:
     return "v4" if version == "IPv4" else "v6"
 
 
+def _is_idle(global_idx: int, idle_percent: int = IDLE_PERCENT) -> bool:
+    """
+    Evenly distribute idle clients across the full client list according to
+    idle_percent, using a cumulative-count (Bresenham-style) method so any
+    percentage (not just multiples of 25) spreads idle clients uniformly.
+    """
+    if idle_percent <= 0:
+        return False
+    if idle_percent >= 100:
+        return True
+    return (global_idx + 1) * idle_percent // 100 != global_idx * idle_percent // 100
+
+
 # --- Random helpers -----------------------------------------------------------
 
 def _rnd_dscp()  -> int: return random.choice(DSCP_VALUES)
@@ -293,9 +335,10 @@ def _rnd_conn()  -> int: return random.choice(CONN_IVALS)
 # --- Session builders ---------------------------------------------------------
 
 def build_browsing_sessions(interface: str, schedule: dict) -> list[dict]:
-    """2 HTTPS GET sessions to random public websites. datasize=1 bypasses zero-validation."""
+    """BROWSING_SESSIONS_PER_CLIENT HTTPS GET sessions to random public websites.
+    datasize=1 bypasses zero-validation."""
     sessions = []
-    for site in random.sample(BROWSING_SITES, 2):
+    for site in random.sample(BROWSING_SITES, BROWSING_SESSIONS_PER_CLIENT):
         sessions.append({
             "status":             "enable",
             "traffictype":        "HTTPS",
@@ -319,96 +362,105 @@ def build_browsing_sessions(interface: str, schedule: dict) -> list[dict]:
     return sessions
 
 
-def build_one_clientop_session(
+def _clientop_pool(endpoints: dict, band_cfg: dict) -> tuple[dict, str]:
+    """Resolve (pool, version) for a clientop session, falling back to v4 if empty."""
+    version = _resolve_version(band_cfg["ip_mode"])
+    ver_key = _pool_key(version)
+    target_type = band_cfg["target_type"]
+    pool = endpoints[ver_key][target_type]
+    if not any(pool[p] for p in ("quic", "tcp")):
+        pool, version = endpoints["v4"][target_type], "IPv4"
+    return pool, version
+
+
+def build_clientop_sessions(
     interface: str, endpoints: dict, band_cfg: dict, schedule: dict,
 ) -> list[dict]:
-    """1 ClientOp session — randomly QUICT or TCPT."""
-    band_ip_mode = band_cfg["ip_mode"]
-    target_type  = band_cfg["target_type"]
-    version = _resolve_version(band_ip_mode)
-    ver_key = _pool_key(version)
-    pool    = endpoints[ver_key][target_type]
-
-    available = [p for p in ("quic", "tcp") if pool[p]]
-    if not available:
-        pool      = endpoints["v4"][target_type]
+    """Build band_cfg["clientop_count"] ClientOp sessions — randomly QUICT or TCPT."""
+    sessions: list[dict] = []
+    for _ in range(band_cfg["clientop_count"]):
+        pool, version = _clientop_pool(endpoints, band_cfg)
         available = [p for p in ("quic", "tcp") if pool[p]]
-        version   = "IPv4"
-    if not available:
-        log.warning("No QUICT/TCPT endpoints; skipping clientop for %s", interface)
-        return []
+        if not available:
+            log.warning("No QUICT/TCPT endpoints; skipping one clientop session for %s", interface)
+            continue
 
-    proto       = random.choice(available)
-    ep          = random.choice(pool[proto])
-    traffictype = "QUICT" if proto == "quic" else "TCPT"
+        proto       = random.choice(available)
+        ep          = random.choice(pool[proto])
+        traffictype = "QUICT" if proto == "quic" else "TCPT"
 
-    return [{
-        "status":             "enable",
-        "traffictype":        traffictype,
-        "host":               ep["host"],
-        "port":               ep["port"],
-        "operation":          random.choices(["download", "upload"], weights=[0.75, 0.25])[0],
-        "interval":           _rnd_cival(),
-        "datasize":           _rnd_dsize(),
-        "packetsize":         _rnd_pkt(),
-        "connectioninterval": _rnd_conn(),
-        "network":            version,
-        "dscpvalue":          _rnd_dscp(),
-        "interface":          interface,
-        "filename":           "",
-        "username":           "",
-        "password":           "",
-        "useragent":          "",
-        "payload":            "",
-        "traffic_schedule":   schedule,
-    }]
+        sessions.append({
+            "status":             "enable",
+            "traffictype":        traffictype,
+            "host":               ep["host"],
+            "port":               ep["port"],
+            "operation":          random.choices(["download", "upload"], weights=[0.75, 0.25])[0],
+            "interval":           _rnd_cival(),
+            "datasize":           _rnd_dsize(),
+            "packetsize":         _rnd_pkt(),
+            "connectioninterval": _rnd_conn(),
+            "network":            version,
+            "dscpvalue":          _rnd_dscp(),
+            "interface":          interface,
+            "filename":           "",
+            "username":           "",
+            "password":           "",
+            "useragent":          "",
+            "payload":            "",
+            "traffic_schedule":   schedule,
+        })
+    return sessions
 
 
-def build_one_fileop_session(
+def _fileop_pool(endpoints: dict, band_cfg: dict) -> tuple[dict, str]:
+    """Resolve (pool, version) for a fileop session, falling back to v4 if empty."""
+    version = _resolve_version(band_cfg["ip_mode"])
+    ver_key = _pool_key(version)
+    target_type = band_cfg["target_type"]
+    pool = endpoints[ver_key][target_type]
+    if not any(pool[p] for p in ("sftp", "ftp", "tftp")):
+        pool, version = endpoints["v4"][target_type], "IPv4"
+    return pool, version
+
+
+def build_fileop_sessions(
     interface: str, endpoints: dict, band_cfg: dict, schedule: dict,
 ) -> list[dict]:
-    """1 FileOp session — randomly sftp/ftp/tftp."""
-    band_ip_mode = band_cfg["ip_mode"]
-    target_type  = band_cfg["target_type"]
-    version = _resolve_version(band_ip_mode)
-    ver_key = _pool_key(version)
-    pool    = endpoints[ver_key][target_type]
-
-    available = [p for p in ("sftp", "ftp", "tftp") if pool[p]]
-    if not available:
-        pool      = endpoints["v4"][target_type]
+    """Build band_cfg["fileop_count"] FileOp sessions — randomly sftp/ftp/tftp."""
+    sessions: list[dict] = []
+    for _ in range(band_cfg["fileop_count"]):
+        pool, version = _fileop_pool(endpoints, band_cfg)
         available = [p for p in ("sftp", "ftp", "tftp") if pool[p]]
-        version   = "IPv4"
-    if not available:
-        log.warning("No fileop endpoints; skipping fileop for %s", interface)
-        return []
+        if not available:
+            log.warning("No fileop endpoints; skipping one fileop session for %s", interface)
+            continue
 
-    proto    = random.choice(available)
-    ep       = random.choice(pool[proto])
-    filesize = _rnd_fsize()
+        proto    = random.choice(available)
+        ep       = random.choice(pool[proto])
+        filesize = _rnd_fsize()
 
-    session: dict = {
-        "status":           "enable",
-        "traffictype":      proto,
-        "host":             ep["host"],
-        "operation":        random.choices(["download", "upload"], weights=[0.75, 0.25])[0],
-        "filesize":         min(filesize, 8) if proto == "tftp" else filesize,
-        "packetsize":       _rnd_pkt(),
-        "interval":         _rnd_fival(),
-        "network":          version,
-        "dscpvalue":        _rnd_dscp(),
-        "interface":        interface,
-        "traffic_schedule": schedule,
-    }
-    if proto == "tftp":
-        session["port"] = ep["port"]
-        session["mode"] = "octet"
-    else:
-        session["port"]     = ep["port"]
-        session["username"] = ep["username"]
-        session["password"] = ep["password"]
-
-    return [session]
+        session: dict = {
+            "status":           "enable",
+            "traffictype":      proto,
+            "host":             ep["host"],
+            "operation":        random.choices(["download", "upload"], weights=[0.75, 0.25])[0],
+            "filesize":         min(filesize, 8) if proto == "tftp" else filesize,
+            "packetsize":       _rnd_pkt(),
+            "interval":         _rnd_fival(),
+            "network":          version,
+            "dscpvalue":        _rnd_dscp(),
+            "interface":        interface,
+            "traffic_schedule": schedule,
+        }
+        if proto == "tftp":
+            session["port"] = ep["port"]
+            session["mode"] = "octet"
+        else:
+            session["port"]     = ep["port"]
+            session["username"] = ep["username"]
+            session["password"] = ep["password"]
+        sessions.append(session)
+    return sessions
 
 
 # --- Per-AP payload assembly --------------------------------------------------
@@ -456,14 +508,16 @@ def build_idle_sessions(interface: str, endpoints: dict, band_cfg: dict) -> list
 
 
 def build_ap_payloads(
-    clients: list[dict], endpoints: dict, ap_bands: dict,
+    clients: list[dict], endpoints: dict, ap_bands: dict, idle_percent: int = IDLE_PERCENT,
 ) -> tuple[dict | None, dict | None, int]:
     """
     Per virtual client:
-      - global_idx % 4 == 3  ->  fully idle, skip (25%)
-      - otherwise             ->  2 HTTPS GETs + 1 clientop + 1 fileop
-                                  each session scoped to active hours via schedule
-    ap_bands: {radio_int: {"ip_mode": ..., "target_type": ...}}
+      - idle_percent% of clients  ->  fully idle, skip
+      - otherwise                  ->  BROWSING_SESSIONS_PER_CLIENT HTTPS GETs
+                                        + band_cfg["clientop_count"] clientop
+                                        + band_cfg["fileop_count"] fileop sessions,
+                                        each scoped to active hours via schedule
+    ap_bands: {radio_int: {"veth_count", "fileop_count", "clientop_count", "ip_mode", "target_type"}}
     Returns (fileop_payload, client_payload, idle_count).
     """
     all_fileop: list[dict] = []
@@ -472,11 +526,10 @@ def build_ap_payloads(
 
     for client in clients:
         iface      = client["interface"]
-        radio      = client["radio"]
         global_idx = client["global_idx"]
-        band_cfg   = ap_bands[radio]
+        band_cfg   = client["band_cfg"]
 
-        if global_idx % IDLE_MODULO == (IDLE_MODULO - 1):
+        if _is_idle(global_idx, idle_percent):
             idle_count += 1
             # Idle clients get a single lightweight HTTP GET heartbeat — not silent
             all_client.extend(build_idle_sessions(iface, endpoints, band_cfg))
@@ -485,8 +538,8 @@ def build_ap_payloads(
         schedule = _active_schedule(global_idx)
 
         all_client.extend(build_browsing_sessions(iface, schedule))
-        all_client.extend(build_one_clientop_session(iface, endpoints, band_cfg, schedule))
-        all_fileop.extend(build_one_fileop_session(iface, endpoints, band_cfg, schedule))
+        all_client.extend(build_clientop_sessions(iface, endpoints, band_cfg, schedule))
+        all_fileop.extend(build_fileop_sessions(iface, endpoints, band_cfg, schedule))
 
     fileop_payload = {"status": "enable", "fileoperations": all_fileop} if all_fileop else None
     client_payload = {"status": "enable", "clientoperation": all_client} if all_client else None
@@ -494,14 +547,18 @@ def build_ap_payloads(
 
 
 def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict) -> dict:
-    result   = {"ap": ap_ip}
-    ap_bands = ap_cfg["bands"]
+    result       = {"ap": ap_ip}
+    ap_bands     = ap_cfg["bands"]
+    idle_percent = ap_cfg.get("idle_percent", IDLE_PERCENT)
 
     fileop_payload, client_payload, idle_count = build_ap_payloads(
-        clients, endpoints, ap_bands)
+        clients, endpoints, ap_bands, idle_percent)
 
     active = len(clients) - idle_count
-    band_summary = {_RADIO_LABEL[r]: f"{b['ip_mode']}/{b['target_type']}" for r, b in ap_bands.items()}
+    band_summary = {
+        _RADIO_LABEL[r]: f"{b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
+        for r, b in ap_bands.items()
+    }
     log.info("[%s] active=%d idle=%d bands=%s", ap_ip, active, idle_count, band_summary)
 
     if fileop_payload:
@@ -528,18 +585,31 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
 _RADIO_LABEL = {0: "2.4G", 1: "5G", 2: "6G"}
 
 
-def build_clients() -> list[dict]:
-    counts = {
-        0: max(0, min(RADIO_2_4G_CLIENTS, MAX_CLIENTS_PER_RADIO)),
-        1: max(0, min(RADIO_5G_CLIENTS,   MAX_CLIENTS_PER_RADIO)),
-        2: max(0, min(RADIO_6G_CLIENTS,   MAX_CLIENTS_PER_RADIO)),
-    }
-    clients = []
+def _clamp_band_cfg(radio: int, band_cfg: dict) -> dict:
+    """Clamp veth_count to [0, MAX_VETH_PER_RADIO], warning if it was out of range."""
+    cfg = dict(band_cfg)
+    requested = cfg["veth_count"]
+    cfg["veth_count"] = max(0, min(requested, MAX_VETH_PER_RADIO))
+    if cfg["veth_count"] != requested:
+        log.warning("%s veth_count %d clamped to %d (max %d)",
+                    _RADIO_LABEL.get(radio, radio), requested, cfg["veth_count"], MAX_VETH_PER_RADIO)
+    return cfg
+
+
+def build_clients(ap_bands: dict[int, dict]) -> list[dict]:
+    """Build the veth interface list for one AP from its resolved band config.
+    ap_bands: {radio_int: {"veth_count", "fileop_count", "clientop_count", "ip_mode", "target_type"}}
+    """
+    clients: list[dict] = []
     global_idx = 0
-    for radio, n in counts.items():
-        for c in range(1, n + 1):
-            clients.append({"interface": f"veth_in_{radio}_{c}",
-                            "radio": radio, "global_idx": global_idx})
+    for radio, band_cfg in sorted(ap_bands.items()):
+        for c in range(1, band_cfg["veth_count"] + 1):
+            clients.append({
+                "interface":  f"veth_in_{radio}_{c}",
+                "radio":      radio,
+                "global_idx": global_idx,
+                "band_cfg":   band_cfg,
+            })
             global_idx += 1
     return clients
 
@@ -554,8 +624,11 @@ examples:
   python3 qwrap-traffic-75-25.py --dry-run --out payloads.json
   python3 qwrap-traffic-75-25.py --debug
 
-Per active client: 2 HTTPS GETs + 1 QUICT/TCPT + 1 fileop, scheduled 9AM-9PM.
-25% of clients are fully idle. Band ip_mode: 2.4G=IPv4, 5G=IPv6, 6G=Dual.
+Per active client: BROWSING_SESSIONS_PER_CLIENT HTTPS GETs + fileop_count/clientop_count
+sessions, scheduled 9AM-9PM. idle_percent% of clients are fully idle — set per-AP via
+AP_CONFIG[ip]["idle_percent"], falling back to the global IDLE_PERCENT constant.
+veth_count, fileop_count, clientop_count, ip_mode and target_type are all set
+per-AP, per-radio in the AP_CONFIG dict at the top of this file.
 '''
 
 
@@ -633,20 +706,33 @@ def main() -> None:
     print('\n' + '-' * 40)
     print('Build client payloads')
     print('-' * 40)
-    clients = build_clients()
-    if not clients:
-        log.error("All RADIO_*_CLIENTS are 0 — nothing to configure.")
+    ap_clients: dict[str, list[dict]] = {}
+    for ip, cfg in ap_config.items():
+        bands        = {r: _clamp_band_cfg(r, b) for r, b in cfg["bands"].items()}
+        idle_percent = cfg.get("idle_percent", IDLE_PERCENT)
+        ap_config[ip] = {"bands": bands, "idle_percent": idle_percent}
+        clients = build_clients(bands)
+        if not clients:
+            log.warning("[%s] all configured radios have veth_count=0 or no radios configured; skipping AP", ip)
+            continue
+        ap_clients[ip] = clients
+
+        total    = len(clients)
+        idle_n   = sum(1 for c in clients if _is_idle(c["global_idx"], idle_percent))
+        active_n = total - idle_n
+        summary  = ", ".join(
+            f"{_RADIO_LABEL.get(r, r)}={b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
+            for r, b in sorted(bands.items())
+        )
+        log.info("[%s] %d total — %d active (%d%%), %d idle (%d%%)  bands=[%s]",
+                 ip, total, active_n, 100 - idle_percent, idle_n, idle_percent, summary)
+
+    if not ap_clients:
+        log.error("Nothing to configure across all APs.")
         sys.exit(1)
 
-    total    = len(clients)
-    idle_n   = total // IDLE_MODULO
-    active_n = total - idle_n
-    log.info("Per-AP virtual clients: %d total — %d active (75%%), %d idle (25%%)",
-             total, active_n, idle_n)
-    log.info("Per-AP band config set in AP_CONFIG (bands dict per AP)")
-
     ap_url: dict[str, str] = {}
-    for ip in ap_config:
+    for ip in ap_clients:
         url = _discovery_url_for(ip)
         if not url:
             log.error("No discovery URL for AP %s — add prefix to DISCOVERY_URLS", ip)
@@ -657,21 +743,22 @@ def main() -> None:
     for url in sorted(set(ap_url.values())):
         endpoints_cache[url] = fetch_endpoints(url)
 
-    ap_endpoints = {ip: endpoints_cache[ap_url[ip]] for ip in ap_config}
+    ap_endpoints = {ip: endpoints_cache[ap_url[ip]] for ip in ap_clients}
 
     if args.dry_run:
         log.info("DRY-RUN: writing payloads to %s", args.out)
         bundle: dict[str, dict] = {}
-        for ip, ap_cfg in ap_config.items():
+        for ip in ap_clients:
+            ap_cfg = ap_config[ip]
             fileop_payload, client_payload, idle_count = build_ap_payloads(
-                clients, ap_endpoints[ip], ap_cfg["bands"])
+                ap_clients[ip], ap_endpoints[ip], ap_cfg["bands"], ap_cfg["idle_percent"])
             bundle[ip] = {
                 "ap_config":            ap_cfg,
                 "fileop_url":           f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/fileop/config",
                 "client_url":           f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/client/config",
                 "fileop_payload":       fileop_payload,
                 "client_payload":       client_payload,
-                "active_clients":       len(clients) - idle_count,
+                "active_clients":       len(ap_clients[ip]) - idle_count,
                 "idle_clients":         idle_count,
                 "fileop_session_count": len(fileop_payload["fileoperations"]) if fileop_payload else 0,
                 "client_session_count": len(client_payload["clientoperation"]) if client_payload else 0,
@@ -687,11 +774,11 @@ def main() -> None:
     print('\n' + '-' * 40)
     print('Push config to AP(s) concurrently')
     print('-' * 40)
-    log.info("Configuring %d APs ...", len(ap_config))
+    log.info("Configuring %d APs ...", len(ap_clients))
 
     results = runConcurrently(
-        lambda ip: configure_ap(ip, clients, ap_endpoints[ip], ap_config[ip]),
-        list(ap_config),
+        lambda ip: configure_ap(ip, ap_clients[ip], ap_endpoints[ip], ap_config[ip]),
+        list(ap_clients),
         "configure",
     )
     summary: list[dict] = list(results.values())
