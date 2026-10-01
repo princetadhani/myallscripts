@@ -155,6 +155,16 @@ BROWSING_SESSIONS_PER_CLIENT = 2
 #   0 -> idle hours are completely silent (no heartbeat, no traffic at all)
 SEND_HEARTBEAT = 1
 
+# Whether each client's active/idle hours differ from one day of the week to
+# the next, on top of the existing hourly rotation:
+#   1 -> each client gets a DIFFERENT active-hour pattern per weekday (e.g.
+#        client-5 active at 1pm/4pm on Monday, but 2am/6am on Tuesday) while
+#        still keeping idle_percent% of clients idle at any given hour.
+#   0 -> each client repeats the SAME active-hour pattern every day of the
+#        week (classic weekly-recurring schedule — Mon through Sun identical
+#        for a given client); only the hour-of-day rotation applies.
+SEND_DAYWISE_VARIATION = 1
+
 # --- Traffic pools ------------------------------------------------------------
 
 DSCP_VALUES  = [0, 10, 26, 34, 46]
@@ -167,9 +177,10 @@ CONN_IVALS   = [0, 30, 60, 120, 300]
 BROWSE_IVALS = [300, 450, 600, 900]
 
 # Daytime active hours (9 AM - 9 PM). The idle_percent split is applied PER HOUR
-# and rotated round-robin across clients (see _client_hour_schedule below), so
-# at any single hour idle_percent% of clients are idle while the rest run full
-# traffic — and which specific clients are idle/active changes every hour, so
+# and rotated round-robin across clients AND across days of the week (see
+# _client_hour_schedule below), so at any single hour idle_percent% of clients
+# are idle while the rest run full traffic — and which specific clients are
+# idle/active changes every hour AND differs from one weekday to the next, so
 # every client gets a turn at full traffic over the course of the run.
 HOURS_BASE = list(range(0, 24))  # active window = 9AM-9PM; for 24hr run, use list(range(0, 24))
 
@@ -326,9 +337,19 @@ def fetch_endpoints(discovery_url: str) -> dict:
 
 # --- Schedule helpers ---------------------------------------------------------
 
-def _get_schedule(hour_list: list[int]) -> dict:
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    return {day: {h: True for h in hour_list} for day in days}
+DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+# Stride (in client-index units) used to shift the rotation's starting point
+# from one day to the next, so a client's active hours differ day-to-day
+# instead of repeating the same hour pattern every day of the week. Any value
+# that isn't a small divisor of typical client counts works; 37 is just an
+# arbitrary prime-ish choice for good spread.
+DAY_PHASE_STRIDE = 37
+
+
+def _get_schedule(day_hours: dict[str, list[int]]) -> dict:
+    """Build the weekdays_schedule dict from a per-day {day_name: [hours]} map."""
+    return {day: {h: True for h in hours} for day, hours in day_hours.items()}
 
 
 def _active_count_per_hour(n_clients: int, idle_percent: int) -> int:
@@ -338,41 +359,58 @@ def _active_count_per_hour(n_clients: int, idle_percent: int) -> int:
     return round(n_clients * (100 - idle_percent) / 100)
 
 
-def _is_active_this_hour(global_idx: int, hour_idx: int, n_clients: int, active_count: int) -> bool:
+def _is_active_this_hour(
+    global_idx: int, day_idx: int, hour_idx: int, n_clients: int, active_count: int,
+) -> bool:
     """
     Round-robin rotation: the "active" window of `active_count` client indices
     shifts by `active_count` positions every hour, so a different slice of
     clients is active each hour while the concurrently-active COUNT stays fixed
     (this is what keeps the idle/active ratio correct at any point in time).
+    `day_idx` additionally phase-shifts the rotation's starting point per day
+    of the week (only when SEND_DAYWISE_VARIATION=1), so the same client's
+    active hours vary day-to-day instead of repeating identically every day.
     """
     if active_count <= 0 or n_clients <= 0:
         return False
     if active_count >= n_clients:
         return True
-    start = (hour_idx * active_count) % n_clients
+    day_phase = (day_idx * DAY_PHASE_STRIDE) % n_clients if SEND_DAYWISE_VARIATION else 0
+    start = (day_phase + hour_idx * active_count) % n_clients
     return (global_idx - start) % n_clients < active_count
 
 
-def _client_hour_schedule(global_idx: int, n_clients: int, idle_percent: int) -> tuple[list[int], list[int]]:
+def _client_hour_schedule(
+    global_idx: int, n_clients: int, idle_percent: int,
+) -> tuple[dict[str, list[int]], dict[str, list[int]]]:
     """
-    Returns (active_hours, idle_hours) — the actual hours (from HOURS_BASE) this
-    client is active vs idle, per the rotating idle_percent schedule for this run.
+    Returns (active_by_day, idle_by_day) — dict[day_name -> hours (from
+    HOURS_BASE)] this client is active vs idle, per the rotating idle_percent
+    schedule for this run. Both the hour-of-day AND the day-of-week rotation
+    vary, so a client's active hours differ across Mon/Tue/Wed/... instead of
+    repeating the same pattern every day.
     """
     active_count = _active_count_per_hour(n_clients, idle_percent)
-    active_hours: list[int] = []
-    idle_hours: list[int] = []
-    for hour_idx, hour in enumerate(HOURS_BASE):
-        if _is_active_this_hour(global_idx, hour_idx, n_clients, active_count):
-            active_hours.append(hour)
-        else:
-            idle_hours.append(hour)
-    return active_hours, idle_hours
+    active_by_day: dict[str, list[int]] = {}
+    idle_by_day: dict[str, list[int]] = {}
+    for day_idx, day in enumerate(DAY_NAMES):
+        active_hours: list[int] = []
+        idle_hours: list[int] = []
+        for hour_idx, hour in enumerate(HOURS_BASE):
+            if _is_active_this_hour(global_idx, day_idx, hour_idx, n_clients, active_count):
+                active_hours.append(hour)
+            else:
+                idle_hours.append(hour)
+        active_by_day[day] = active_hours
+        idle_by_day[day]   = idle_hours
+    return active_by_day, idle_by_day
 
 
 def _rotation_coverage_ok(n_clients: int, idle_percent: int) -> bool:
     """
-    True if every client is guaranteed at least one active hour across HOURS_BASE
-    this run. idle_percent=100 is an explicit "always idle" config, not a gap.
+    True if every client is guaranteed at least one active hour (on at least
+    one day) across HOURS_BASE this run. idle_percent=100 is an explicit
+    "always idle" config, not a gap.
     """
     active_count = _active_count_per_hour(n_clients, idle_percent)
     if active_count <= 0:
@@ -621,10 +659,12 @@ def build_ap_payloads(
         global_idx = client["global_idx"]
         band_cfg   = client["band_cfg"]
 
-        active_hours, idle_hours = _client_hour_schedule(global_idx, n_clients, idle_percent)
+        active_by_day, idle_by_day = _client_hour_schedule(global_idx, n_clients, idle_percent)
+        has_active = any(active_by_day.values())
+        has_idle   = any(idle_by_day.values())
 
-        if active_hours:
-            active_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(active_hours)}
+        if has_active:
+            active_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(active_by_day)}
             browsing = build_browsing_sessions(iface, active_schedule)
             clientop = build_clientop_sessions(iface, endpoints, band_cfg, active_schedule)
             fileop   = build_fileop_sessions(iface, endpoints, band_cfg, active_schedule)
@@ -638,8 +678,8 @@ def build_ap_payloads(
         else:
             uncovered += 1
 
-        if idle_hours and SEND_HEARTBEAT:
-            idle_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(idle_hours)}
+        if has_idle and SEND_HEARTBEAT:
+            idle_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(idle_by_day)}
             heartbeat = build_idle_sessions(iface, endpoints, band_cfg, idle_schedule)
             all_client.extend(heartbeat)
             if heartbeat:
@@ -710,8 +750,10 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
         _RADIO_LABEL[r]: f"{b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
         for r, b in ap_bands.items()
     }
-    log.info("[%s] %d clients — ~%d active/hour (rotating, idle_percent=%d%%) bands=%s",
-             ap_ip, stats["total"], stats["active_count_per_hour"], idle_percent, band_summary)
+    rotation_desc = "rotating hourly only (same hours every day)" if not SEND_DAYWISE_VARIATION \
+        else "rotating hourly + varying by day-of-week"
+    log.info("[%s] %d clients — ~%d active/hour (%s, idle_percent=%d%%) bands=%s",
+             ap_ip, stats["total"], stats["active_count_per_hour"], rotation_desc, idle_percent, band_summary)
 
     if stats["uncovered"]:
         log.warning(
@@ -726,6 +768,9 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
              ap_ip, BROWSING_SESSIONS_PER_CLIENT)
     log.info("[%s] SEND_HEARTBEAT = %d  # %s", ap_ip, SEND_HEARTBEAT,
               "idle-hour heartbeat GET enabled" if SEND_HEARTBEAT else "idle hours fully silent")
+    log.info("[%s] SEND_DAYWISE_VARIATION = %d  # %s", ap_ip, SEND_DAYWISE_VARIATION,
+              "active hours differ per day-of-week" if SEND_DAYWISE_VARIATION
+              else "same active hours repeat every day (weekly recurring)")
 
     if fileop_payload:
         ok, msg = _api_post(ap_ip, "/device/traffic/fileop/config", fileop_payload)
@@ -891,9 +936,11 @@ def main() -> None:
             f"{_RADIO_LABEL.get(r, r)}={b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
             for r, b in sorted(bands.items())
         )
+        schedule_desc = ("same active hours repeat every day (weekly recurring)" if not SEND_DAYWISE_VARIATION
+                          else "active hours differ per day-of-week")
         log.info("[%s] %d total clients — ~%d active/hour (idle_percent=%d%%, rotating hourly "
-                 "over %d-hour window)  bands=[%s]",
-                 ip, total, active_count, idle_percent, len(HOURS_BASE), summary)
+                 "over %d-hour window; %s)  bands=[%s]",
+                 ip, total, active_count, idle_percent, len(HOURS_BASE), schedule_desc, summary)
         if not _rotation_coverage_ok(total, idle_percent):
             log.warning(
                 "[%s] idle_percent=%d%% with %d clients only allows %d active slot(s)/hour x %d hours "
