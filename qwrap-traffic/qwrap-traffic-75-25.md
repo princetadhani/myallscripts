@@ -54,15 +54,78 @@ a blank copy/paste skeleton right above it in the code comments. Example:
 },
 ```
 
-| Field            | Meaning                                                                                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `idle_percent`   | % of this AP's virtual clients that stay idle at any given hour. Optional — falls back to global `IDLE_PERCENT` if omitted.                                              |
-| `bands`          | One entry per radio: `0` = 2.4GHz, `1` = 5GHz, `2` = 6GHz. Skip a radio key entirely to not configure that radio.                                                        |
-| `veth_count`     | How many virtual client interfaces to create on this radio (max 28).                                                                                                     |
-| `fileop_count`   | How many FileOp (SFTP/FTP/TFTP) sessions each **active** client on this radio runs.                                                                                      |
-| `clientop_count` | How many ClientOp (QUIC/TCP) sessions each **active** client on this radio runs (in addition to the fixed browsing sessions — see `BROWSING_SESSIONS_PER_CLIENT` below). |
-| `ip_mode`        | `"IPv4"`, `"IPv6"`, or `"Dual"` (randomly picks one per session if Dual).                                                                                                |
-| `target_type`    | `"hostname"` or `"ip"` — which discovery-endpoint pool to use.                                                                                                           |
+| Field            | Meaning                                                                                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `idle_percent`   | % of this AP's virtual clients that stay idle at any given hour. Optional — falls back to global `IDLE_PERCENT` if omitted.                                                |
+| `bands`          | One entry per radio: `0` = 2.4GHz, `1` = 5GHz, `2` = 6GHz. Skip a radio key entirely to not configure that radio.                                                          |
+| `veth_count`     | How many virtual client interfaces to create on this radio (max 28).                                                                                                       |
+| `fileop_count`   | How many FileOp (SFTP/FTP/TFTP) sessions each **active** client on this radio runs.                                                                                        |
+| `clientop_count` | How many ClientOp (QUIC/TCP) sessions each **active** client on this radio runs (in addition to the fixed browsing sessions — see `BROWSING_SESSIONS_PER_CLIENT` below).   |
+| `ip_mode`        | `"IPv4"`, `"IPv6"`, or `"Dual"` (randomly picks one per session if Dual).                                                                                                  |
+| `target_type`    | `"hostname"` or `"ip"` — which discovery-endpoint pool to use.                                                                                                             |
+| `schedule_group` | Optional int. Which active-hour rotation starting-point this AP uses — see section 4a below. If omitted, auto-derived from the AP's own IP so every AP differs by default. |
+
+## 3a. Making different APs have different schedules — `schedule_group`
+
+**The problem this solves:** by default, if two APs have the exact same number
+of clients (e.g. both have 84 veth interfaces), client #1 on AP-1 and client #1
+on AP-2 would end up with the **exact same active-hour schedule** — same hours
+active on the same days — because the rotation math only looks at the client's
+position (index) and the day/hour, not which AP it belongs to. Nothing
+previously made one AP's rotation different from another AP's rotation.
+
+**The fix — `schedule_group` (int, optional, per-AP):**
+
+Think of `schedule_group` as the **starting point** for that AP's rotation
+calculation — like dealing a deck of cards starting from a different spot in
+the deck:
+
+- APs with the **same** `schedule_group` value → **identical** active-hour
+  schedules for their same-index clients (useful if you deliberately want two
+  APs to mirror each other for a test).
+- APs with **different** `schedule_group` values → **different** schedules.
+
+Mechanically, it works exactly like the day-of-week shift (`DAY_PHASE_STRIDE`)
+described above, just keyed by AP instead of by day — it's one more
+phase-shift added into the same rotation formula:
+
+```python
+ap_phase = (schedule_group * AP_PHASE_STRIDE) % n_clients
+start = (ap_phase + day_phase + hour_idx * active_count) % n_clients
+```
+
+**Default behavior (important):** if you don't set `schedule_group` for an AP,
+it does **not** default to `0` for everyone (which would silently bring back
+the "all APs look the same" problem for anyone who forgets to set it).
+Instead, it's auto-derived from a stable hash of the AP's own IP address. So:
+
+- **Omit the key entirely** → every AP is automatically different out of the
+  box. This is the fix for the "all clients across APs look identical"
+  problem, with zero config needed.
+- **Set `schedule_group` explicitly** → you get manual control. E.g. put
+  `"schedule_group": 1` on 5 APs and `"schedule_group": 2` on 3 other APs —
+  the 5 will all schedule identically to each other, the 3 will schedule
+  identically to each other, and the two groups will differ from one another.
+
+Example:
+
+```python
+"10.86.205.165": {
+    "idle_percent": 75,
+    "schedule_group": 1,     # <- optional; shares schedule with any other AP using group 1
+    "bands": { ... },
+},
+"10.86.205.223": {
+    "idle_percent": 70,
+    # no schedule_group set -> auto-derived from this AP's own IP, guaranteed
+    # different from 10.86.205.165 (and from any other AP) by default
+    "bands": { ... },
+},
+```
+
+The logs print the effective `schedule_group` for every AP on every run (and
+note whether it came from your config or was auto-derived), so you can always
+confirm which APs are grouped together.
 
 ## 4. Global constants (the "knobs")
 
@@ -177,6 +240,15 @@ Set `SEND_DAYWISE_VARIATION = 0`.
 **Q: How do I make this run for the full day instead of just daytime?**
 Change `HOURS_BASE = list(range(9, 21))` to `list(range(0, 24))` (or vice
 versa).
+
+**Q: Why do client #1 on AP-1 and client #1 on AP-2 have the exact same
+active-hour schedule?**
+Set `schedule_group` to a different value on each AP (or just leave it unset
+— it auto-derives a different value per AP from the AP's IP). See section 3a.
+
+**Q: I want two specific APs to have identical schedules on purpose (e.g. for
+a side-by-side test)?**
+Give both of them the same explicit `schedule_group` value.
 
 **Q: Where do I add a new AP?**
 Copy the blank skeleton comment block above `AP_CONFIG`, paste it in, fill in

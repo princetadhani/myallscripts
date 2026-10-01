@@ -55,6 +55,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import logging
 import random
@@ -72,16 +73,24 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # 
 # Per-AP, per-band configuration.
 # Each radio entry fully controls its own veth count + session counts + IP settings.
+# 
 #   radio 0 -> 2.4 GHz   radio 1 -> 5 GHz   radio 2 -> 6 GHz
 #   veth_count     : how many veth_in_<radio>_* interfaces to configure (1..28, clamped to MAX_VETH_PER_RADIO)
 #   fileop_count   : number of FileOp sessions per active (non-idle) veth interface
-#   clientop_count : number of ClientOp (QUICT/TCPT) sessions per active veth interface
-#                    (in addition to the 2 fixed HTTPS browsing sessions)
+#   clientop_count : number of ClientOp (QUICT/TCPT) sessions per active veth interface (in addition to the 2 fixed HTTPS browsing sessions)
 #   ip_mode        : "IPv4" | "IPv6" | "Dual"
 #   target_type    : "hostname" | "ip"
 #
-# "idle_percent" (optional, per-AP): % of this AP's virtual clients that stay
+# "idle_percent": , (optional, per-AP): % of this AP's virtual clients that stay
 # fully idle. Falls back to IDLE_PERCENT (below) if omitted.
+#
+# "schedule_group": , (optional, per-AP, int): which active-hour rotation
+# starting-point this AP uses. APs sharing the same schedule_group get
+# IDENTICAL active-hour schedules for their same-index clients; APs with
+# different schedule_group values get different schedules. If omitted, it's
+# auto-derived from the AP's own IP, so every AP differs by default — set it
+# explicitly only if you want specific APs to mirror (or deliberately differ
+# from) each other.
 #
 # ─── Blank skeleton — copy/paste this per AP and fill in the values ─────
 # Add/remove radio lines (0/1/2) as needed; an omitted radio is skipped.
@@ -89,6 +98,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #
 #     "ap_ip": {
 #         "idle_percent": ,
+#         "schedule_group": ,
 #         "bands": {
 #             0: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
 #             1: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
@@ -163,7 +173,7 @@ SEND_HEARTBEAT = 1
 #   0 -> each client repeats the SAME active-hour pattern every day of the
 #        week (classic weekly-recurring schedule — Mon through Sun identical
 #        for a given client); only the hour-of-day rotation applies.
-SEND_DAYWISE_VARIATION = 1
+SEND_DAYWISE_VARIATION = 0
 
 # --- Traffic pools ------------------------------------------------------------
 
@@ -213,7 +223,9 @@ BROWSING_SITES = [
     "https://docker.com", "https://npmjs.com", "https://chatgpt.com",
     "https://gemini.google.com", "https://perplexity.ai",
 ]
-
+###############################################################################################################################################################################################
+###############################################################################################################################################################################################
+###############################################################################################################################################################################################
 # --- Logging ------------------------------------------------------------------
 
 logging.basicConfig(
@@ -346,6 +358,24 @@ DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
 # arbitrary prime-ish choice for good spread.
 DAY_PHASE_STRIDE = 37
 
+# Stride (in client-index units) used to shift the rotation's starting point
+# from one AP's "schedule_group" to the next, so two APs with different
+# schedule_group values get different active-hour patterns even when they
+# have identical veth/idle_percent config. Same spread idea as
+# DAY_PHASE_STRIDE, just a different prime-ish constant to avoid the two
+# shifts canceling each other out.
+AP_PHASE_STRIDE = 53
+
+
+def _default_schedule_group(ap_ip: str) -> int:
+    """
+    Stable per-AP default for `schedule_group` when an AP's config doesn't set
+    one explicitly. Derived from the AP's IP/host string (not from dict order
+    or any other address), so every AP gets a different schedule out of the
+    box, but the value is deterministic across runs for the same AP.
+    """
+    return int(hashlib.md5(ap_ip.encode()).hexdigest(), 16) % 10_000
+
 
 def _get_schedule(day_hours: dict[str, list[int]]) -> dict:
     """Build the weekdays_schedule dict from a per-day {day_name: [hours]} map."""
@@ -361,6 +391,7 @@ def _active_count_per_hour(n_clients: int, idle_percent: int) -> int:
 
 def _is_active_this_hour(
     global_idx: int, day_idx: int, hour_idx: int, n_clients: int, active_count: int,
+    schedule_group: int = 0,
 ) -> bool:
     """
     Round-robin rotation: the "active" window of `active_count` client indices
@@ -370,25 +401,31 @@ def _is_active_this_hour(
     `day_idx` additionally phase-shifts the rotation's starting point per day
     of the week (only when SEND_DAYWISE_VARIATION=1), so the same client's
     active hours vary day-to-day instead of repeating identically every day.
+    `schedule_group` phase-shifts the rotation's starting point per AP, so two
+    APs with different schedule_group values don't produce identical
+    schedules for their same-index clients (same mechanism as the day-of-week
+    shift, just keyed by AP instead of by day).
     """
     if active_count <= 0 or n_clients <= 0:
         return False
     if active_count >= n_clients:
         return True
     day_phase = (day_idx * DAY_PHASE_STRIDE) % n_clients if SEND_DAYWISE_VARIATION else 0
-    start = (day_phase + hour_idx * active_count) % n_clients
+    ap_phase  = (schedule_group * AP_PHASE_STRIDE) % n_clients
+    start = (ap_phase + day_phase + hour_idx * active_count) % n_clients
     return (global_idx - start) % n_clients < active_count
 
 
 def _client_hour_schedule(
-    global_idx: int, n_clients: int, idle_percent: int,
+    global_idx: int, n_clients: int, idle_percent: int, schedule_group: int = 0,
 ) -> tuple[dict[str, list[int]], dict[str, list[int]]]:
     """
     Returns (active_by_day, idle_by_day) — dict[day_name -> hours (from
     HOURS_BASE)] this client is active vs idle, per the rotating idle_percent
     schedule for this run. Both the hour-of-day AND the day-of-week rotation
     vary, so a client's active hours differ across Mon/Tue/Wed/... instead of
-    repeating the same pattern every day.
+    repeating the same pattern every day. `schedule_group` additionally
+    differentiates the schedule across APs (see `_is_active_this_hour`).
     """
     active_count = _active_count_per_hour(n_clients, idle_percent)
     active_by_day: dict[str, list[int]] = {}
@@ -397,7 +434,7 @@ def _client_hour_schedule(
         active_hours: list[int] = []
         idle_hours: list[int] = []
         for hour_idx, hour in enumerate(HOURS_BASE):
-            if _is_active_this_hour(global_idx, day_idx, hour_idx, n_clients, active_count):
+            if _is_active_this_hour(global_idx, day_idx, hour_idx, n_clients, active_count, schedule_group):
                 active_hours.append(hour)
             else:
                 idle_hours.append(hour)
@@ -619,6 +656,7 @@ def build_idle_sessions(interface: str, endpoints: dict, band_cfg: dict, schedul
 
 def build_ap_payloads(
     clients: list[dict], endpoints: dict, ap_bands: dict, idle_percent: int = IDLE_PERCENT,
+    schedule_group: int = 0,
 ) -> tuple[dict | None, dict | None, dict]:
     """
     Rotating per-hour active/idle schedule (single run, hour-by-hour over HOURS_BASE):
@@ -659,7 +697,7 @@ def build_ap_payloads(
         global_idx = client["global_idx"]
         band_cfg   = client["band_cfg"]
 
-        active_by_day, idle_by_day = _client_hour_schedule(global_idx, n_clients, idle_percent)
+        active_by_day, idle_by_day = _client_hour_schedule(global_idx, n_clients, idle_percent, schedule_group)
         has_active = any(active_by_day.values())
         has_idle   = any(idle_by_day.values())
 
@@ -739,12 +777,13 @@ def _client_breakdown_str(stats: dict, ap_bands: dict) -> str:
 
 
 def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict) -> dict:
-    result       = {"ap": ap_ip}
-    ap_bands     = ap_cfg["bands"]
-    idle_percent = ap_cfg.get("idle_percent", IDLE_PERCENT)
+    result         = {"ap": ap_ip}
+    ap_bands       = ap_cfg["bands"]
+    idle_percent   = ap_cfg.get("idle_percent", IDLE_PERCENT)
+    schedule_group = ap_cfg.get("schedule_group", _default_schedule_group(ap_ip))
 
     fileop_payload, client_payload, stats = build_ap_payloads(
-        clients, endpoints, ap_bands, idle_percent)
+        clients, endpoints, ap_bands, idle_percent, schedule_group)
 
     band_summary = {
         _RADIO_LABEL[r]: f"{b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
@@ -771,6 +810,9 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
     log.info("[%s] SEND_DAYWISE_VARIATION = %d  # %s", ap_ip, SEND_DAYWISE_VARIATION,
               "active hours differ per day-of-week" if SEND_DAYWISE_VARIATION
               else "same active hours repeat every day (weekly recurring)")
+    log.info("[%s] schedule_group = %d  # %s", ap_ip, schedule_group,
+              "explicitly set in AP_CONFIG" if "schedule_group" in ap_cfg
+              else "auto-derived from AP IP (no schedule_group set)")
 
     if fileop_payload:
         ok, msg = _api_post(ap_ip, "/device/traffic/fileop/config", fileop_payload)
@@ -923,7 +965,11 @@ def main() -> None:
     for ip, cfg in ap_config.items():
         bands        = {r: _clamp_band_cfg(r, b) for r, b in cfg["bands"].items()}
         idle_percent = cfg.get("idle_percent", IDLE_PERCENT)
-        ap_config[ip] = {"bands": bands, "idle_percent": idle_percent}
+        ap_config_entry = {"bands": bands, "idle_percent": idle_percent}
+        if "schedule_group" in cfg:
+            ap_config_entry["schedule_group"] = cfg["schedule_group"]
+        ap_config[ip] = ap_config_entry
+        schedule_group = ap_config_entry.get("schedule_group", _default_schedule_group(ip))
         clients = build_clients(bands)
         if not clients:
             log.warning("[%s] all configured radios have veth_count=0 or no radios configured; skipping AP", ip)
@@ -939,8 +985,8 @@ def main() -> None:
         schedule_desc = ("same active hours repeat every day (weekly recurring)" if not SEND_DAYWISE_VARIATION
                           else "active hours differ per day-of-week")
         log.info("[%s] %d total clients — ~%d active/hour (idle_percent=%d%%, rotating hourly "
-                 "over %d-hour window; %s)  bands=[%s]",
-                 ip, total, active_count, idle_percent, len(HOURS_BASE), schedule_desc, summary)
+                 "over %d-hour window; %s; schedule_group=%d)  bands=[%s]",
+                 ip, total, active_count, idle_percent, len(HOURS_BASE), schedule_desc, schedule_group, summary)
         if not _rotation_coverage_ok(total, idle_percent):
             log.warning(
                 "[%s] idle_percent=%d%% with %d clients only allows %d active slot(s)/hour x %d hours "
@@ -972,8 +1018,9 @@ def main() -> None:
         bundle: dict[str, dict] = {}
         for ip in ap_clients:
             ap_cfg = ap_config[ip]
+            ap_schedule_group = ap_cfg.get("schedule_group", _default_schedule_group(ip))
             fileop_payload, client_payload, stats = build_ap_payloads(
-                ap_clients[ip], ap_endpoints[ip], ap_cfg["bands"], ap_cfg["idle_percent"])
+                ap_clients[ip], ap_endpoints[ip], ap_cfg["bands"], ap_cfg["idle_percent"], ap_schedule_group)
             bundle[ip] = {
                 "ap_config":             ap_cfg,
                 "fileop_url":            f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/fileop/config",
