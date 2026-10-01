@@ -16,6 +16,39 @@ Additional features vs original:
   - Dual-stack endpoint pools (v4 + v6) built from discovery API
   - Time-based scheduling support (weekdays_schedule per session)
   - 75/25 download/upload weighting on all fileop and clientop sessions
+  - Hourly active/idle rotation (see HOURS_BASE below) so every client gets a
+    turn running full traffic, with an optional idle-hour heartbeat (see
+    SEND_HEARTBEAT below) instead of going completely silent during its idle
+    hours.
+
+Why the idle-hour heartbeat (SEND_HEARTBEAT) exists:
+  Without it, a client is completely silent during its idle hours — no
+  traffic at all (this was the behavior before the per-hour idle heartbeat
+  was added). A client's veth/virtual interface is a simulated Wi-Fi client
+  association on the AP; if it sends zero traffic for its idle hours, from
+  the AP's/controller's perspective it looks like a client that's associated
+  but completely inactive — which is unrealistic for most real-world
+  traffic-simulation scenarios (real idle devices still do background
+  checks: DNS lookups, keepalives, notification polling, OS/app background
+  sync, captive-portal checks, etc.).
+  The heartbeat (build_idle_sessions — one lightweight HTTP GET
+  /wifiagent/dynamic, datasize=1, long interval of 600/900/1200s, lowest DSCP
+  priority) exists to:
+    - Keep the client "visibly alive" on the AP (still generating minimal
+      periodic activity) instead of going completely silent — more realistic
+      idle-device emulation.
+    - Prevent the AP/controller from potentially aging out, disassociating,
+      or flagging the client as inactive/dead due to total silence over a
+      multi-hour idle window.
+    - Avoid skewing traffic-pattern statistics on the AP side where a
+      "fully silent for hours" client might look anomalous compared to a
+      genuinely idle-but-present device.
+  It's intentionally tiny and low-priority (dscpvalue=0, 10-20 minute
+  intervals) so it doesn't meaningfully add load or count as "real" traffic —
+  it's just a presence signal, which is why it's tracked separately in
+  session counts rather than folded into the active browsing/clientop
+  numbers. Set SEND_HEARTBEAT = 0 to disable it entirely and go back to
+  fully silent idle hours.
 
 Usage:
   python3 qwrap-traffic-75-25.py [--dry-run] [--ap HOST[,HOST...]] [--debug]
@@ -67,9 +100,9 @@ AP_CONFIG: dict[str, dict] = {
     "10.86.205.165": {
         "idle_percent": 80,
         "bands": {
-            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
         },
     },
 }
@@ -100,6 +133,12 @@ IDLE_PERCENT = 25
 # Number of HTTPS GET "browsing" sessions built per active (non-idle) client.
 BROWSING_SESSIONS_PER_CLIENT = 2
 
+# Whether idle clients send a lightweight heartbeat GET during their idle
+# hours (see module docstring above for rationale).
+#   1 -> idle hours get a small HTTP GET heartbeat (build_idle_sessions)
+#   0 -> idle hours are completely silent (no heartbeat, no traffic at all)
+SEND_HEARTBEAT = 1
+
 # --- Traffic pools ------------------------------------------------------------
 
 DSCP_VALUES  = [0, 10, 26, 34, 46]
@@ -111,16 +150,12 @@ CLIENT_IVALS = [180, 300, 450, 600, 750]
 CONN_IVALS   = [0, 30, 60, 120, 300]
 BROWSE_IVALS = [300, 450, 600, 900]
 
-# Daytime active hours (9 AM - 9 PM). Each client gets a 3-hour idle window
-# carved out via IDLE_SHIFTS, giving a 75/25 session-level active/idle split
-# within these hours in addition to the IDLE_PERCENT fully-idle clients above.
-HOURS_BASE  = list(range(9, 21))
-IDLE_SHIFTS = [
-    [9, 10, 11],
-    [12, 13, 14],
-    [15, 16, 17],
-    [18, 19, 20],
-]
+# Daytime active hours (9 AM - 9 PM). The idle_percent split is applied PER HOUR
+# and rotated round-robin across clients (see _client_hour_schedule below), so
+# at any single hour idle_percent% of clients are idle while the rest run full
+# traffic — and which specific clients are idle/active changes every hour, so
+# every client gets a turn at full traffic over the course of the run.
+HOURS_BASE = list(range(9, 21))
 
 BROWSING_SITES = [
     "https://fortune.com", "https://azure.microsoft.com/en-in", "https://arista.com",
@@ -218,14 +253,6 @@ def fetch_endpoints(discovery_url: str) -> dict:
         log.error("Discovery failed for %s: %s", discovery_url, exc)
         sys.exit(1)
 
-    try:
-        from urllib.parse import urlparse
-        host = urlparse(discovery_url).hostname or "discovery"
-        with open(f"discovery_raw_{host}.json", "w") as fh:
-            json.dump(raw, fh, indent=2)
-    except Exception as exc:
-        log.debug("Could not write discovery json: %s", exc)
-
     containers = raw.get("containers", []) if isinstance(raw, dict) else []
     if not containers:
         log.error("Discovery response missing 'containers' array")
@@ -288,11 +315,53 @@ def _get_schedule(hour_list: list[int]) -> dict:
     return {day: {h: True for h in hour_list} for day in days}
 
 
-def _active_schedule(client_global_idx: int) -> dict:
-    """Returns weekdays_schedule for the 9 active hours (excludes the client's idle shift)."""
-    idle_shift = IDLE_SHIFTS[client_global_idx % len(IDLE_SHIFTS)]
-    active_hours = [h for h in HOURS_BASE if h not in idle_shift]
-    return {"traffic_default": False, "weekdays_schedule": _get_schedule(active_hours)}
+def _active_count_per_hour(n_clients: int, idle_percent: int) -> int:
+    """How many clients may be concurrently active at any single hour, given idle_percent."""
+    if n_clients <= 0:
+        return 0
+    return round(n_clients * (100 - idle_percent) / 100)
+
+
+def _is_active_this_hour(global_idx: int, hour_idx: int, n_clients: int, active_count: int) -> bool:
+    """
+    Round-robin rotation: the "active" window of `active_count` client indices
+    shifts by `active_count` positions every hour, so a different slice of
+    clients is active each hour while the concurrently-active COUNT stays fixed
+    (this is what keeps the idle/active ratio correct at any point in time).
+    """
+    if active_count <= 0 or n_clients <= 0:
+        return False
+    if active_count >= n_clients:
+        return True
+    start = (hour_idx * active_count) % n_clients
+    return (global_idx - start) % n_clients < active_count
+
+
+def _client_hour_schedule(global_idx: int, n_clients: int, idle_percent: int) -> tuple[list[int], list[int]]:
+    """
+    Returns (active_hours, idle_hours) — the actual hours (from HOURS_BASE) this
+    client is active vs idle, per the rotating idle_percent schedule for this run.
+    """
+    active_count = _active_count_per_hour(n_clients, idle_percent)
+    active_hours: list[int] = []
+    idle_hours: list[int] = []
+    for hour_idx, hour in enumerate(HOURS_BASE):
+        if _is_active_this_hour(global_idx, hour_idx, n_clients, active_count):
+            active_hours.append(hour)
+        else:
+            idle_hours.append(hour)
+    return active_hours, idle_hours
+
+
+def _rotation_coverage_ok(n_clients: int, idle_percent: int) -> bool:
+    """
+    True if every client is guaranteed at least one active hour across HOURS_BASE
+    this run. idle_percent=100 is an explicit "always idle" config, not a gap.
+    """
+    active_count = _active_count_per_hour(n_clients, idle_percent)
+    if active_count <= 0:
+        return idle_percent >= 100
+    return active_count * len(HOURS_BASE) >= n_clients
 
 
 # --- IP version resolution ----------------------------------------------------
@@ -306,19 +375,6 @@ def _resolve_version(band_ip_mode: str) -> str:
 
 def _pool_key(version: str) -> str:
     return "v4" if version == "IPv4" else "v6"
-
-
-def _is_idle(global_idx: int, idle_percent: int = IDLE_PERCENT) -> bool:
-    """
-    Evenly distribute idle clients across the full client list according to
-    idle_percent, using a cumulative-count (Bresenham-style) method so any
-    percentage (not just multiples of 25) spreads idle clients uniformly.
-    """
-    if idle_percent <= 0:
-        return False
-    if idle_percent >= 100:
-        return True
-    return (global_idx + 1) * idle_percent // 100 != global_idx * idle_percent // 100
 
 
 # --- Random helpers -----------------------------------------------------------
@@ -465,9 +521,9 @@ def build_fileop_sessions(
 
 # --- Per-AP payload assembly --------------------------------------------------
 
-def build_idle_sessions(interface: str, endpoints: dict, band_cfg: dict) -> list[dict]:
+def build_idle_sessions(interface: str, endpoints: dict, band_cfg: dict, schedule: dict) -> list[dict]:
     """
-    Lightweight HTTP GET to discovery server for idle clients.
+    Lightweight HTTP GET to discovery server for this client's idle hours.
     Keeps the client visible on the AP without generating real load.
     Uses /wifiagent/dynamic which returns a small dynamic response.
     """
@@ -503,47 +559,59 @@ def build_idle_sessions(interface: str, endpoints: dict, band_cfg: dict) -> list
         "password":           "",
         "useragent":          "",
         "payload":            "",
-        "traffic_schedule":   {},         # runs any time — idle clients have no active window
+        "traffic_schedule":   schedule,   # scoped to this client's idle hours only
     }]
 
 
 def build_ap_payloads(
     clients: list[dict], endpoints: dict, ap_bands: dict, idle_percent: int = IDLE_PERCENT,
-) -> tuple[dict | None, dict | None, int]:
+) -> tuple[dict | None, dict | None, dict]:
     """
-    Per virtual client:
-      - idle_percent% of clients  ->  fully idle, skip
-      - otherwise                  ->  BROWSING_SESSIONS_PER_CLIENT HTTPS GETs
-                                        + band_cfg["clientop_count"] clientop
-                                        + band_cfg["fileop_count"] fileop sessions,
-                                        each scoped to active hours via schedule
+    Rotating per-hour active/idle schedule (single run, hour-by-hour over HOURS_BASE):
+      - At any given hour, idle_percent% of clients are idle (lightweight HTTP
+        heartbeat) and the rest run full traffic (BROWSING_SESSIONS_PER_CLIENT
+        HTTPS GETs + band_cfg["clientop_count"] clientop + band_cfg["fileop_count"]
+        fileop sessions).
+      - WHICH clients are idle/active rotates every hour (round-robin via
+        _client_hour_schedule), so every client gets a turn at full traffic over
+        the course of the run while the instantaneous idle/active ratio holds.
     ap_bands: {radio_int: {"veth_count", "fileop_count", "clientop_count", "ip_mode", "target_type"}}
-    Returns (fileop_payload, client_payload, idle_count).
+    Returns (fileop_payload, client_payload, stats) where
+      stats = {"active_count_per_hour": int, "uncovered": int, "total": int}
+      "uncovered" = clients that got zero active hours this run (see _rotation_coverage_ok).
     """
     all_fileop: list[dict] = []
     all_client: list[dict] = []
-    idle_count = 0
+    n_clients  = len(clients)
+    uncovered  = 0
 
     for client in clients:
         iface      = client["interface"]
         global_idx = client["global_idx"]
         band_cfg   = client["band_cfg"]
 
-        if _is_idle(global_idx, idle_percent):
-            idle_count += 1
-            # Idle clients get a single lightweight HTTP GET heartbeat — not silent
-            all_client.extend(build_idle_sessions(iface, endpoints, band_cfg))
-            continue
+        active_hours, idle_hours = _client_hour_schedule(global_idx, n_clients, idle_percent)
 
-        schedule = _active_schedule(global_idx)
+        if active_hours:
+            active_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(active_hours)}
+            all_client.extend(build_browsing_sessions(iface, active_schedule))
+            all_client.extend(build_clientop_sessions(iface, endpoints, band_cfg, active_schedule))
+            all_fileop.extend(build_fileop_sessions(iface, endpoints, band_cfg, active_schedule))
+        else:
+            uncovered += 1
 
-        all_client.extend(build_browsing_sessions(iface, schedule))
-        all_client.extend(build_clientop_sessions(iface, endpoints, band_cfg, schedule))
-        all_fileop.extend(build_fileop_sessions(iface, endpoints, band_cfg, schedule))
+        if idle_hours and SEND_HEARTBEAT:
+            idle_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(idle_hours)}
+            all_client.extend(build_idle_sessions(iface, endpoints, band_cfg, idle_schedule))
 
     fileop_payload = {"status": "enable", "fileoperations": all_fileop} if all_fileop else None
     client_payload = {"status": "enable", "clientoperation": all_client} if all_client else None
-    return fileop_payload, client_payload, idle_count
+    stats = {
+        "active_count_per_hour": _active_count_per_hour(n_clients, idle_percent),
+        "uncovered":             uncovered,
+        "total":                 n_clients,
+    }
+    return fileop_payload, client_payload, stats
 
 
 def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict) -> dict:
@@ -551,15 +619,24 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
     ap_bands     = ap_cfg["bands"]
     idle_percent = ap_cfg.get("idle_percent", IDLE_PERCENT)
 
-    fileop_payload, client_payload, idle_count = build_ap_payloads(
+    fileop_payload, client_payload, stats = build_ap_payloads(
         clients, endpoints, ap_bands, idle_percent)
 
-    active = len(clients) - idle_count
     band_summary = {
         _RADIO_LABEL[r]: f"{b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
         for r, b in ap_bands.items()
     }
-    log.info("[%s] active=%d idle=%d bands=%s", ap_ip, active, idle_count, band_summary)
+    log.info("[%s] %d clients — ~%d active/hour (rotating, idle_percent=%d%%) bands=%s",
+             ap_ip, stats["total"], stats["active_count_per_hour"], idle_percent, band_summary)
+
+    if stats["uncovered"]:
+        log.warning(
+            "[%s] %d/%d client(s) got ZERO active hours this run — idle_percent=%d%% only allows "
+            "%d active slot(s)/hour x %d hours, too few to rotate through all clients; "
+            "lower idle_percent or reduce veth_count for full coverage.",
+            ap_ip, stats["uncovered"], stats["total"], idle_percent,
+            stats["active_count_per_hour"], len(HOURS_BASE),
+        )
 
     if fileop_payload:
         ok, msg = _api_post(ap_ip, "/device/traffic/fileop/config", fileop_payload)
@@ -717,15 +794,22 @@ def main() -> None:
             continue
         ap_clients[ip] = clients
 
-        total    = len(clients)
-        idle_n   = sum(1 for c in clients if _is_idle(c["global_idx"], idle_percent))
-        active_n = total - idle_n
-        summary  = ", ".join(
+        total        = len(clients)
+        active_count = _active_count_per_hour(total, idle_percent)
+        summary      = ", ".join(
             f"{_RADIO_LABEL.get(r, r)}={b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
             for r, b in sorted(bands.items())
         )
-        log.info("[%s] %d total — %d active (%d%%), %d idle (%d%%)  bands=[%s]",
-                 ip, total, active_n, 100 - idle_percent, idle_n, idle_percent, summary)
+        log.info("[%s] %d total clients — ~%d active/hour (idle_percent=%d%%, rotating hourly "
+                 "over %d-hour window)  bands=[%s]",
+                 ip, total, active_count, idle_percent, len(HOURS_BASE), summary)
+        if not _rotation_coverage_ok(total, idle_percent):
+            log.warning(
+                "[%s] idle_percent=%d%% with %d clients only allows %d active slot(s)/hour x %d hours "
+                "= %d total active-slots this run — some client(s) will get ZERO active hours. "
+                "Lower idle_percent or reduce veth_count for full rotation coverage.",
+                ip, idle_percent, total, active_count, len(HOURS_BASE), active_count * len(HOURS_BASE),
+            )
 
     if not ap_clients:
         log.error("Nothing to configure across all APs.")
@@ -750,22 +834,26 @@ def main() -> None:
         bundle: dict[str, dict] = {}
         for ip in ap_clients:
             ap_cfg = ap_config[ip]
-            fileop_payload, client_payload, idle_count = build_ap_payloads(
+            fileop_payload, client_payload, stats = build_ap_payloads(
                 ap_clients[ip], ap_endpoints[ip], ap_cfg["bands"], ap_cfg["idle_percent"])
             bundle[ip] = {
-                "ap_config":            ap_cfg,
-                "fileop_url":           f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/fileop/config",
-                "client_url":           f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/client/config",
-                "fileop_payload":       fileop_payload,
-                "client_payload":       client_payload,
-                "active_clients":       len(ap_clients[ip]) - idle_count,
-                "idle_clients":         idle_count,
-                "fileop_session_count": len(fileop_payload["fileoperations"]) if fileop_payload else 0,
-                "client_session_count": len(client_payload["clientoperation"]) if client_payload else 0,
+                "ap_config":             ap_cfg,
+                "fileop_url":            f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/fileop/config",
+                "client_url":            f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/client/config",
+                "fileop_payload":        fileop_payload,
+                "client_payload":        client_payload,
+                "active_count_per_hour": stats["active_count_per_hour"],
+                "uncovered_clients":     stats["uncovered"],
+                "fileop_session_count":  len(fileop_payload["fileoperations"]) if fileop_payload else 0,
+                "client_session_count":  len(client_payload["clientoperation"]) if client_payload else 0,
             }
-            log.info("  [%s] active=%d idle=%d fileop=%d client=%d",
-                     ip, bundle[ip]["active_clients"], bundle[ip]["idle_clients"],
+            log.info("  [%s] active/hour=%d uncovered=%d fileop=%d client=%d",
+                     ip, bundle[ip]["active_count_per_hour"], bundle[ip]["uncovered_clients"],
                      bundle[ip]["fileop_session_count"], bundle[ip]["client_session_count"])
+            if bundle[ip]["uncovered_clients"]:
+                log.warning("[%s] %d client(s) got ZERO active hours this run (idle_percent=%d%% too high "
+                            "for %d clients x %d hours)", ip, bundle[ip]["uncovered_clients"],
+                            ap_cfg["idle_percent"], len(ap_clients[ip]), len(HOURS_BASE))
         with open(args.out, "w") as fh:
             json.dump(bundle, fh, indent=2)
         log.info("Wrote %d AP payload(s) -> %s", len(bundle), args.out)
