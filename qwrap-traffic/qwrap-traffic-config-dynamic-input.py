@@ -262,19 +262,11 @@ _RADIO_LABEL = {0: "2.4G", 1: "5G", 2: "6G"}
 # ─── Traffic variety pools ────────────────────────────────────────────────────
 
 DSCP_VALUES  = [0, 10, 26, 34, 46]               # BE, AF11, AF31, AF41, EF
-PACKET_SIZES = [64, 128, 256, 512, 1024, 1280, 1400, 1500]  # bytes (Ethernet MTU = 1500)
-                                                              # 64   = min Ethernet frame / TCP ACK
-                                                              # 128  = small control / mgmt
-                                                              # 256  = VoIP / small data
-                                                              # 512  = medium data
-                                                              # 1024 = common chunk size
-                                                              # 1280 = IPv6 min MTU
-                                                              # 1400 = common tunnel-safe MTU
-                                                              # 1500 = standard Ethernet MTU
+PACKET_SIZES = [64, 128, 256, 512, 1024, 1280, 1400, 1500, 2048, 4096, 9000]
 FILE_SIZES   = [25, 50, 75, 100, 125]        # MB  (fileop filesize, max 100)
 DATA_SIZES   = [25, 50, 75, 100, 125]        # MB  (client datasize, max 100)
-FILE_IVALS   = [300, 450, 600, 900, 1100]        # seconds  (must be > 120; sized for 25-125 MB transfers)
-CLIENT_IVALS = [180, 300, 450, 600, 900]         # seconds  (must be > 60;  sized for 25-125 MB transfers)
+FILE_IVALS   = [300, 450, 600, 900]        # seconds  (must be > 120; sized for 25-125 MB transfers)
+CLIENT_IVALS = [180, 300, 450, 600, 750]         # seconds  (must be > 60;  sized for 25-125 MB transfers)
 CONN_IVALS   = [0, 30, 60, 120, 300]             # seconds  (keep-alive after transfer; 0 = close immediately)
 
 # ─── Logging ──────────────────────────────────────────────────────────────
