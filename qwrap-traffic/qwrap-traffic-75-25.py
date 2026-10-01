@@ -98,13 +98,29 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #
 AP_CONFIG: dict[str, dict] = {
     "10.86.205.165": {
-        "idle_percent": 80,
+        "idle_percent": 75,
         "bands": {
-            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
+            0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
         },
     },
+     "10.86.205.223": {
+        "idle_percent": 70,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+        },
+    },
+    "10.86.204.227": {
+        "idle_percent": 70,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
+        },
+    },   
 }
 
 MAX_VETH_PER_RADIO = 28
@@ -155,7 +171,7 @@ BROWSE_IVALS = [300, 450, 600, 900]
 # at any single hour idle_percent% of clients are idle while the rest run full
 # traffic — and which specific clients are idle/active changes every hour, so
 # every client gets a turn at full traffic over the course of the run.
-HOURS_BASE = list(range(9, 21))
+HOURS_BASE = list(range(0, 24))  # active window = 9AM-9PM; for 24hr run, use list(range(0, 24))
 
 BROWSING_SITES = [
     "https://fortune.com", "https://azure.microsoft.com/en-in", "https://arista.com",
@@ -577,16 +593,31 @@ def build_ap_payloads(
         the course of the run while the instantaneous idle/active ratio holds.
     ap_bands: {radio_int: {"veth_count", "fileop_count", "clientop_count", "ip_mode", "target_type"}}
     Returns (fileop_payload, client_payload, stats) where
-      stats = {"active_count_per_hour": int, "uncovered": int, "total": int}
+      stats = {
+          "active_count_per_hour": int, "uncovered": int, "total": int,
+          "fileop_by_radio":    {radio: session_count},
+          "browsing_by_radio":  {radio: session_count},
+          "clientop_by_radio":  {radio: session_count},
+          "heartbeat_by_radio": {radio: session_count},
+          "active_by_radio":    {radio: active_client_count},
+          "heartbeat_clients_by_radio": {radio: heartbeat_client_count},
+      }
       "uncovered" = clients that got zero active hours this run (see _rotation_coverage_ok).
     """
     all_fileop: list[dict] = []
     all_client: list[dict] = []
     n_clients  = len(clients)
     uncovered  = 0
+    fileop_by_radio:            dict[int, int] = {}
+    browsing_by_radio:          dict[int, int] = {}
+    clientop_by_radio:          dict[int, int] = {}
+    heartbeat_by_radio:         dict[int, int] = {}
+    active_by_radio:            dict[int, int] = {}
+    heartbeat_clients_by_radio: dict[int, int] = {}
 
     for client in clients:
         iface      = client["interface"]
+        radio      = client["radio"]
         global_idx = client["global_idx"]
         band_cfg   = client["band_cfg"]
 
@@ -594,24 +625,77 @@ def build_ap_payloads(
 
         if active_hours:
             active_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(active_hours)}
-            all_client.extend(build_browsing_sessions(iface, active_schedule))
-            all_client.extend(build_clientop_sessions(iface, endpoints, band_cfg, active_schedule))
-            all_fileop.extend(build_fileop_sessions(iface, endpoints, band_cfg, active_schedule))
+            browsing = build_browsing_sessions(iface, active_schedule)
+            clientop = build_clientop_sessions(iface, endpoints, band_cfg, active_schedule)
+            fileop   = build_fileop_sessions(iface, endpoints, band_cfg, active_schedule)
+            all_client.extend(browsing)
+            all_client.extend(clientop)
+            all_fileop.extend(fileop)
+            active_by_radio[radio]   = active_by_radio.get(radio, 0) + 1
+            browsing_by_radio[radio] = browsing_by_radio.get(radio, 0) + len(browsing)
+            clientop_by_radio[radio] = clientop_by_radio.get(radio, 0) + len(clientop)
+            fileop_by_radio[radio]   = fileop_by_radio.get(radio, 0) + len(fileop)
         else:
             uncovered += 1
 
         if idle_hours and SEND_HEARTBEAT:
             idle_schedule = {"traffic_default": False, "weekdays_schedule": _get_schedule(idle_hours)}
-            all_client.extend(build_idle_sessions(iface, endpoints, band_cfg, idle_schedule))
+            heartbeat = build_idle_sessions(iface, endpoints, band_cfg, idle_schedule)
+            all_client.extend(heartbeat)
+            if heartbeat:
+                heartbeat_by_radio[radio]         = heartbeat_by_radio.get(radio, 0) + len(heartbeat)
+                heartbeat_clients_by_radio[radio] = heartbeat_clients_by_radio.get(radio, 0) + 1
 
     fileop_payload = {"status": "enable", "fileoperations": all_fileop} if all_fileop else None
     client_payload = {"status": "enable", "clientoperation": all_client} if all_client else None
     stats = {
-        "active_count_per_hour": _active_count_per_hour(n_clients, idle_percent),
-        "uncovered":             uncovered,
-        "total":                 n_clients,
+        "active_count_per_hour":       _active_count_per_hour(n_clients, idle_percent),
+        "uncovered":                   uncovered,
+        "total":                       n_clients,
+        "fileop_by_radio":             fileop_by_radio,
+        "browsing_by_radio":           browsing_by_radio,
+        "clientop_by_radio":           clientop_by_radio,
+        "heartbeat_by_radio":          heartbeat_by_radio,
+        "active_by_radio":             active_by_radio,
+        "heartbeat_clients_by_radio":  heartbeat_clients_by_radio,
     }
     return fileop_payload, client_payload, stats
+
+
+def _fileop_breakdown_str(stats: dict, ap_bands: dict) -> str:
+    """Render 'label=active×fileop_count=count, ...  (total=N)' per radio,
+    same style as qwrap-traffic-config-dynamic-input.py's _breakdown_str."""
+    fileop_by_radio = stats["fileop_by_radio"]
+    parts = []
+    for radio in sorted(fileop_by_radio):
+        active   = stats["active_by_radio"].get(radio, 0)
+        per_veth = ap_bands[radio]["fileop_count"]
+        parts.append(f"{_RADIO_LABEL.get(radio, radio)}={active}x{per_veth}={fileop_by_radio[radio]}")
+    total = sum(fileop_by_radio.values())
+    return ", ".join(parts) + f"  (total={total})" if parts else "(total=0)"
+
+
+def _client_breakdown_str(stats: dict, ap_bands: dict) -> str:
+    """Render per-radio 'label=browsing(active×2)+clientop(active×N)+heartbeat(idle×1)=count'
+    breakdown, same style as qwrap-traffic-config-dynamic-input.py's _breakdown_str,
+    extended to cover the three session kinds that make up client sessions here."""
+    radios = sorted(set(stats["browsing_by_radio"]) | set(stats["clientop_by_radio"]) | set(stats["heartbeat_by_radio"]))
+    parts = []
+    for radio in radios:
+        active       = stats["active_by_radio"].get(radio, 0)
+        heartbeat_n  = stats["heartbeat_clients_by_radio"].get(radio, 0)
+        clientop_cnt = ap_bands[radio]["clientop_count"]
+        radio_total  = (stats["browsing_by_radio"].get(radio, 0)
+                        + stats["clientop_by_radio"].get(radio, 0)
+                        + stats["heartbeat_by_radio"].get(radio, 0))
+        parts.append(
+            f"{_RADIO_LABEL.get(radio, radio)}=browsing({active}x{BROWSING_SESSIONS_PER_CLIENT})"
+            f"+clientop({active}x{clientop_cnt})+heartbeat({heartbeat_n}x1)={radio_total}"
+        )
+    total = (sum(stats["browsing_by_radio"].values())
+             + sum(stats["clientop_by_radio"].values())
+             + sum(stats["heartbeat_by_radio"].values()))
+    return ", ".join(parts) + f"  (total={total})" if parts else "(total=0)"
 
 
 def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict) -> dict:
@@ -638,13 +722,19 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
             stats["active_count_per_hour"], len(HOURS_BASE),
         )
 
+    log.info("[%s] BROWSING_SESSIONS_PER_CLIENT = %d  # fixed, applies to every active client",
+             ap_ip, BROWSING_SESSIONS_PER_CLIENT)
+    log.info("[%s] SEND_HEARTBEAT = %d  # %s", ap_ip, SEND_HEARTBEAT,
+              "idle-hour heartbeat GET enabled" if SEND_HEARTBEAT else "idle hours fully silent")
+
     if fileop_payload:
         ok, msg = _api_post(ap_ip, "/device/traffic/fileop/config", fileop_payload)
         n = len(fileop_payload["fileoperations"])
         result["fileop"] = f"ok ({n} sessions)" if ok else f"FAIL: {msg}"
     else:
         result["fileop"] = "skipped – no fileop endpoints"
-    log.info("[%s] fileop  -> %s", ap_ip, result["fileop"])
+    log.info("[%s] fileop  -> %s  [%s]", ap_ip, result["fileop"],
+              _fileop_breakdown_str(stats, ap_bands))
 
     if client_payload:
         ok, msg = _api_post(ap_ip, "/device/traffic/client/config", client_payload)
@@ -652,7 +742,8 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
         result["client"] = f"ok ({n} sessions)" if ok else f"FAIL: {msg}"
     else:
         result["client"] = "skipped – no clientop endpoints"
-    log.info("[%s] client  -> %s", ap_ip, result["client"])
+    log.info("[%s] client  -> %s  [%s]", ap_ip, result["client"],
+              _client_breakdown_str(stats, ap_bands))
 
     return result
 
@@ -850,6 +941,8 @@ def main() -> None:
             log.info("  [%s] active/hour=%d uncovered=%d fileop=%d client=%d",
                      ip, bundle[ip]["active_count_per_hour"], bundle[ip]["uncovered_clients"],
                      bundle[ip]["fileop_session_count"], bundle[ip]["client_session_count"])
+            log.info("  [%s] fileop breakdown [%s]", ip, _fileop_breakdown_str(stats, ap_cfg["bands"]))
+            log.info("  [%s] client breakdown [%s]", ip, _client_breakdown_str(stats, ap_cfg["bands"]))
             if bundle[ip]["uncovered_clients"]:
                 log.warning("[%s] %d client(s) got ZERO active hours this run (idle_percent=%d%% too high "
                             "for %d clients x %d hours)", ip, bundle[ip]["uncovered_clients"],
