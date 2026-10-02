@@ -158,6 +158,19 @@ keep-alive request during their idle hours.
   doing anything in the background. This was the original behavior before
   the heartbeat feature was added.
 
+### `COLOR_LOGS = 1`
+
+Controls whether terminal log lines are colorized per-AP (each AP's log
+lines get a distinct color from a fixed 20-entry palette, so interleaved
+output from concurrent AP pushes is easy to tell apart at a glance).
+
+- **`COLOR_LOGS = 1` (default):** Colorizes log output — but only when
+  actually printing to a real terminal; it still auto-falls-back to plain
+  text when output is piped/redirected to a file, or when the `NO_COLOR`
+  environment variable is set.
+- **`COLOR_LOGS = 0`:** Never colorizes, even on a terminal — always plain
+  text.
+
 ### `SEND_DAYWISE_VARIATION = 1`
 
 Controls whether each client's active/idle hours are the **same every day of

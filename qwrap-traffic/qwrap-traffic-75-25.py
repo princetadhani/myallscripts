@@ -58,7 +58,9 @@ import argparse
 import hashlib
 import json
 import logging
+import os
 import random
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -118,17 +120,25 @@ AP_CONFIG: dict[str, dict] = {
      "10.86.205.223": {
         "idle_percent": 70,
         "bands": {
-            0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
         },
     },
     "10.86.204.227": {
         "idle_percent": 70,
         "bands": {
-            0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
-            1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
+            0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
+        },
+    },   
+    "10.87.1.23": {
+        "idle_percent": 70,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
         },
     },   
 }
@@ -174,6 +184,13 @@ SEND_HEARTBEAT = 1
 #        week (classic weekly-recurring schedule — Mon through Sun identical
 #        for a given client); only the hour-of-day rotation applies.
 SEND_DAYWISE_VARIATION = 0
+
+# Whether log lines are colored per-AP in the terminal (see _AP_COLOR_PALETTE
+# below for how colors are assigned):
+#   1 -> colorize log output (still auto-disabled when stdout isn't a TTY,
+#        e.g. piped to a file, or when NO_COLOR env var is set)
+#   0 -> never colorize, even on a terminal (plain text always)
+COLOR_LOGS = 1
 
 # --- Traffic pools ------------------------------------------------------------
 
@@ -226,13 +243,73 @@ BROWSING_SITES = [
 ###############################################################################################################################################################################################
 ###############################################################################################################################################################################################
 ###############################################################################################################################################################################################
-# --- Logging ------------------------------------------------------------------
+# --- Logging --------------------------------------------------------------------
+#
+# Per-AP log colouring: every log line that starts with an AP IP prefix (e.g.
+# "[10.86.205.165] ...") gets coloured with a colour assigned to that IP, so
+# interleaved output from multiple APs (concurrent push) is easy to tell apart
+# at a glance. Colours are a fixed 20-entry palette (chosen to read clearly on
+# a dark-mode terminal background) assigned in AP_CONFIG order, so the same AP
+# always gets the same colour across runs. Falls back to plain/uncoloured
+# output automatically when stdout isn't a terminal (e.g. piped to a file),
+# when NO_COLOR is set, or when COLOR_LOGS = 0 (see global toggles above).
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s  %(levelname)-8s  %(message)s",
-    datefmt="%H:%M:%S",
-)
+_LOG_COLOR_ENABLED = COLOR_LOGS and sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+
+# 256-color ANSI codes — bright/saturated hues that stay readable on a dark
+# terminal background. Supports up to 20 APs before colours repeat.
+_AP_COLOR_PALETTE = [
+    "\033[38;5;39m",   # blue
+    "\033[38;5;208m",  # orange
+    "\033[38;5;82m",   # green
+    "\033[38;5;213m",  # pink
+    "\033[38;5;226m",  # yellow
+    "\033[38;5;51m",   # cyan
+    "\033[38;5;203m",  # salmon/red
+    "\033[38;5;141m",  # purple
+    "\033[38;5;214m",  # amber
+    "\033[38;5;120m",  # light green
+    "\033[38;5;75m",   # light blue
+    "\033[38;5;219m",  # light pink
+    "\033[38;5;190m",  # lime
+    "\033[38;5;201m",  # magenta
+    "\033[38;5;87m",   # aqua
+    "\033[38;5;215m",  # peach
+    "\033[38;5;159m",  # pale cyan
+    "\033[38;5;183m",  # lavender
+    "\033[38;5;228m",  # pale yellow
+    "\033[38;5;111m",  # periwinkle
+]
+_LOG_RESET = "\033[0m"
+
+# Assigned in AP_CONFIG's (insertion-ordered) key order, so a given AP keeps
+# the same colour across runs regardless of which APs are targeted via --ap.
+_AP_LOG_COLORS: dict[str, str] = {
+    ip: _AP_COLOR_PALETTE[i % len(_AP_COLOR_PALETTE)]
+    for i, ip in enumerate(AP_CONFIG)
+}
+
+_IP_BRACKET_RE = re.compile(r"\[(\d{1,3}(?:\.\d{1,3}){3})\]")
+
+
+class _PerApColorFormatter(logging.Formatter):
+    """Colours a log line by the AP IP found in its leading "[ip]" prefix (if
+    any). Lines with no recognizable AP IP (general/global log lines) are left
+    uncoloured. No-ops entirely when _LOG_COLOR_ENABLED is False."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        line = super().format(record)
+        if not _LOG_COLOR_ENABLED:
+            return line
+        match = _IP_BRACKET_RE.search(record.getMessage())
+        color = _AP_LOG_COLORS.get(match.group(1)) if match else None
+        return f"{color}{line}{_LOG_RESET}" if color else line
+
+
+_log_handler = logging.StreamHandler()
+_log_handler.setFormatter(_PerApColorFormatter(
+    fmt="%(asctime)s  %(levelname)-8s  %(message)s", datefmt="%H:%M:%S"))
+logging.basicConfig(level=logging.INFO, handlers=[_log_handler])
 log = logging.getLogger("traffic_config")
 
 # --- HTTP session (shared) ----------------------------------------------------

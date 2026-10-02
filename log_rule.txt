@@ -140,7 +140,100 @@ single compact line per AP instead of one line per value:
     log.info("[%s] %s via %s", ip, radioBreakdown, ap_url[ip])
     # -> [10.86.204.227] 2.4G=28v/28f/28c/IPv4/hostname, 5G=28v/28f/28c/... via http://...
 
-7. Do NOT
+7. Per-AP log colorization (optional, for concurrent multi-AP scripts)
+-------------------------------------------------------
+When a script pushes to multiple APs CONCURRENTLY colorize each AP's lines by
+a color assigned to that specific host, so you can visually track one AP's
+output as it threads through the interleaved stream. Implemented once in
+qwrap-traffic-75-25.py — copy this pattern (not a shared import, see Do NOT).
+
+a) Global toggle (next to other global booleans like SEND_HEARTBEAT):
+
+    # 1 -> colorize log output (still auto-disabled when stdout isn't a TTY,
+    #      e.g. piped to a file, or when NO_COLOR env var is set)
+    # 0 -> never colorize, even on a terminal (plain text always)
+    COLOR_LOGS = 1
+
+b) Palette + assignment (near the logging.basicConfig setup): a fixed list
+   of ANSI 256-color codes chosen to stay readable on a DARK terminal
+   background (bright/saturated hues — blues, oranges, greens, pinks,
+   cyans, etc. — avoid dark/dim colors that wash out). Size the palette to
+   comfortably cover the max number of hosts you expect (20 was enough for
+   qwrap-traffic-75-25.py); colors cycle via modulo past that.
+
+   Assign colors by iterating the host/AP config dict's key order (NOT by
+   IP/subnet) — this is what makes mixed subnets (10.85.x, 10.86.x,
+   10.87.x, etc., in any proportion) each still get one distinct color as
+   long as total hosts <= palette size:
+
+    _LOG_COLOR_ENABLED = COLOR_LOGS and sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+
+    _AP_COLOR_PALETTE = [
+    "\033[38;5;39m",   # blue
+    "\033[38;5;208m",  # orange
+    "\033[38;5;82m",   # green
+    "\033[38;5;213m",  # pink
+    "\033[38;5;226m",  # yellow
+    "\033[38;5;51m",   # cyan
+    "\033[38;5;203m",  # salmon/red
+    "\033[38;5;141m",  # purple
+    "\033[38;5;214m",  # amber
+    "\033[38;5;120m",  # light green
+    "\033[38;5;75m",   # light blue
+    "\033[38;5;219m",  # light pink
+    "\033[38;5;190m",  # lime
+    "\033[38;5;201m",  # magenta
+    "\033[38;5;87m",   # aqua
+    "\033[38;5;215m",  # peach
+    "\033[38;5;159m",  # pale cyan
+    "\033[38;5;183m",  # lavender
+    "\033[38;5;228m",  # pale yellow
+    "\033[38;5;111m",  # periwinkle
+        # ... extend to cover expected max host count
+    ]
+    _LOG_RESET = "\033[0m"
+
+    _AP_LOG_COLORS = {
+        ip: _AP_COLOR_PALETTE[i % len(_AP_COLOR_PALETTE)]
+        for i, ip in enumerate(AP_CONFIG)   # insertion order of the config dict
+    }
+
+c) Formatter: wrap the WHOLE log line in the color for whichever host IP
+   appears in that line's "[ip]" bracket prefix (per section 2's tagging
+   convention). Lines with no bracketed IP (global/setup lines — discovery,
+   endpoint pool sizes, "Targeting N AP(s)", etc.) are left uncolored, not
+   guessed at:
+
+    _IP_BRACKET_RE = re.compile(r"\[(\d{1,3}(?:\.\d{1,3}){3})\]")
+
+    class _PerApColorFormatter(logging.Formatter):
+        def format(self, record):
+            line = super().format(record)
+            if not _LOG_COLOR_ENABLED:
+                return line
+            match = _IP_BRACKET_RE.search(record.getMessage())
+            color = _AP_LOG_COLORS.get(match.group(1)) if match else None
+            return f"{color}{line}{_LOG_RESET}" if color else line
+
+    _log_handler = logging.StreamHandler()
+    _log_handler.setFormatter(_PerApColorFormatter(
+        fmt='%(asctime)s  %(levelname)-9s%(message)s', datefmt='%H:%M:%S'))
+    logging.basicConfig(level=logging.INFO, handlers=[_log_handler])
+    log = logging.getLogger('<script-name>')
+
+Rules:
+  - A given host/AP must ALWAYS get the same color across runs regardless of
+    which subset is targeted (e.g. via an --ap filter) — color comes from
+    its position in the config dict, not from the filtered/resolved subset.
+  - Only color lines that already follow section 2's "[host] ..." tagging
+    convention — don't invent a separate tagging scheme just for color.
+  - Must auto-disable (plain text, no escape codes) when stdout isn't a TTY
+    or when NO_COLOR is set, so redirected/piped output and log files never
+    contain raw ANSI escape codes.
+  - Keep this an explicit opt-out via COLOR_LOGS (default 1), consistent
+    with how other global behavior toggles in the script work.
+
+8. Do NOT
 -------------------------------------------------------
   - Don't change the base logging.basicConfig format (timestamp/level style)
     per-script — keep it identical everywhere.
@@ -150,3 +243,5 @@ single compact line per AP instead of one line per value:
     or to concurrent multi-AP scripts (see section 3).
   - Don't use print() for anything that should be filterable/greppable by
     level or host — that always goes through log.
+  - Don't hardcode colors by subnet/IP pattern — always assign by config
+    dict iteration order so mixed subnets still each get a distinct color.
