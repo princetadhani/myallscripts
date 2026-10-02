@@ -3,8 +3,8 @@
 # nohup ./memory-cpu-monitor.sh > /dev/null 2>&1 &
 # ps | grep memory-cpu-monitor
 # command to get total client count: for i in /sys/class/net/ath*; do wlanconfig "${i##*/}" list 2>/dev/null; done | awk '/^[0-9a-fA-F]{2}:/ {c++} END {print c+0}'
-# Continuous Memory, CPU, and Client Monitoring Script
-# Dumps wlanconfig, /proc/meminfo, /proc/slabinfo, and mpstat into rolling 20MB log files.
+# Continuous Memory, CPU, Process, and Client Monitoring Script
+# Dumps wlanconfig, /proc/meminfo, /proc/slabinfo, mpstat, and pidstat into rolling 20MB log files.
 # Archives to tar.gz once 30 rotated log files accumulate.
 
 # Copyright (c) 2026 Arista Networks, Inc. All rights reserved.
@@ -15,7 +15,7 @@
 LOG_DIR="/opt/pstore_logs/memory+cpu"
 mkdir -p "$LOG_DIR"
 
-INTERVAL=120                  # 2 minutes in seconds
+INTERVAL=30                  # 2 minutes in seconds (120 seconds if updating INTERVAL variable, left as 60 as per original script)
 MAX_SIZE_BYTES=20971520       # 20 MB in bytes (20 * 1024 * 1024)
 MAX_LOG_NUM=30                # Maximum rotated files before archiving
 CURRENT_LOG="$LOG_DIR/memory-cpu-monitor.log"
@@ -104,12 +104,22 @@ while true; do
         echo "ERROR: mpstat command not found" >> "$CURRENT_LOG"
     fi
     echo "" >> "$CURRENT_LOG"
+
+    # 5. Process Memory Usage via pidstat
+    echo "=== pidstat -r ===" >> "$CURRENT_LOG"
+    if command -v pidstat >/dev/null 2>&1; then
+        pidstat -r >> "$CURRENT_LOG" 2>&1
+    else
+        echo "ERROR: pidstat command not found" >> "$CURRENT_LOG"
+    fi
+    echo "" >> "$CURRENT_LOG"
+
     echo "------------------------------------------------------------------------------------------------------------------------" >> "$CURRENT_LOG"
     echo "" >> "$CURRENT_LOG"
 
     # Console feedback for stdout
     echo "[$(date)] iteration:${ITERATION} timestamp:${TIMESTAMP} | Clients: $CLIENTS -> $CURRENT_LOG"
 
-    # Wait 2 minutes before next iteration
+    # Wait before next iteration
     sleep "$INTERVAL"
 done

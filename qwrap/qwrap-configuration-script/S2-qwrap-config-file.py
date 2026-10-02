@@ -1,11 +1,11 @@
 """
 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
 
 
 QWRAP AP configuration file.
@@ -73,16 +73,16 @@ AP_LIST = [
                 "ssid":             "S2-Agni-Office",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
                 "keyMgmt":          "WPA-EAP-SUITE-B-192",
                 "ieee80211w":       "required",
                 "groupCipher":      "GCMP-256",
                 "pairwiseCipher":   "GCMP-256",
                 "clients": {
-                    "count":          26,
-                    "hostnamePrefix": "CN-3028",
+                    "count":          28,
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -91,16 +91,16 @@ AP_LIST = [
                 "ssid":             "S2-Agni-Office",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3027@qwrap.com/ca.pem",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3027@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3027@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3027@qwrap.com/ca.pem",
                 "keyMgmt":          "WPA-EAP-SUITE-B-192",
                 "ieee80211w":       "required",
                 "groupCipher":      "GCMP-256",
                 "pairwiseCipher":   "GCMP-256",
                  "clients": {
                     "count":          28,
-                    "hostnamePrefix": "CN-3027",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -109,16 +109,16 @@ AP_LIST = [
                 "ssid":             "S2-Agni-Office",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
                 "keyMgmt":          "WPA-EAP-SUITE-B-192",
                 "ieee80211w":       "required",
                 "groupCipher":      "GCMP-256",
                 "pairwiseCipher":   "GCMP-256",
                 "clients": {
-                    "count":          26,
-                    "hostnamePrefix": "CN-3028",
+                    "count":          28,
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -138,7 +138,7 @@ AP_LIST = [
                 "password":         "S2-Dynamic-Vlan-ssid-vlan-with-bw",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "S2-Dynamic-Vlan-ssid-vlan-with-bw",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -153,7 +153,7 @@ AP_LIST = [
                 "ieee80211w":       "required",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "Dynamic-Vlan-3038",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -168,7 +168,7 @@ AP_LIST = [
                 "ieee80211w":       "required",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "Dynamic-Vlan-3080",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },

@@ -14,11 +14,11 @@ Usage:
   python3 qwrap-traffic-config-dynamic-input.py [--ap HOST[,HOST...]] [--dry-run] [--debug]
 
 
-py /Users/prince.tadhani/myallscripts/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
 
-py /Users/prince.tadhani/myallscripts/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.86.205.82,10.86.205.240,10.86.205.157,10.86.205.90,10.86.205.88,10.86.205.49
 
-py /Users/prince.tadhani/myallscripts/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-traffic/qwrap-traffic-config-dynamic-input.py --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243
 """
 
 import argparse

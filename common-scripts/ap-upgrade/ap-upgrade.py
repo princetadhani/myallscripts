@@ -12,18 +12,18 @@ if given. --ap accepts ANY host/IP (no dependency on AP_LIST — an AP does
 not need to be present in AP_LIST to be targeted via --ap).
 
 Usage:
-  ./ap-upgrade.py --ap 10.86.58.139 --url http://10.86.34.204/wifiagent/content/22.3.0F-12-KASAN/
-  ./ap-upgrade.py --ap 10.86.58.139,10.86.58.140 --url <base_url> --debug
+  python3 /Users/prince.tadhani/myallscripts/common-scripts/ap-upgrade/ap-upgrade.py --ap 10.86.58.139 --url http://10.86.34.204/wifiagent/content/22.3.0F-12-KASAN/
+  python3 /Users/prince.tadhani/myallscripts/common-scripts/ap-upgrade/ap-upgrade.py --ap 10.86.58.139,10.86.58.140 --url <base_url> --debug
 
   # Jenkins mode: instead of --url, pass --jenkins and paste the per-platform
   # Jenkins build URLs (one per line) when prompted, then press Ctrl+D. Each
   # AP is matched to the URL whose trailing platform tag (e.g. _c330, _c360_2,
   # _o405, _w318) matches its detected model/sub ID.
-  ./ap-upgrade.py --ap 10.86.58.139 --jenkins
+  python3 /Users/prince.tadhani/myallscripts/common-scripts/ap-upgrade/ap-upgrade.py --ap 10.86.58.139 --jenkins
 
 # Open a real terminal (avoids VS Code's paste corruption bug) for --jenkins pasting:
 
-osascript -e 'tell application "iTerm2" to create window with default profile' -e 'tell application "iTerm2" to tell current session of current window to write text "cd /Users/prince.tadhani/myallscripts/ap-upgrade"'
+osascript -e 'tell application "iTerm2" to create window with default profile' -e 'tell application "iTerm2" to tell current session of current window to write text "cd /Users/prince.tadhani/myallscripts/common-scripts/ap-upgrade"'
 
 Author:  Prince Tadhani
 '''

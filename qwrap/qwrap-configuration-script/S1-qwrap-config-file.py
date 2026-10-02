@@ -1,11 +1,11 @@
 """
 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.86.205.122,10.86.204.204,10.86.205.60,10.86.205.223,10.86.204.227,10.86.205.165
 
 QWRAP AP configuration file.
 
@@ -71,9 +71,9 @@ AP_LIST = [
                 "ssid":             "S1-Agni-Corp",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3003@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3003@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3003@qwrap.com/ca.pem",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/ca.pem",
                 "keyMgmt":          "FT-EAP",
                 "ieee80211w":       "required",
                 "groupCipher":      "CCMP",
@@ -89,9 +89,9 @@ AP_LIST = [
                 "ssid":             "S1-Agni-Corp",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
                 "keyMgmt":          "FT-EAP",
                 "ieee80211w":       "required",
                 "groupCipher":      "CCMP",
@@ -107,9 +107,9 @@ AP_LIST = [
                 "ssid":             "S1-Agni-Corp",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
                 "keyMgmt":          "FT-EAP",
                 "ieee80211w":       "required",
                 "groupCipher":      "CCMP",

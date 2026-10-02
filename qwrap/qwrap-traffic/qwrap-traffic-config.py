@@ -12,7 +12,7 @@ RADIO_6G_CLIENTS constants below — each 0..28 — which expand into
 veth_in_<radio>_<index> interfaces (radio 0 = 2.4G, 1 = 5G, 2 = 6G).
 
 Usage:
-  python3 QwrapApTrafficConfigure.py [--dry-run] [--ap HOST[,HOST...]] [--debug]
+  python3 /Users/prince.tadhani/myallscripts/qwrap/qwrap-traffic/qwrap-traffic-config.py [--dry-run] [--ap HOST[,HOST...]] [--debug]
 """
 
 import argparse

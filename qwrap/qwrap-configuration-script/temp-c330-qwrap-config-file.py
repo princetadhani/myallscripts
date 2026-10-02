@@ -1,12 +1,4 @@
 """
-
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-
 QWRAP AP configuration file.
 
 Edit AP_LIST below. Each entry is one standalone QWRAP AP with up to 3 radios
@@ -70,93 +62,61 @@ DEFAULT_CLI_PASSWORD = "arastra"
 # whole string with just the option you want (e.g. "security": "wpa3"). Fields
 # left as "" (ssid, passphrase, username, password, bssid, cert paths) are
 # free-text - fill in your own value.
-"""
 
+#########################################################################################################################################
+#                                             Define the AP's here which need to configure                                              #
+#########################################################################################################################################
+AP_LIST = [
+    
     {
-        "host": "",
+        "host": "10.86.204.202",
         "radios": {
             0: {  # 2.4ghz
-                "ssid":             "",
-                "security":         "open | owe | wpa2 | wpa2-dot1x | wpa3 | wpa3-dot1x",
-                "passphrase":       "",
-                "eapType":          "peap | tls",
-                "username":         "",
-                "password":         "",
-                "digitalCertPath":  "",
-                "privateKeyPath":   "",
-                "serverCaCertPath": "",
-                "keyMgmt":          "WPA-EAP | WPA-EAP-SHA256 | FT-EAP | WPA-EAP-SUITE-B-192",
-                "bssid":            "",
-                "ieee80211w":       "disabled | optional | required",
-                "groupCipher":      "GCMP-256 | CCMP",
-                "pairwiseCipher":   "GCMP-256 | CCMP",
-                "portalType":       "internal",
-                "protocol":         "N | VHT | HE | EHT",
-                "channelWidth":     "20 | 40 | 80 | 160 | 320",
+                "ssid":             "S1-Agni-Corp",
+                "security":         "wpa3-dot1x",
+                "eapType":          "tls",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/ca.pem",
                 "clients": {
-                    "count":          0,
+                    "count":          28,
                     "hostnamePrefix": "",
-                    "ipv4":           0,
+                    "ipv4":           1,
                     "ipv6":           0,
                 },
             },
             1: {  # 5ghz
-                "ssid":             "",
-                "security":         "open | owe | wpa2 | wpa2-dot1x | wpa3 | wpa3-dot1x",
-                "passphrase":       "",
-                "eapType":          "peap | tls",
-                "username":         "",
-                "password":         "",
-                "digitalCertPath":  "",
-                "privateKeyPath":   "",
-                "serverCaCertPath": "",
-                "keyMgmt":          "WPA-EAP | WPA-EAP-SHA256 | FT-EAP | WPA-EAP-SUITE-B-192",
-                "bssid":            "",
-                "ieee80211w":       "disabled | optional | required",
-                "groupCipher":      "GCMP-256 | CCMP",
-                "pairwiseCipher":   "GCMP-256 | CCMP",
-                "portalType":       "internal",
-                "protocol":         "N | VHT | HE | EHT",
-                "channelWidth":     "20 | 40 | 80 | 160 | 320",
+                "ssid":             "S1-Agni-Corp",
+                "security":         "wpa3-dot1x",
+                "eapType":          "tls",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/ca.pem",
                 "clients": {
-                    "count":          0,
+                    "count":          28,
                     "hostnamePrefix": "",
-                    "ipv4":           0,
+                    "ipv4":           1,
                     "ipv6":           0,
                 },
             },
             2: {  # 6ghz
-                "ssid":             "",
-                "security":         "open | owe | wpa2 | wpa2-dot1x | wpa3 | wpa3-dot1x",
-                "passphrase":       "",
-                "eapType":          "peap | tls",
-                "username":         "",
-                "password":         "",
-                "digitalCertPath":  "",
-                "privateKeyPath":   "",
-                "serverCaCertPath": "",
-                "keyMgmt":          "WPA-EAP | WPA-EAP-SHA256 | FT-EAP | WPA-EAP-SUITE-B-192",
-                "bssid":            "",
-                "ieee80211w":       "disabled | optional | required",
-                "groupCipher":      "GCMP-256 | CCMP",
-                "pairwiseCipher":   "GCMP-256 | CCMP",
-                "portalType":       "internal",
-                "protocol":         "N | VHT | HE | EHT",
-                "channelWidth":     "20 | 40 | 80 | 160 | 320",
+                "ssid":             "S1-Agni-Corp",
+                "security":         "wpa3-dot1x",
+                "eapType":          "tls",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
                 "clients": {
-                    "count":          0,
+                    "count":          28,
                     "hostnamePrefix": "",
-                    "ipv4":           0,
+                    "ipv4":           1,
                     "ipv6":           0,
                 },
             },
         },
     },
 
-"""
-#########################################################################################################################################
-#                                             Define the AP's here which need to configure                                              #
-#########################################################################################################################################
-AP_LIST = [
+
+
     
 ]

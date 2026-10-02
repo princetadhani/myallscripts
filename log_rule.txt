@@ -247,3 +247,26 @@ Rules:
     level or host — that always goes through log.
   - Don't hardcode colors by subnet/IP pattern — always assign by config
     dict iteration order so mixed subnets still each get a distinct color.
+
+
+
+qwrap
+ - /Users/prince.tadhani/myallscripts/qwrap-certs
+ - /Users/prince.tadhani/myallscripts/qwrap-configuration-script
+ - /Users/prince.tadhani/myallscripts/qwrap-traffic
+ - /Users/prince.tadhani/myallscripts/wifiagent-scripts
+ - /Users/prince.tadhani/myallscripts/allqwrapaplogin.py
+ - /Users/prince.tadhani/myallscripts/s1-qwrap-ap-login.py
+ - /Users/prince.tadhani/myallscripts/s2-qwrap-ap-login.py
+ - /Users/prince.tadhani/myallscripts/s3-qwrap-ap-login.py
+
+ap
+ - /Users/prince.tadhani/myallscripts/afc-configure-6ghz-outdoor
+ - /Users/prince.tadhani/myallscripts/kasan-kmem
+ - /Users/prince.tadhani/myallscripts/kickmac
+ - /Users/prince.tadhani/myallscripts/memory-cpu-monitor
+
+common-scripts
+ - /Users/prince.tadhani/myallscripts/ramdump-list-fetch-from-tftp-server
+ - /Users/prince.tadhani/myallscripts/ap-upgrade
+

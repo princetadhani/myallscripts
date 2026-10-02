@@ -16,9 +16,9 @@ not need to be present in AP_LIST to be targeted via --ap).
 * All APs are processed concurrently (ThreadPoolExecutor).
 
 usage:
-  python3 afc-configure.py (It will use AP_LIST of present in .py file)
-  python3 afc-configure.py --ap 10.86.205.157
-  python3 afc-configure.py --ap 10.86.205.157,10.86.205.158
+  python3 /Users/prince.tadhani/myallscripts/ap/afc-configure-6ghz-outdoor/afc-configure.py  (It will use AP_LIST of present in .py file)
+  python3 /Users/prince.tadhani/myallscripts/ap/afc-configure-6ghz-outdoor/afc-configure.py --ap 10.86.205.157
+  python3 /Users/prince.tadhani/myallscripts/ap/afc-configure-6ghz-outdoor/afc-configure.py --ap 10.86.205.157,10.86.205.158
 '''
 
 import argparse
