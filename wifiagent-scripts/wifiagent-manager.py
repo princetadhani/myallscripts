@@ -44,6 +44,8 @@ py wifiagent-manager.py --action status --ap 10.87.169.175,10.87.169.130,10.87.1
 import argparse
 import json
 import logging
+import os
+import re
 import sys
 import textwrap
 import threading
@@ -59,11 +61,24 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _print_lock  = threading.Lock()
 
+# ---------------------------------------------------------------------------
+# Per-AP log/print colorization (see log_rule.txt section 7). Colorizes any
+# log/print line tagged "[ip] ..." so interleaved concurrent-run output from
+# different APs is easy to tell apart. Assigned by AP_IPS list order (not by
+# IP/subnet), so mixed 10.86.x/10.87.x/etc. hosts each still get one distinct
+# color as long as total hosts <= palette size. Auto-disabled when stdout
+# isn't a TTY (e.g. piped to a file) or when NO_COLOR is set.
+# ---------------------------------------------------------------------------
+# 1 -> colorize log/print output (still auto-disabled when stdout isn't a
+#      TTY, e.g. piped to a file, or when NO_COLOR env var is set)
+# 0 -> never colorize, even on a terminal (plain text always)
+COLOR_LOGS = 1
+
 
 def _print(msg=''):
     '''Thread-safe print so parallel AP output does not interleave.'''
     with _print_lock:
-        print(msg)
+        print(_colorize(msg))
 
 # ---------------------------------------------------------------------------
 # AP IP List  –  edit this list to target different APs
@@ -92,6 +107,62 @@ AP_IPS: list[str] = [
 '10.87.169.112',
 '10.87.169.243'
 ]
+
+_LOG_COLOR_ENABLED = COLOR_LOGS and sys.stdout.isatty() and os.environ.get('NO_COLOR') is None
+
+# 256-color ANSI codes — bright/saturated hues that stay readable on a dark
+# terminal background. Supports up to 20 APs before colours repeat.
+_AP_COLOR_PALETTE = [
+    '\033[38;5;208m',  # orange
+    '\033[38;5;34m',   # green
+    '\033[38;5;226m',  # yellow
+    '\033[38;5;27m',   # blue
+    '\033[38;5;201m',  # magenta
+    '\033[38;5;51m',   # cyan
+    '\033[38;5;118m',  # lime
+    '\033[38;5;218m',  # pink
+    '\033[38;5;130m',  # brown
+    '\033[38;5;100m',  # olive
+    '\033[38;5;215m',  # apricot
+    '\033[38;5;25m',   # navy
+    '\033[38;5;54m',   # indigo
+    '\033[38;5;178m',  # gold
+    '\033[38;5;39m',   # sky blue
+    '\033[38;5;80m',   # turquoise
+    '\033[38;5;93m',   # purple
+    '\033[38;5;30m',   # teal
+    '\033[38;5;183m',  # lavender
+    '\033[38;5;121m',  # mint
+]
+_LOG_RESET = '\033[0m'
+
+# Assigned in AP_IPS order, so a given AP keeps the same colour across runs
+# regardless of which subset is targeted via --ap.
+_AP_LOG_COLORS: dict[str, str] = {
+    ip: _AP_COLOR_PALETTE[i % len(_AP_COLOR_PALETTE)]
+    for i, ip in enumerate(AP_IPS)
+}
+
+_IP_BRACKET_RE = re.compile(r'\[(\d{1,3}(?:\.\d{1,3}){3})\]')
+
+
+def _colorize(msg: str) -> str:
+    '''Colour msg by the AP IP found in its leading "[ip]" tag (if any and if
+    that IP is known/coloured). Returns msg unchanged otherwise.'''
+    if not _LOG_COLOR_ENABLED:
+        return msg
+    match = _IP_BRACKET_RE.search(msg)
+    color = _AP_LOG_COLORS.get(match.group(1)) if match else None
+    return f'{color}{msg}{_LOG_RESET}' if color else msg
+
+
+class _PerApColorFormatter(logging.Formatter):
+    '''Colours a log line by the AP IP found in its leading "[ip]" prefix (if
+    any). Lines with no recognizable/known AP IP are left uncoloured.'''
+
+    def format(self, record: logging.LogRecord) -> str:
+        line = super().format(record)
+        return _colorize(line) if _LOG_COLOR_ENABLED else line
 # ---------------------------------------------------------------------------
 # Wifi OTP signing endpoint used by the arista-ssh-agent Response[...] challenge/
 # response prompt (same as SWAT's otpLib.getWifiOTP(), and qwrap-manager.py).
@@ -790,10 +861,11 @@ def main():
     )
     options = parser.parse_args()
 
+    _logHandler = logging.StreamHandler(sys.stdout)
+    _logHandler.setFormatter(_PerApColorFormatter('%(asctime)s %(levelname)s %(message)s'))
     logging.basicConfig(
         level=getattr(logging, options.logLevel.upper(), logging.WARNING),
-        format='%(asctime)s %(levelname)s %(message)s',
-        stream=sys.stdout,
+        handlers=[_logHandler],
     )
 
     # Resolve target AP list (comma-separated: --ap ip1,ip2,...)

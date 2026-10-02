@@ -120,27 +120,19 @@ AP_CONFIG: dict[str, dict] = {
      "10.86.205.223": {
         "idle_percent": 70,
         "bands": {
-            0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
             1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
         },
     },
     "10.86.204.227": {
         "idle_percent": 70,
         "bands": {
-            0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
-            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
+            0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
         },
-    },   
-    "10.87.1.23": {
-        "idle_percent": 70,
-        "bands": {
-            0: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
-            1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "ip"},
-        },
-    },   
+    },     
 }
 
 MAX_VETH_PER_RADIO = 28
@@ -259,26 +251,26 @@ _LOG_COLOR_ENABLED = COLOR_LOGS and sys.stdout.isatty() and os.environ.get("NO_C
 # 256-color ANSI codes — bright/saturated hues that stay readable on a dark
 # terminal background. Supports up to 20 APs before colours repeat.
 _AP_COLOR_PALETTE = [
-    "\033[38;5;39m",   # blue
     "\033[38;5;208m",  # orange
-    "\033[38;5;82m",   # green
-    "\033[38;5;213m",  # pink
+    "\033[38;5;34m",   # green
     "\033[38;5;226m",  # yellow
-    "\033[38;5;51m",   # cyan
-    "\033[38;5;203m",  # salmon/red
-    "\033[38;5;141m",  # purple
-    "\033[38;5;214m",  # amber
-    "\033[38;5;120m",  # light green
-    "\033[38;5;75m",   # light blue
-    "\033[38;5;219m",  # light pink
-    "\033[38;5;190m",  # lime
+    "\033[38;5;27m",   # blue
     "\033[38;5;201m",  # magenta
-    "\033[38;5;87m",   # aqua
-    "\033[38;5;215m",  # peach
-    "\033[38;5;159m",  # pale cyan
+    "\033[38;5;51m",   # cyan
+    "\033[38;5;118m",  # lime
+    "\033[38;5;218m",  # pink
+    "\033[38;5;130m",  # brown
+    "\033[38;5;100m",  # olive
+    "\033[38;5;215m",  # apricot
+    "\033[38;5;25m",   # navy
+    "\033[38;5;54m",   # indigo
+    "\033[38;5;178m",  # gold
+    "\033[38;5;39m",   # sky blue
+    "\033[38;5;80m",   # turquoise
+    "\033[38;5;93m",   # purple
+    "\033[38;5;30m",   # teal
     "\033[38;5;183m",  # lavender
-    "\033[38;5;228m",  # pale yellow
-    "\033[38;5;111m",  # periwinkle
+    "\033[38;5;121m",  # mint
 ]
 _LOG_RESET = "\033[0m"
 

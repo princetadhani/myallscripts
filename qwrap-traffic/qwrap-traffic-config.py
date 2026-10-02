@@ -18,7 +18,9 @@ Usage:
 import argparse
 import json
 import logging
+import os
 import random
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -28,6 +30,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# --- Per-AP log colorization (see log_rule.txt section 7) ---
+COLOR_LOGS = 1
 
 # ─── AP inventory ─────────────────────────────────────────────────────────────
 
@@ -102,12 +107,63 @@ CLIENT_IVALS = [180, 300, 450, 600, 750]         # seconds  (must be > 60;  size
 CONN_IVALS   = [0, 30, 60, 120, 300]             # seconds  (keep-alive after transfer; 0 = close immediately)
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
+# Per-AP log colorization: colours each log line by the AP IP found in its
+# leading "[ip]" tag, so interleaved output from concurrent AP pushes is
+# easy to tell apart at a glance. Colours are assigned in AP_IPS order, so
+# a given AP keeps the same colour across runs. Auto-disables when stdout
+# isn't a TTY, when NO_COLOR is set, or when COLOR_LOGS = 0 above.
+_LOG_COLOR_ENABLED = COLOR_LOGS and sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s  %(levelname)-8s  %(message)s",
-    datefmt="%H:%M:%S",
-)
+_AP_COLOR_PALETTE = [
+    "\033[38;5;208m",  # orange
+    "\033[38;5;34m",   # green
+    "\033[38;5;226m",  # yellow
+    "\033[38;5;27m",   # blue
+    "\033[38;5;201m",  # magenta
+    "\033[38;5;51m",   # cyan
+    "\033[38;5;118m",  # lime
+    "\033[38;5;218m",  # pink
+    "\033[38;5;130m",  # brown
+    "\033[38;5;100m",  # olive
+    "\033[38;5;215m",  # apricot
+    "\033[38;5;25m",   # navy
+    "\033[38;5;54m",   # indigo
+    "\033[38;5;178m",  # gold
+    "\033[38;5;39m",   # sky blue
+    "\033[38;5;80m",   # turquoise
+    "\033[38;5;93m",   # purple
+    "\033[38;5;30m",   # teal
+    "\033[38;5;183m",  # lavender
+    "\033[38;5;121m",  # mint
+]
+_LOG_RESET = "\033[0m"
+
+_AP_LOG_COLORS: dict[str, str] = {
+    ip: _AP_COLOR_PALETTE[i % len(_AP_COLOR_PALETTE)]
+    for i, ip in enumerate(AP_IPS)
+}
+
+_IP_BRACKET_RE = re.compile(r"\[(\d{1,3}(?:\.\d{1,3}){3})\]")
+
+
+class _PerApColorFormatter(logging.Formatter):
+    """Colours a log line by the AP IP found in its leading "[ip]" prefix (if
+    any). Lines with no recognizable AP IP (general/global log lines) are left
+    uncoloured. No-ops entirely when _LOG_COLOR_ENABLED is False."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        line = super().format(record)
+        if not _LOG_COLOR_ENABLED:
+            return line
+        match = _IP_BRACKET_RE.search(record.getMessage())
+        color = _AP_LOG_COLORS.get(match.group(1)) if match else None
+        return f"{color}{line}{_LOG_RESET}" if color else line
+
+
+_log_handler = logging.StreamHandler()
+_log_handler.setFormatter(_PerApColorFormatter(
+    fmt="%(asctime)s  %(levelname)-8s  %(message)s", datefmt="%H:%M:%S"))
+logging.basicConfig(level=logging.INFO, handlers=[_log_handler])
 log = logging.getLogger("traffic_config")
 
 # ─── HTTP session (shared) ────────────────────────────────────────────────────
