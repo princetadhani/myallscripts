@@ -1,0 +1,7 @@
+qwrap configure radios 0 security wpa3-dot1x ssid "S1-Agni-Corp" eap-type tls username "qwrapAP3003@qwrap.com" ca-cert "/root/qwrapAP3003@qwrap.com/ca.pem" client-cert "/root/qwrapAP3003@qwrap.com/client.pem" private-key "/root/qwrapAP3003@qwrap.com/key.pem"
+qwrap client add radios 0 num 28 dhcp 1 hostname-prefix qwrapAP3003@qwrap.com
+qwrap configure radios 1 security wpa3-dot1x ssid "S1-Agni-Corp" eap-type tls username "radio5GhzqwrapAP3003@qwrap.com" ca-cert "/root/radio5GhzqwrapAP3003@qwrap.com/ca.pem" client-cert "/root/radio5GhzqwrapAP3003@qwrap.com/client.pem" private-key "/root/radio5GhzqwrapAP3003@qwrap.com/key.pem"
+qwrap client add radios 1 num 28 dhcp 1 hostname-prefix radio5GhzqwrapAP3003@qwrap.com
+qwrap configure radios 2 security wpa3-dot1x ssid "S1-Agni-Corp" eap-type tls username "qwrapAP3004@qwrap.com" ca-cert "/root/qwrapAP3004@qwrap.com/ca.pem" client-cert "/root/qwrapAP3004@qwrap.com/client.pem" private-key "/root/qwrapAP3004@qwrap.com/key.pem"
+qwrap client add radios 2 num 28 dhcp 1 hostname-prefix qwrapAP3004@qwrap.com
+

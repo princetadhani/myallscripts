@@ -51,7 +51,7 @@ Why the idle-hour heartbeat (SEND_HEARTBEAT) exists:
   fully silent idle hours.
 
 Usage:
-  python3 qwrap-traffic-75-25.py [--dry-run] [--ap HOST[,HOST...]] [--debug]
+  python3 /Users/prince.tadhani/myallscripts/qwrap/qwrap-traffic/qwrap-traffic-75-25.py [--dry-run] [--ap HOST[,HOST...]] [--debug]
 """
 
 import argparse

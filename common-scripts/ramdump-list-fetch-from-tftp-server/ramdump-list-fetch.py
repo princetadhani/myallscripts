@@ -14,10 +14,10 @@ if given. --ap accepts ANY MAC (no dependency on AP_LIST — an AP does
 not need to be present in AP_LIST to be targeted via --ap).
 
 Usage:
-  ./ramdump-list-fetch.py --ap E0:1C:A7:20:5D:3F
-  ./ramdump-list-fetch.py --ap E01CA7205D3F,30B62D00978F
-  ./ramdump-list-fetch.py --ap E01CA7205D3F --time "1 day"
-  ./ramdump-list-fetch.py --ap E01CA7205D3F --debug
+  python3 /Users/prince.tadhani/myallscripts/common-scripts/ramdump-list-fetch-from-tftp-server/ramdump-list-fetch.py --ap E0:1C:A7:20:5D:3F
+  python3 /Users/prince.tadhani/myallscripts/common-scripts/ramdump-list-fetch-from-tftp-server/ramdump-list-fetch.py --ap E01CA7205D3F,30B62D00978F
+  python3 /Users/prince.tadhani/myallscripts/common-scripts/ramdump-list-fetch-from-tftp-server/ramdump-list-fetch.py --ap E01CA7205D3F --time "1 day"
+  python3 /Users/prince.tadhani/myallscripts/common-scripts/ramdump-list-fetch-from-tftp-server/ramdump-list-fetch.py --ap E01CA7205D3F --debug
 '''
 
 import argparse

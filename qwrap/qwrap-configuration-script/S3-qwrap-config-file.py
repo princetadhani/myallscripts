@@ -1,11 +1,11 @@
 """
 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
-py /Users/prince.tadhani/myallscripts/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action configure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action configure --config-persist enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action deconfigure --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action config-persist-enable --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action save-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
+py /Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-manager.py --action apply-qwrap-config-yaml --ap 10.87.169.175,10.87.169.130,10.87.169.87,10.87.169.17,10.87.169.113,10.87.169.112,10.87.169.243 
 
 QWRAP AP configuration file.
 

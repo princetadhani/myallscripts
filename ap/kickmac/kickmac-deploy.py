@@ -22,10 +22,10 @@ not need to be present in AP_LIST to be targeted via --ap).
 * All APs are processed concurrently (ThreadPoolExecutor).
 
 usage:
-    python3 kickmac-deploy.py (It will use AP_LIST of present in .py file)
-    python3 kickmac-deploy.py --ap 10.86.205.157
-    python3 kickmac-deploy.py --ap 10.86.205.157,10.86.205.158
-    python3 kickmac-deploy.py --debug
+    python3 /Users/prince.tadhani/myallscripts/ap/kickmac/kickmac-deploy.py (It will use AP_LIST of present in .py file)
+    python3 /Users/prince.tadhani/myallscripts/ap/kickmac/kickmac-deploy.py --ap 10.86.205.157
+    python3 /Users/prince.tadhani/myallscripts/ap/kickmac/kickmac-deploy.py --ap 10.86.205.157,10.86.205.158
+    python3 /Users/prince.tadhani/myallscripts/ap/kickmac/kickmac-deploy.py --debug
 
 After the kickmac binary is SCP'd to the targeted AP(s), you will be prompted
 to enter the kickmac options to run on the AP(s) as a single line, e.g.:
