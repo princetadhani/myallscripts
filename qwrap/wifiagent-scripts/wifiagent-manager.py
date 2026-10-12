@@ -483,15 +483,13 @@ def _get_pid(conn, ip):
 def _start_binary(conn, ip):
     '''
     chmod + launch wifiagent in the background.
-    Captures any immediate stderr to help diagnose startup failures.
+    Discards stdout and stderr from the background process.
     Returns PID string on success, None otherwise.
     '''
     _print(f'[{ip}]  chmod +x {AP_BIN_PATH}')
     _run(conn, ip, f'chmod +x {AP_BIN_PATH}')
 
-    # Run with stderr captured to a temp file so we can show it on failure
-    errLog = '/tmp/wifiagent_start.log'
-    launchCmd = f'{AP_BIN_PATH} -conf {AP_CONF_PATH} > /dev/null 2>{errLog} &'
+    launchCmd = f'{AP_BIN_PATH} -conf {AP_CONF_PATH} > /dev/null 2>&1 &'
     _print(f'[{ip}]  {launchCmd}')
     _run(conn, ip, launchCmd, timeout=10)
 
@@ -506,15 +504,7 @@ def _start_binary(conn, ip):
             break
 
     if not pid:
-        # Show any error output the binary wrote before it died
-        errLines = _run(conn, ip, f'cat {errLog} 2>/dev/null || true')
-        if errLines:
-            _print(f'[{ip}]  -- binary stderr --')
-            for line in errLines:
-                _print(f'[{ip}]    {line}')
-            _print(f'[{ip}]  -- end stderr --')
-
-        # Also show what is actually running to aid diagnosis
+        # Show what is actually running to aid diagnosis.
         psLines = _run(conn, ip, 'ps | grep -v grep | grep -i wifi || echo "(no wifi process found)"')
         _print(f'[{ip}]  ps check: {" | ".join(psLines)}')
 
