@@ -9,8 +9,8 @@ Per active (non-idle) virtual-client interface:
   - fileop_count   FileOp sessions   : randomly sftp / ftp / tftp (from discovery endpoints)
 
 Additional features vs original:
-  - Configurable active/idle split via per-AP "idle_percent" in AP_CONFIG
-    (falls back to the global IDLE_PERCENT constant if omitted)
+  - Configurable active/idle split via per-AP "active_percent" in AP_CONFIG
+    (falls back to the global ACTIVE_PERCENT constant if omitted)
   - Per-AP, per-radio config dict (AP_CONFIG) specifying veth_count, fileop_count,
     clientop_count, ip_mode (IPv4/IPv6/Dual) and target_type (hostname/ip)
   - Dual-stack endpoint pools (v4 + v6) built from discovery API
@@ -83,8 +83,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #   ip_mode        : "IPv4" | "IPv6" | "Dual"
 #   target_type    : "hostname" | "ip"
 #
-# "idle_percent": , (optional, per-AP): % of this AP's virtual clients that stay
-# fully idle. Falls back to IDLE_PERCENT (below) if omitted.
+# "active_percent": , (optional, per-AP): % of this AP's virtual clients that are
+# active. Falls back to ACTIVE_PERCENT (below) if omitted.
 #
 # "schedule_group": , (optional, per-AP, int): which active-hour rotation
 # starting-point this AP uses. APs sharing the same schedule_group get
@@ -99,7 +99,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Copy from here and paste it:
 #
 #     "ap_ip": {
-#         "idle_percent": ,
+#         "active_percent": ,
 #         "schedule_group": ,
 #         "bands": {
 #             0: {"veth_count": , "fileop_count": , "clientop_count": , "ip_mode": "", "target_type": ""},
@@ -110,7 +110,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #
 AP_CONFIG: dict[str, dict] = {
     # "10.86.204.202": {
-    #     "idle_percent": 85,
+    #     "active_percent": 15,
     #     "bands": {
     #         0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
     #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -118,7 +118,7 @@ AP_CONFIG: dict[str, dict] = {
     #     },
     # },
     # "10.86.205.192": {
-    #     "idle_percent": 85,
+    #     "active_percent": 15,
     #     "bands": {
     #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
     #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -127,7 +127,7 @@ AP_CONFIG: dict[str, dict] = {
     # },
 
     # "10.86.204.243": {
-    #     "idle_percent": 85,
+    #     "active_percent": 15,
     #     "bands": {
     #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
     #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -136,7 +136,7 @@ AP_CONFIG: dict[str, dict] = {
     # },
 
     # "10.86.205.21": {
-    #     "idle_percent": 85,
+    #     "active_percent": 15,
     #     "bands": {
     #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
     #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -145,7 +145,7 @@ AP_CONFIG: dict[str, dict] = {
     # },
 
     # "10.86.205.147": {
-    #     "idle_percent": 85,
+    #     "active_percent": 15,
     #     "bands": {
     #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
     #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -154,7 +154,7 @@ AP_CONFIG: dict[str, dict] = {
     # },
 
     # "10.86.205.223": {
-    #     "idle_percent": 85,
+    #     "active_percent": 15,
     #     "bands": {
     #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
     #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -163,7 +163,7 @@ AP_CONFIG: dict[str, dict] = {
     # },
 
     # "10.86.204.227": {
-    #     "idle_percent": 85,
+    #     "active_percent": 15,
     #     "bands": {
     #         0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "ip"},
     #         1: {"veth_count": 28, "fileop_count": 4, "clientop_count": 4, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -173,7 +173,7 @@ AP_CONFIG: dict[str, dict] = {
 
 
     "10.86.205.82": {
-        "idle_percent": 90,
+        "active_percent": 13,
         "bands": {
             0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
             1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
@@ -181,7 +181,7 @@ AP_CONFIG: dict[str, dict] = {
         },
     },
     "10.86.205.240": {
-        "idle_percent": 90,
+        "active_percent": 10,
         "bands": {
             0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
             1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
@@ -190,7 +190,7 @@ AP_CONFIG: dict[str, dict] = {
     },
 
     "10.86.205.157": {
-        "idle_percent": 90,
+        "active_percent": 10,
         "bands": {
             0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
             1: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
@@ -199,7 +199,7 @@ AP_CONFIG: dict[str, dict] = {
     },
 
     "10.86.205.90": {
-        "idle_percent": 90,
+        "active_percent": 10,
         "bands": {
             0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
             1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
@@ -208,7 +208,7 @@ AP_CONFIG: dict[str, dict] = {
     },
 
     "10.86.205.88": {
-        "idle_percent": 90,
+        "active_percent": 10,
         "bands": {
             0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
             1: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
@@ -217,7 +217,7 @@ AP_CONFIG: dict[str, dict] = {
     },
 
     "10.86.205.49": {
-        "idle_percent": 90,
+        "active_percent": 10,
         "bands": {
             0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
             1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
@@ -244,11 +244,10 @@ TIMEOUT = 60
 # Per-AP veth/session counts now come from AP_CONFIG (see "bands" above) —
 # no global RADIO_*_CLIENTS constants needed.
 
-# Default percentage of virtual clients that are idle at any time (0-100),
-# used for any AP whose AP_CONFIG entry doesn't set its own "idle_percent".
-# The remainder (100 - idle_percent) are active. Idle clients are spread
-# evenly across the client list (e.g. idle_percent=25 idles every 4th client).
-IDLE_PERCENT = 25
+# Default percentage of virtual clients that are active at any time (0-100),
+# used for any AP whose AP_CONFIG entry doesn't set its own "active_percent".
+# Active clients are spread evenly across the client list.
+ACTIVE_PERCENT = 75
 
 # Number of HTTPS GET "browsing" sessions built per active (non-idle) client.
 BROWSING_SESSIONS_PER_CLIENT = 2
@@ -263,18 +262,12 @@ SEND_HEARTBEAT = 1
 # the next, on top of the existing hourly rotation:
 #   1 -> each client gets a DIFFERENT active-hour pattern per weekday (e.g.
 #        client-5 active at 1pm/4pm on Monday, but 2am/6am on Tuesday) while
-#        still keeping idle_percent% of clients idle at any given hour.
+#        still keeping active_percent% of clients active at any given hour.
 #   0 -> each client repeats the SAME active-hour pattern every day of the
 #        week (classic weekly-recurring schedule — Mon through Sun identical
 #        for a given client); only the hour-of-day rotation applies.
 SEND_DAYWISE_VARIATION = 0
 
-# Whether log lines are colored per-AP in the terminal (see _AP_COLOR_PALETTE
-# below for how colors are assigned):
-#   1 -> colorize log output (still auto-disabled when stdout isn't a TTY,
-#        e.g. piped to a file, or when NO_COLOR env var is set)
-#   0 -> never colorize, even on a terminal (plain text always)
-COLOR_LOGS = 1
 
 # --- Traffic pools ------------------------------------------------------------
 
@@ -287,10 +280,10 @@ CLIENT_IVALS = [180, 300, 450, 600, 750]
 CONN_IVALS   = [0, 30, 60, 120, 300]
 BROWSE_IVALS = [300, 450, 600, 900]
 
-# Daytime active hours (9 AM - 9 PM). The idle_percent split is applied PER HOUR
+# Daytime active hours (9 AM - 9 PM). The active_percent split is applied PER HOUR
 # and rotated round-robin across clients AND across days of the week (see
-# _client_hour_schedule below), so at any single hour idle_percent% of clients
-# are idle while the rest run full traffic — and which specific clients are
+# _client_hour_schedule below), so at any single hour active_percent% of clients
+# run full traffic while the rest are idle — and which specific clients are
 # idle/active changes every hour AND differs from one weekday to the next, so
 # every client gets a turn at full traffic over the course of the run.
 HOURS_BASE = list(range(0, 24))  # active window = 9AM-9PM; for 24hr run, use list(range(0, 24))
@@ -329,69 +322,12 @@ BROWSING_SITES = [
 ###############################################################################################################################################################################################
 # --- Logging --------------------------------------------------------------------
 #
-# Per-AP log colouring: every log line that starts with an AP IP prefix (e.g.
-# "[10.86.205.165] ...") gets coloured with a colour assigned to that IP, so
 # interleaved output from multiple APs (concurrent push) is easy to tell apart
-# at a glance. Colours are a fixed 20-entry palette (chosen to read clearly on
 # a dark-mode terminal background) assigned in AP_CONFIG order, so the same AP
-# always gets the same colour across runs. Falls back to plain/uncoloured
 # output automatically when stdout isn't a terminal (e.g. piped to a file),
-# when NO_COLOR is set, or when COLOR_LOGS = 0 (see global toggles above).
-
-_LOG_COLOR_ENABLED = COLOR_LOGS and sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
-
-# 256-color ANSI codes — bright/saturated hues that stay readable on a dark
-# terminal background. Supports up to 20 APs before colours repeat.
-_AP_COLOR_PALETTE = [
-    "\033[38;5;208m",  # orange
-    "\033[38;5;34m",   # green
-    "\033[38;5;226m",  # yellow
-    "\033[38;5;27m",   # blue
-    "\033[38;5;201m",  # magenta
-    "\033[38;5;51m",   # cyan
-    "\033[38;5;118m",  # lime
-    "\033[38;5;218m",  # pink
-    "\033[38;5;130m",  # brown
-    "\033[38;5;100m",  # olive
-    "\033[38;5;215m",  # apricot
-    "\033[38;5;25m",   # navy
-    "\033[38;5;54m",   # indigo
-    "\033[38;5;178m",  # gold
-    "\033[38;5;39m",   # sky blue
-    "\033[38;5;80m",   # turquoise
-    "\033[38;5;93m",   # purple
-    "\033[38;5;30m",   # teal
-    "\033[38;5;183m",  # lavender
-    "\033[38;5;121m",  # mint
-]
-_LOG_RESET = "\033[0m"
-
-# Assigned in AP_CONFIG's (insertion-ordered) key order, so a given AP keeps
-# the same colour across runs regardless of which APs are targeted via --ap.
-_AP_LOG_COLORS: dict[str, str] = {
-    ip: _AP_COLOR_PALETTE[i % len(_AP_COLOR_PALETTE)]
-    for i, ip in enumerate(AP_CONFIG)
-}
-
-_IP_BRACKET_RE = re.compile(r"\[(\d{1,3}(?:\.\d{1,3}){3})\]")
-
-
-class _PerApColorFormatter(logging.Formatter):
-    """Colours a log line by the AP IP found in its leading "[ip]" prefix (if
-    any). Lines with no recognizable AP IP (general/global log lines) are left
-    uncoloured. No-ops entirely when _LOG_COLOR_ENABLED is False."""
-
-    def format(self, record: logging.LogRecord) -> str:
-        line = super().format(record)
-        if not _LOG_COLOR_ENABLED:
-            return line
-        match = _IP_BRACKET_RE.search(record.getMessage())
-        color = _AP_LOG_COLORS.get(match.group(1)) if match else None
-        return f"{color}{line}{_LOG_RESET}" if color else line
-
 
 _log_handler = logging.StreamHandler()
-_log_handler.setFormatter(_PerApColorFormatter(
+_log_handler.setFormatter(logging.Formatter(
     fmt="%(asctime)s  %(levelname)-8s  %(message)s", datefmt="%H:%M:%S"))
 logging.basicConfig(level=logging.INFO, handlers=[_log_handler])
 log = logging.getLogger("traffic_config")
@@ -522,7 +458,7 @@ DAY_PHASE_STRIDE = 37
 # Stride (in client-index units) used to shift the rotation's starting point
 # from one AP's "schedule_group" to the next, so two APs with different
 # schedule_group values get different active-hour patterns even when they
-# have identical veth/idle_percent config. Same spread idea as
+# have identical veth/active_percent config. Same spread idea as
 # DAY_PHASE_STRIDE, just a different prime-ish constant to avoid the two
 # shifts canceling each other out.
 AP_PHASE_STRIDE = 53
@@ -543,11 +479,11 @@ def _get_schedule(day_hours: dict[str, list[int]]) -> dict:
     return {day: {h: True for h in hours} for day, hours in day_hours.items()}
 
 
-def _active_count_per_hour(n_clients: int, idle_percent: int) -> int:
-    """How many clients may be concurrently active at any single hour, given idle_percent."""
+def _active_count_per_hour(n_clients: int, active_percent: int) -> int:
+    """How many clients may be concurrently active at any single hour, given active_percent."""
     if n_clients <= 0:
         return 0
-    return round(n_clients * (100 - idle_percent) / 100)
+    return round(n_clients * active_percent / 100)
 
 
 def _is_active_this_hour(
@@ -578,17 +514,17 @@ def _is_active_this_hour(
 
 
 def _client_hour_schedule(
-    global_idx: int, n_clients: int, idle_percent: int, schedule_group: int = 0,
+    global_idx: int, n_clients: int, active_percent: int, schedule_group: int = 0,
 ) -> tuple[dict[str, list[int]], dict[str, list[int]]]:
     """
     Returns (active_by_day, idle_by_day) — dict[day_name -> hours (from
-    HOURS_BASE)] this client is active vs idle, per the rotating idle_percent
+    HOURS_BASE)] this client is active vs idle, per the rotating active_percent
     schedule for this run. Both the hour-of-day AND the day-of-week rotation
     vary, so a client's active hours differ across Mon/Tue/Wed/... instead of
     repeating the same pattern every day. `schedule_group` additionally
     differentiates the schedule across APs (see `_is_active_this_hour`).
     """
-    active_count = _active_count_per_hour(n_clients, idle_percent)
+    active_count = _active_count_per_hour(n_clients, active_percent)
     active_by_day: dict[str, list[int]] = {}
     idle_by_day: dict[str, list[int]] = {}
     for day_idx, day in enumerate(DAY_NAMES):
@@ -604,15 +540,15 @@ def _client_hour_schedule(
     return active_by_day, idle_by_day
 
 
-def _rotation_coverage_ok(n_clients: int, idle_percent: int) -> bool:
+def _rotation_coverage_ok(n_clients: int, active_percent: int) -> bool:
     """
     True if every client is guaranteed at least one active hour (on at least
-    one day) across HOURS_BASE this run. idle_percent=100 is an explicit
+    one day) across HOURS_BASE this run. active_percent=0 is an explicit
     "always idle" config, not a gap.
     """
-    active_count = _active_count_per_hour(n_clients, idle_percent)
+    active_count = _active_count_per_hour(n_clients, active_percent)
     if active_count <= 0:
-        return idle_percent >= 100
+        return active_percent <= 0
     return active_count * len(HOURS_BASE) >= n_clients
 
 
@@ -816,12 +752,12 @@ def build_idle_sessions(interface: str, endpoints: dict, band_cfg: dict, schedul
 
 
 def build_ap_payloads(
-    clients: list[dict], endpoints: dict, ap_bands: dict, idle_percent: int = IDLE_PERCENT,
+    clients: list[dict], endpoints: dict, ap_bands: dict, active_percent: int = ACTIVE_PERCENT,
     schedule_group: int = 0,
 ) -> tuple[dict | None, dict | None, dict]:
     """
     Rotating per-hour active/idle schedule (single run, hour-by-hour over HOURS_BASE):
-      - At any given hour, idle_percent% of clients are idle (lightweight HTTP
+      - At any given hour, (100 - active_percent)% of clients are idle (lightweight HTTP
         heartbeat) and the rest run full traffic (BROWSING_SESSIONS_PER_CLIENT
         HTTPS GETs + band_cfg["clientop_count"] clientop + band_cfg["fileop_count"]
         fileop sessions).
@@ -858,7 +794,7 @@ def build_ap_payloads(
         global_idx = client["global_idx"]
         band_cfg   = client["band_cfg"]
 
-        active_by_day, idle_by_day = _client_hour_schedule(global_idx, n_clients, idle_percent, schedule_group)
+        active_by_day, idle_by_day = _client_hour_schedule(global_idx, n_clients, active_percent, schedule_group)
         has_active = any(active_by_day.values())
         has_idle   = any(idle_by_day.values())
 
@@ -888,7 +824,7 @@ def build_ap_payloads(
     fileop_payload = {"status": "enable", "fileoperations": all_fileop} if all_fileop else None
     client_payload = {"status": "enable", "clientoperation": all_client} if all_client else None
     stats = {
-        "active_count_per_hour":       _active_count_per_hour(n_clients, idle_percent),
+        "active_count_per_hour":       _active_count_per_hour(n_clients, active_percent),
         "uncovered":                   uncovered,
         "total":                       n_clients,
         "fileop_by_radio":             fileop_by_radio,
@@ -940,11 +876,11 @@ def _client_breakdown_str(stats: dict, ap_bands: dict) -> str:
 def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict) -> dict:
     result         = {"ap": ap_ip}
     ap_bands       = ap_cfg["bands"]
-    idle_percent   = ap_cfg.get("idle_percent", IDLE_PERCENT)
+    active_percent  = ap_cfg.get("active_percent", ACTIVE_PERCENT)
     schedule_group = ap_cfg.get("schedule_group", _default_schedule_group(ap_ip))
 
     fileop_payload, client_payload, stats = build_ap_payloads(
-        clients, endpoints, ap_bands, idle_percent, schedule_group)
+        clients, endpoints, ap_bands, active_percent, schedule_group)
 
     band_summary = {
         _RADIO_LABEL[r]: f"{b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
@@ -952,15 +888,15 @@ def configure_ap(ap_ip: str, clients: list[dict], endpoints: dict, ap_cfg: dict)
     }
     rotation_desc = "rotating hourly only (same hours every day)" if not SEND_DAYWISE_VARIATION \
         else "rotating hourly + varying by day-of-week"
-    log.info("[%s] %d clients — ~%d active/hour (%s, idle_percent=%d%%) bands=%s",
-             ap_ip, stats["total"], stats["active_count_per_hour"], rotation_desc, idle_percent, band_summary)
+    log.info("[%s] %d clients — ~%d active/hour (%s, active_percent=%d%%) bands=%s",
+             ap_ip, stats["total"], stats["active_count_per_hour"], rotation_desc, active_percent, band_summary)
 
     if stats["uncovered"]:
         log.warning(
-            "[%s] %d/%d client(s) got ZERO active hours this run — idle_percent=%d%% only allows "
+            "[%s] %d/%d client(s) got ZERO active hours this run — active_percent=%d%% only allows "
             "%d active slot(s)/hour x %d hours, too few to rotate through all clients; "
-            "lower idle_percent or reduce veth_count for full coverage.",
-            ap_ip, stats["uncovered"], stats["total"], idle_percent,
+            "lower active_percent or reduce veth_count for full coverage.",
+            ap_ip, stats["uncovered"], stats["total"], active_percent,
             stats["active_count_per_hour"], len(HOURS_BASE),
         )
 
@@ -1041,8 +977,8 @@ examples:
   python3 qwrap-traffic-75-25.py --debug
 
 Per active client: BROWSING_SESSIONS_PER_CLIENT HTTPS GETs + fileop_count/clientop_count
-sessions, scheduled 9AM-9PM. idle_percent% of clients are fully idle — set per-AP via
-AP_CONFIG[ip]["idle_percent"], falling back to the global IDLE_PERCENT constant.
+sessions, scheduled 9AM-9PM. (100 - active_percent)% of clients are fully idle — set per-AP via
+AP_CONFIG[ip]["active_percent"], falling back to the global ACTIVE_PERCENT constant.
 veth_count, fileop_count, clientop_count, ip_mode and target_type are all set
 per-AP, per-radio in the AP_CONFIG dict at the top of this file.
 '''
@@ -1125,8 +1061,8 @@ def main() -> None:
     ap_clients: dict[str, list[dict]] = {}
     for ip, cfg in ap_config.items():
         bands        = {r: _clamp_band_cfg(r, b) for r, b in cfg["bands"].items()}
-        idle_percent = cfg.get("idle_percent", IDLE_PERCENT)
-        ap_config_entry = {"bands": bands, "idle_percent": idle_percent}
+        active_percent = cfg.get("active_percent", ACTIVE_PERCENT)
+        ap_config_entry = {"bands": bands, "active_percent": active_percent}
         if "schedule_group" in cfg:
             ap_config_entry["schedule_group"] = cfg["schedule_group"]
         ap_config[ip] = ap_config_entry
@@ -1138,22 +1074,22 @@ def main() -> None:
         ap_clients[ip] = clients
 
         total        = len(clients)
-        active_count = _active_count_per_hour(total, idle_percent)
+        active_count = _active_count_per_hour(total, active_percent)
         summary      = ", ".join(
             f"{_RADIO_LABEL.get(r, r)}={b['veth_count']}v/{b['fileop_count']}f/{b['clientop_count']}c/{b['ip_mode']}/{b['target_type']}"
             for r, b in sorted(bands.items())
         )
         schedule_desc = ("same active hours repeat every day (weekly recurring)" if not SEND_DAYWISE_VARIATION
                           else "active hours differ per day-of-week")
-        log.info("[%s] %d total clients — ~%d active/hour (idle_percent=%d%%, rotating hourly "
+        log.info("[%s] %d total clients — ~%d active/hour (active_percent=%d%%, rotating hourly "
                  "over %d-hour window; %s; schedule_group=%d)  bands=[%s]",
-                 ip, total, active_count, idle_percent, len(HOURS_BASE), schedule_desc, schedule_group, summary)
-        if not _rotation_coverage_ok(total, idle_percent):
+                 ip, total, active_count, active_percent, len(HOURS_BASE), schedule_desc, schedule_group, summary)
+        if not _rotation_coverage_ok(total, active_percent):
             log.warning(
-                "[%s] idle_percent=%d%% with %d clients only allows %d active slot(s)/hour x %d hours "
+                "[%s] active_percent=%d%% with %d clients only allows %d active slot(s)/hour x %d hours "
                 "= %d total active-slots this run — some client(s) will get ZERO active hours. "
-                "Lower idle_percent or reduce veth_count for full rotation coverage.",
-                ip, idle_percent, total, active_count, len(HOURS_BASE), active_count * len(HOURS_BASE),
+                "Lower active_percent or reduce veth_count for full rotation coverage.",
+                ip, active_percent, total, active_count, len(HOURS_BASE), active_count * len(HOURS_BASE),
             )
 
     if not ap_clients:
@@ -1181,7 +1117,7 @@ def main() -> None:
             ap_cfg = ap_config[ip]
             ap_schedule_group = ap_cfg.get("schedule_group", _default_schedule_group(ip))
             fileop_payload, client_payload, stats = build_ap_payloads(
-                ap_clients[ip], ap_endpoints[ip], ap_cfg["bands"], ap_cfg["idle_percent"], ap_schedule_group)
+                ap_clients[ip], ap_endpoints[ip], ap_cfg["bands"], ap_cfg["active_percent"], ap_schedule_group)
             bundle[ip] = {
                 "ap_config":             ap_cfg,
                 "fileop_url":            f"http://{ip}:{WIFIAGENT_PORT}/device/traffic/fileop/config",
@@ -1199,9 +1135,9 @@ def main() -> None:
             log.info("  [%s] fileop breakdown [%s]", ip, _fileop_breakdown_str(stats, ap_cfg["bands"]))
             log.info("  [%s] client breakdown [%s]", ip, _client_breakdown_str(stats, ap_cfg["bands"]))
             if bundle[ip]["uncovered_clients"]:
-                log.warning("[%s] %d client(s) got ZERO active hours this run (idle_percent=%d%% too high "
+                log.warning("[%s] %d client(s) got ZERO active hours this run (active_percent=%d%% too low "
                             "for %d clients x %d hours)", ip, bundle[ip]["uncovered_clients"],
-                            ap_cfg["idle_percent"], len(ap_clients[ip]), len(HOURS_BASE))
+                            ap_cfg["active_percent"], len(ap_clients[ip]), len(HOURS_BASE))
         with open(args.out, "w") as fh:
             json.dump(bundle, fh, indent=2)
         log.info("Wrote %d AP payload(s) -> %s", len(bundle), args.out)

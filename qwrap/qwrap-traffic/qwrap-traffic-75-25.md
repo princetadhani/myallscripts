@@ -45,7 +45,7 @@ a blank copy/paste skeleton right above it in the code comments. Example:
 
 ```python
 "10.86.205.223": {
-    "idle_percent": 70,
+    "active_percent": 30,
     "bands": {
         0: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
         1: {"veth_count": 28, "fileop_count": 3, "clientop_count": 3, "ip_mode": "IPv4", "target_type": "hostname"},
@@ -56,7 +56,7 @@ a blank copy/paste skeleton right above it in the code comments. Example:
 
 | Field            | Meaning                                                                                                                                                                    |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `idle_percent`   | % of this AP's virtual clients that stay idle at any given hour. Optional — falls back to global `IDLE_PERCENT` if omitted.                                                |
+| `active_percent` | % of this AP's virtual clients that are active at any given hour. Optional — falls back to global `ACTIVE_PERCENT` if omitted.                                               |
 | `bands`          | One entry per radio: `0` = 2.4GHz, `1` = 5GHz, `2` = 6GHz. Skip a radio key entirely to not configure that radio.                                                          |
 | `veth_count`     | How many virtual client interfaces to create on this radio (max 28).                                                                                                       |
 | `fileop_count`   | How many FileOp (SFTP/FTP/TFTP) sessions each **active** client on this radio runs.                                                                                        |
@@ -111,12 +111,12 @@ Example:
 
 ```python
 "10.86.205.165": {
-    "idle_percent": 75,
+    "active_percent": 25,
     "schedule_group": 1,     # <- optional; shares schedule with any other AP using group 1
     "bands": { ... },
 },
 "10.86.205.223": {
-    "idle_percent": 70,
+    "active_percent": 30,
     # no schedule_group set -> auto-derived from this AP's own IP, guaranteed
     # different from 10.86.205.165 (and from any other AP) by default
     "bands": { ... },
@@ -131,10 +131,10 @@ confirm which APs are grouped together.
 
 All near the top of the file, just below `AP_CONFIG`:
 
-### `IDLE_PERCENT = 25`
+### `ACTIVE_PERCENT = 75`
 
 Default idle percentage used for any AP that doesn't set its own
-`idle_percent`. E.g. `25` means 25% of clients are idle, 75% active, at any
+`active_percent`. E.g. `75` means 75% of clients are active, 25% idle, at any
 given hour.
 
 ### `BROWSING_SESSIONS_PER_CLIENT = 2`
@@ -158,19 +158,6 @@ keep-alive request during their idle hours.
   doing anything in the background. This was the original behavior before
   the heartbeat feature was added.
 
-### `COLOR_LOGS = 1`
-
-Controls whether terminal log lines are colorized per-AP (each AP's log
-lines get a distinct color from a fixed 20-entry palette, so interleaved
-output from concurrent AP pushes is easy to tell apart at a glance).
-
-- **`COLOR_LOGS = 1` (default):** Colorizes log output — but only when
-  actually printing to a real terminal; it still auto-falls-back to plain
-  text when output is piped/redirected to a file, or when the `NO_COLOR`
-  environment variable is set.
-- **`COLOR_LOGS = 0`:** Never colorizes, even on a terminal — always plain
-  text.
-
 ### `SEND_DAYWISE_VARIATION = 1`
 
 Controls whether each client's active/idle hours are the **same every day of
@@ -190,7 +177,7 @@ the week**, or **different each day**.
   their devices at the exact same minute every single day.
 
 **In both cases**, the overall ratio is preserved: at any given hour, on any
-given day, `idle_percent`% of clients are idle and the rest are active — only
+given day, `active_percent`% of clients are active and the rest are idle — only
 _which_ clients fill that active slot changes.
 
 ### `HOURS_BASE = list(range(0, 24))`
@@ -207,7 +194,7 @@ Change this single line to switch between a daytime-only run and a full
 
 Think of it like a rotating schedule, not a fixed split:
 
-1. At any single hour, only `idle_percent`% of clients are idle — the rest
+1. At any single hour, `active_percent`% of clients are active — the rest
    are "active" (running full browsing+clientop+fileop traffic).
 2. **Which** clients are in the active group **changes every hour** — it
    rotates round-robin so that over the course of the day, every client gets
@@ -216,8 +203,8 @@ Think of it like a rotating schedule, not a fixed split:
    shifts for each day of the week, so the same client's active hours look
    different on Monday vs Tuesday vs Wednesday, etc.
 4. If a client never lands in the active group on any day (possible with a
-   very high `idle_percent` and few hours), it's counted as "uncovered" and
-   you'll see a warning in the logs telling you to lower `idle_percent` or
+   very low `active_percent` and few hours), it's counted as "uncovered" and
+   you'll see a warning in the logs telling you to increase `active_percent` or
    reduce `veth_count`.
 
 ## 6. Reading the logs
