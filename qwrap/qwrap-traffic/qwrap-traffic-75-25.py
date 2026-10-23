@@ -109,49 +109,50 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #     },
 #
 AP_CONFIG: dict[str, dict] = {
-    # "10.86.204.202": {
-    #     "active_percent": 15,
-    #     "bands": {
-    #         0: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
-    #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
-    #     },
-    # },
-    # "10.86.205.192": {
-    #     "active_percent": 15,
-    #     "bands": {
-    #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
-    #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
-    #     },
-    # },
+    "10.86.204.202": {
+        "active_percent": 10,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
+        },
+    },
 
-    # "10.86.204.243": {
-    #     "active_percent": 15,
-    #     "bands": {
-    #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #     },
-    # },
+    "10.86.205.192": {
+        "active_percent": 10,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 3, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "ip"},
+        },
+    },
 
-    # "10.86.205.21": {
-    #     "active_percent": 15,
-    #     "bands": {
-    #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #     },
-    # },
+    "10.86.204.243": {
+        "active_percent": 10,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+        },
+    },
 
-    # "10.86.205.147": {
-    #     "active_percent": 15,
-    #     "bands": {
-    #         0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
-    #         2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
-    #     },
-    # },
+    "10.86.205.21": {
+        "active_percent": 10,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+        },
+    },
+
+    "10.86.205.147": {
+        "active_percent": 15,
+        "bands": {
+            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv4", "target_type": "hostname"},
+            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv4", "target_type": "hostname"},
+        },
+    },
 
     # "10.86.205.223": {
     #     "active_percent": 15,
@@ -172,58 +173,7 @@ AP_CONFIG: dict[str, dict] = {
     # },     
 
 
-    "10.86.205.82": {
-        "active_percent": 13,
-        "bands": {
-            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-        },
-    },
-    "10.86.205.240": {
-        "active_percent": 10,
-        "bands": {
-            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-        },
-    },
-
-    "10.86.205.157": {
-        "active_percent": 10,
-        "bands": {
-            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 1, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-        },
-    },
-
-    "10.86.205.90": {
-        "active_percent": 10,
-        "bands": {
-            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-        },
-    },
-
-    "10.86.205.88": {
-        "active_percent": 10,
-        "bands": {
-            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 3, "ip_mode": "IPv6", "target_type": "hostname"},
-        },
-    },
-
-    "10.86.205.49": {
-        "active_percent": 10,
-        "bands": {
-            0: {"veth_count": 28, "fileop_count": 1, "clientop_count": 1, "ip_mode": "IPv6", "target_type": "hostname"},
-            1: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-            2: {"veth_count": 28, "fileop_count": 2, "clientop_count": 2, "ip_mode": "IPv6", "target_type": "hostname"},
-        },
-    },    
+      
        
 }
 

@@ -6,6 +6,8 @@ It is meant to grow over time — as new day-to-day tasks come up, new scripts (
 
 ## Adding New Scripts
 
+- `ap/acs-api-loop/`: discover CloudVision radios once from a GET request JSON and trigger ACS every five minutes, with a discovery-only preview.
+
 As new day-to-day automation needs come up, add them here rather than keeping one-off scripts elsewhere:
 
 - Group related scripts under a purpose-named subfolder (e.g. `qwrap-traffic/`, `qwrap-certs/`) instead of dumping everything at the root.

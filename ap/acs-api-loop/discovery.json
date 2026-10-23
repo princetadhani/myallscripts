@@ -1,0 +1,22 @@
+{
+  "GET": {
+    "scheme": "https",
+    "host": "cloud-mt.dt1.wifi.arista.cloud",
+    "filename": "/wifi/api/manageddevices/aps/radios",
+    "query": {
+      "filter": [
+        "{\"property\":\"protocol\",\"value\":[\"UNKNOWN\"],\"operator\":\"!=\"}",
+        "{\"property\":\"apmode\",\"value\":[true],\"operator\":\"=\"}"
+      ],
+      "operator": "AND",
+      "startindex": "0",
+      "pagesize": "100",
+      "locationid": "186",
+      "nodeid": "0",
+      "sortascending": "false",
+      "sortcolumn": "clients",
+      "totalcountrequired": "true",
+      "CID": "ATN13"
+    }
+  }
+}

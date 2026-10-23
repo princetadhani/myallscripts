@@ -14,7 +14,9 @@ import json
 import logging
 import os
 import re
+import socket
 import sys
+import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -32,7 +34,7 @@ for _noisyLogger in ('urllib3', 'requests'):
 # Path to the qwrap config file (AP_LIST, DEFAULT_CLI_USERNAME/PASSWORD) to
 # use for this run, 
 # EG: config_file_path = "/Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/qwrap-config-file-template.py"
-config_file_path = "/Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/S2-qwrap-config-file.py"
+config_file_path = "/Users/prince.tadhani/myallscripts/qwrap/qwrap-configuration-script/temp-c330-qwrap-config-file.py"
 
 AP_LIST              = None
 DEFAULT_CLI_USERNAME = None
@@ -194,7 +196,11 @@ class QwrapSession:
 
         cmd = f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {username}@{host}'
         self.child = pexpect.spawn(cmd, env=_sshEnv(), timeout=timeout, encoding='utf-8')
-        _authenticate(self.child, password, host, promptPattern=ROOT_PROMPT, timeout=timeout)
+        try:
+            _authenticate(self.child, password, host, promptPattern=ROOT_PROMPT, timeout=timeout)
+        except Exception:
+            self.child.close(force=True)
+            raise
         self._inConfig = False
 
     def _toConfig(self):
@@ -681,6 +687,68 @@ def reassociateClients(apInfo, reAcquireIp, persistOption=None):
         session.close()
 
 
+def isQwrapModeEnabled(session):
+    '''Read the mode flag without requiring any radios or clients to exist.'''
+    output = session.configSend('show qwrap', timeout=300)
+    match = re.search(r'^\s*Qwrap Mode:\s*(On|Off)\s*$', output, re.MULTILINE | re.IGNORECASE)
+    if not match:
+        raise RuntimeError(f'{session.host}: could not parse QWRAP mode from "show qwrap"')
+    return match.group(1).lower() == 'on'
+
+
+def enableQwrapMode(apInfo):
+    '''Enable QWRAP mode, close the old CLI session, and verify after reboot.
+    Mirrors CueApQwrap.enableQwrapMode(waitForReboot=True).'''
+    host = apInfo['host']
+    username, password = _apCredentials(apInfo)
+    session = QwrapSession(host, username, password)
+    try:
+        if isQwrapModeEnabled(session):
+            log.info(f'{host}: QWRAP mode is already enabled')
+            return
+        try:
+            output = session.configSend('qwrap', timeout=30)
+        except (pexpect.EOF, pexpect.TIMEOUT):
+            # Enabling QWRAP reboots the AP and can drop SSH before a prompt.
+            log.debug(f'{host}: CLI interrupted while enabling QWRAP; waiting for reboot')
+        else:
+            if re.search(r'error|invalid|failed', output, re.IGNORECASE):
+                raise RuntimeError(f'{host}: enabling QWRAP failed. Output:\n{output}')
+    finally:
+        session.close()
+
+    log.info(f'{host}: waiting for AP SSH to go down')
+    deadline = time.monotonic() + 120
+    while True:
+        try:
+            with socket.create_connection((host, 22), timeout=5):
+                pass
+        except OSError:
+            break
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f'{host}: AP did not go down within 120 seconds after enabling QWRAP')
+        time.sleep(2)
+
+    log.info(f'{host}: waiting for AP to return with QWRAP enabled')
+    deadline = time.monotonic() + 600
+    lastError = None
+    while time.monotonic() < deadline:
+        session = None
+        try:
+            session = QwrapSession(host, username, password)
+            if isQwrapModeEnabled(session):
+                log.info(f'{host}: QWRAP mode enabled and verified after reboot')
+                return
+            lastError = 'QWRAP mode is still Off'
+        except (OSError, RuntimeError, pexpect.ExceptionPexpect) as err:
+            lastError = str(err)
+        finally:
+            if session is not None:
+                session.close()
+        time.sleep(5)
+    raise RuntimeError(f'{host}: QWRAP did not become ready within 600 seconds: {lastError}')
+
+
 def enableConfigPersist(apInfo):
     '''Enable QWRAP config persistence (config written to disk in real time, so
     it survives reboot) on this AP (used by --action config-persist-enable).
@@ -731,6 +799,7 @@ def runConcurrently(func, apList, actionName):
 
 EPILOG = '''\
 actions:
+  qwrap-enable              Enable QWRAP mode if needed, wait for reboot, and verify mode
   configure                 Configure radios and add clients (full setup)
   deconfigure               Remove clients and deconfigure radios (full teardown)
   radio-configure           Configure radios only, skip adding clients
@@ -745,6 +814,8 @@ actions:
   apply-qwrap-config-yaml   Apply a saved yaml (matched by the AP's live MAC) back to /opt/qwrap/qwrap_config.yaml on the AP, then reboot (fire-and-forget)
 
 examples:
+  python3 qwrap-manager.py --action qwrap-enable
+  python3 qwrap-manager.py --action qwrap-enable --ap 10.86.205.157
   python3 qwrap-manager.py --action configure
   python3 qwrap-manager.py --action deconfigure
   python3 qwrap-manager.py --action configure --ap 10.86.205.157,10.86.205.158
@@ -786,7 +857,7 @@ def parseArgs():
 
     required = parser.add_argument_group('required arguments')
     required.add_argument('--action', required=True,
-                           choices=['configure', 'deconfigure', 'radio-configure', 'client-add', 'client-remove',
+                           choices=['qwrap-enable', 'configure', 'deconfigure', 'radio-configure', 'client-add', 'client-remove',
                                     'client-remove-count', 'client-disassociate', 'client-reassociate',
                                     'config-persist-enable', 'config-persist-disable',
                                     'save-qwrap-config-yaml', 'apply-qwrap-config-yaml'],
@@ -818,8 +889,8 @@ def parseArgs():
     if args.reacquire_ip and args.action != 'client-reassociate':
         parser.error('--reacquire-ip is only valid with --action client-reassociate')
 
-    if args.config_persist is not None and args.action in ('config-persist-enable', 'config-persist-disable'):
-        parser.error('--config-persist is not valid with --action config-persist-enable/config-persist-disable')
+    if args.config_persist is not None and args.action in ('qwrap-enable', 'config-persist-enable', 'config-persist-disable'):
+        parser.error('--config-persist is not valid with --action qwrap-enable/config-persist-enable/config-persist-disable')
 
     return args
 
@@ -853,7 +924,9 @@ def main():
     loadConfig()
     apList = resolveApList(args)
 
-    if args.action == 'configure':
+    if args.action == 'qwrap-enable':
+        runConcurrently(enableQwrapMode, apList, 'qwrap-enable')
+    elif args.action == 'configure':
         runConcurrently(lambda apInfo: configureAp(apInfo, persistOption=args.config_persist), apList, 'configure')
     elif args.action == 'deconfigure':
         runConcurrently(lambda apInfo: deconfigureAp(apInfo, persistOption=args.config_persist), apList, 'deconfigure')

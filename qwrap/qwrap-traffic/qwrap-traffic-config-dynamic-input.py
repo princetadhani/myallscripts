@@ -91,8 +91,13 @@ MAX_VETH_PER_RADIO = 28
 # ─── AP_LIST (used only when DEFAULT_MODE = 1) ──────────────────────────
 # Plain list of AP IPs — add/remove/comment out lines as needed.
 AP_LIST: list[str] = [
+    '10.86.60.80',  
+    '10.86.205.21',
+    '10.86.204.202',
+    '10.86.204.243',
+    '10.86.205.147', '10.86.205.192',
 #S1 qwrap:
-'10.86.205.197',
+'10.86.205.54',
 '10.86.62.197',
 '10.86.205.122',
 '10.86.204.204',
