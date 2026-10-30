@@ -64,7 +64,8 @@ DEFAULT_CLI_PASSWORD = "arastra"
 #                                             Define the AP's here which need to configure                                              #
 #########################################################################################################################################
 AP_LIST = [
-    {   # AP-1 1-C430--00923F--S1-QWRAP
+    
+    {
         "host": "10.86.205.122",
         "radios": {
             0: {  # 2.4ghz
@@ -74,6 +75,7 @@ AP_LIST = [
                 "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/client.pem",
                 "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/key.pem",
                 "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/ca.pem",
+                "bssid":            "30:B6:2D:05:C9:90",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
@@ -88,7 +90,7 @@ AP_LIST = [
                 "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/client.pem",
                 "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/key.pem",
                 "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/ca.pem",
-                "keyMgmt":          "FT-EAP",
+                "bssid":            "E0:1C:A7:20:5D:10",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
@@ -103,7 +105,7 @@ AP_LIST = [
                 "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
                 "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
                 "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
-                "keyMgmt":          "FT-EAP",
+                "bssid":            "30:B6:2D:05:C9:B0",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
@@ -114,29 +116,31 @@ AP_LIST = [
         },
     },
 
-    {   # AP-2: 2-C430--007F7F--S1-QWRAP
+    {   # AP-2: 
         "host": "10.86.204.204",
         "radios": {
             0: {  # 2.4ghz
                 "ssid":             "S1-GPSK",
                 "security":         "wpa2",
                 "passphrase":       "welcome3005",
+                "bssid":            "E0:1C:A7:20:5D:01",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             1: {  # 5ghz
                 "ssid":             "S1-GPSK",
                 "security":         "wpa2",
                 "passphrase":       "welcome3006",
+                "bssid":            "30:B6:2D:05:C9:A1",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             2: {  # 6ghz
@@ -146,17 +150,18 @@ AP_LIST = [
                 "username":         "vxlanvlanpool",
                 "password":         "vxlanvlanpool",
                 "keyMgmt":          "FT-EAP",
+                "bssid":            "E0:1C:A7:20:5D:21",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
         },
     },
 
-    {   # AP-3 3-C430--00978F--S1-QWRAP
+    {   # AP-3 
         "host": "10.86.205.60",
         "radios": {
             0: {  # 2.4ghz
@@ -166,11 +171,12 @@ AP_LIST = [
                 "username":         "vxlanvlanpool",
                 "password":         "vxlanvlanpool",
                 "keyMgmt":          "WPA-EAP-SHA256",
+                "bssid":            "30:B6:2D:05:C9:93",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             1: {  # 5ghz
@@ -179,11 +185,12 @@ AP_LIST = [
                 "eapType":          "peap",
                 "username":         "vxlanvlanpool",
                 "password":         "vxlanvlanpool",
+                "bssid":            "E0:1C:A7:20:5D:13",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             2: {  # 6ghz
@@ -192,55 +199,19 @@ AP_LIST = [
                 "eapType":          "peap",
                 "username":         "vxlanvlanpool",
                 "password":         "vxlanvlanpool",
+                "bssid":            "E0:1C:A7:20:5D:21",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
         },
     },
 
 
-    {   # AP-4 1-C460D--C2755F--S1-QWRAP
-        "host": "10.86.205.223",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S1-Vxlan-OWE",
-                "security":         "owe",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           1,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S1-Vxlan-OWE",
-                "security":         "owe",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           1,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S1-Vxlan-OWE",
-                "security":         "owe",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           1,
-                },
-            },
-        },
-    },
-
-
-    {   # AP-5 2-C460D--C2714F--S1-QWRAP
+    {   # AP-4 
         "host": "10.86.204.227",
         "radios": {
             0: {  # 2.4ghz
@@ -249,11 +220,12 @@ AP_LIST = [
                 "eapType":          "peap",
                 "username":         "eogre3013",
                 "password":         "eogre3013",
+                "bssid":            "30:B6:2D:05:C9:96",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             1: {  # 5ghz
@@ -263,69 +235,78 @@ AP_LIST = [
                 "username":         "role-EoGRE-11W",
                 "password":         "role-EoGRE-11W",
                 "keyMgmt":          "FT-EAP",
+                "bssid":            "E0:1C:A7:20:5D:16",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             2: {  # 6ghz
-                "ssid":             "S1-APHP-WPA3-SAE",
-                "security":         "wpa3",
-                "passphrase":       "Hello@123",
-                "portalType":       "internal",
+                "ssid":             "S1-Agni-Corp",
+                "security":         "wpa3-dot1x",
+                "eapType":          "tls",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
+                "bssid":            "E0:1C:A7:20:5D:20",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
         },
     },
 
-
-    {   # AP-6 1-O405--201EFF--S1-QWRAP
+    {   # AP-5
         "host": "10.86.205.165",
         "radios": {
             0: {  # 2.4ghz
                 "ssid":             "S1-NAT-PSK",
                 "security":         "wpa2",
                 "passphrase":       "Hello@123",
+                "bssid":            "E0:1C:A7:20:5D:17",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             1: {  # 5ghz
                 "ssid":             "S1-NAT-PSK",
                 "security":         "wpa2",
                 "passphrase":       "Hello@123",
-
+                "bssid":            "30:B6:2D:05:C9:A7",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
             2: {  # 6ghz
-                "ssid":             "S1-APHP-WPA3-SAE",
-                "security":         "wpa3",
-                "passphrase":       "Hello@123",
-                "portalType":       "internal",
+                "ssid":             "S1-Agni-Corp",
+                "security":         "wpa3-dot1x",
+                "eapType":          "tls",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/ca.pem",
+                "bssid":            "30:B6:2D:05:C9:B0",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
                     "ipv4":           1,
-                    "ipv6":           1,
+                    "ipv6":           0,
                 },
             },
         },
     },
 
 
+
+    
 ]

@@ -26,7 +26,7 @@ All possible per-radio fields are listed below (leave unused ones as None):
     digitalCertPath   - client cert .pem LOCAL path on this laptop                      (tls only)
     privateKeyPath    - private key .pem LOCAL path on this laptop                      (tls only)
     serverCaCertPath  - CA cert .pem LOCAL path on this laptop                          (tls only)
-    keyMgmt           - "WPA-EAP" | "WPA-EAP-SHA256" | "FT-EAP" | "WPA-EAP-SUITE-B-192"
+    keyMgmt           - "WPA-EAP" | "WPA-EAP-SHA256" | "FT-EAP" | "WPA-EAP-SUITE-B-192" | "FT-EAP-SHA384"
     bssid             - Specific BSSID to connect to
     ieee80211w        - "disabled" | "optional" | "required"
     groupCipher       - "GCMP-256" | "CCMP"
@@ -73,10 +73,10 @@ AP_LIST = [
                 "ssid":             "S2-Agni-Office",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3079@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3079@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3079@qwrap.com/ca.pem",
+                "keyMgmt":          "FT-EAP-SHA384",
                 "ieee80211w":       "required",
                 "groupCipher":      "GCMP-256",
                 "pairwiseCipher":   "GCMP-256",
@@ -91,10 +91,10 @@ AP_LIST = [
                 "ssid":             "S2-Agni-Office",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3027@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3027@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3027@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3080@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3080@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3080@qwrap.com/ca.pem",
+                "keyMgmt":          "FT-EAP-SHA384",
                 "ieee80211w":       "required",
                 "groupCipher":      "GCMP-256",
                 "pairwiseCipher":   "GCMP-256",
@@ -109,10 +109,10 @@ AP_LIST = [
                 "ssid":             "S2-Agni-Office",
                 "security":         "wpa3-dot1x",
                 "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3028@qwrap.com/ca.pem",
-                "keyMgmt":          "WPA-EAP-SUITE-B-192",
+                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3079@qwrap.com/client.pem",
+                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3079@qwrap.com/key.pem",
+                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3079@qwrap.com/ca.pem",
+                "keyMgmt":          "FT-EAP-SHA384",
                 "ieee80211w":       "required",
                 "groupCipher":      "GCMP-256",
                 "pairwiseCipher":   "GCMP-256",
@@ -147,10 +147,9 @@ AP_LIST = [
                 "ssid":             "S2-Dynamic-Vlan",
                 "security":         "wpa3-dot1x",
                 "eapType":          "peap",
-                "username":         "S2-Dynamic-Vlan-3038",
-                "password":         "S2-Dynamic-Vlan-3038",
+                "username":         "S2-Dynamic-Vlan-3080",
+                "password":         "S2-Dynamic-Vlan-3080",
                 "keyMgmt":          "WPA-EAP-SHA256",
-                "ieee80211w":       "required",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
@@ -162,10 +161,9 @@ AP_LIST = [
                "ssid":             "S2-Dynamic-Vlan",
                 "security":         "wpa3-dot1x",
                 "eapType":          "peap",
-                "username":         "S2-Dynamic-Vlan-3080",
-                "password":         "S2-Dynamic-Vlan-3080",
+                "username":         "S2-Dynamic-Vlan-3082",
+                "password":         "S2-Dynamic-Vlan-3082",
                 "keyMgmt":          "WPA-EAP-SHA256",
-                "ieee80211w":       "required",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
@@ -184,10 +182,9 @@ AP_LIST = [
                 "ssid":             "S2-VlanPool",
                 "security":         "wpa3",
                 "passphrase":       "Hello@123",
-                "ieee80211w":       "required",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "S2-VlanPool",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -196,10 +193,9 @@ AP_LIST = [
                 "ssid":             "S2-VlanPool",
                 "security":         "wpa3",
                 "passphrase":       "Hello@123",
-                "ieee80211w":       "required",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "S2-VlanPool",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -208,10 +204,9 @@ AP_LIST = [
                 "ssid":             "S2-VlanPool",
                 "security":         "wpa3",
                 "passphrase":       "Hello@123",
-                "ieee80211w":       "required",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "S2-VlanPool",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -220,47 +215,47 @@ AP_LIST = [
     },
 
 
-    {   # AP-4 2-C460D--C274BF--S2-QWRAP
-        "host": "10.86.205.90",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S2-APHP-WPA3-T-SAE",
-                "security":         "wpa2",
-                "passphrase":       "Hello@123",
-                "portalType":       "internal",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "Portal",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S2-APHP-WPA3-T-SAE",
-                "security":         "wpa3",
-                "passphrase":       "Hello@123",
-                "portalType":       "internal",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "Portal",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S2-APHP-WPA3-T-SAE",
-                "security":         "wpa3",
-                "passphrase":       "Hello@123",
-                "portalType":       "internal",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "Portal",
-                    "ipv4":           0,
-                    "ipv6":           1,
-                },
-            },
-        },
-    },
+    # {   # AP-4 2-C460D--C274BF--S2-QWRAP
+    #     "host": "10.86.205.90",
+    #     "radios": {
+    #         0: {  # 2.4ghz
+    #             "ssid":             "S2-APHP-WPA3-T-SAE",
+    #             "security":         "wpa2",
+    #             "passphrase":       "Hello@123",
+    #             "portalType":       "internal",
+    #             "clients": {
+    #                 "count":          28,
+    #                 "hostnamePrefix": "Portal",
+    #                 "ipv4":           0,
+    #                 "ipv6":           1,
+    #             },
+    #         },
+    #         1: {  # 5ghz
+    #             "ssid":             "S2-APHP-WPA3-T-SAE",
+    #             "security":         "wpa3",
+    #             "passphrase":       "Hello@123",
+    #             "portalType":       "internal",
+    #             "clients": {
+    #                 "count":          28,
+    #                 "hostnamePrefix": "Portal",
+    #                 "ipv4":           0,
+    #                 "ipv6":           1,
+    #             },
+    #         },
+    #         2: {  # 6ghz
+    #             "ssid":             "S2-APHP-WPA3-T-SAE",
+    #             "security":         "wpa3",
+    #             "passphrase":       "Hello@123",
+    #             "portalType":       "internal",
+    #             "clients": {
+    #                 "count":          28,
+    #                 "hostnamePrefix": "Portal",
+    #                 "ipv4":           0,
+    #                 "ipv6":           1,
+    #             },
+    #         },
+    #     },
+    # },
 
 
     {   # AP-5 3-C460D--C27D2F--S2-QWRAP
@@ -271,7 +266,7 @@ AP_LIST = [
                 "security":         "owe",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "OWE",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -281,7 +276,7 @@ AP_LIST = [
                 "security":         "owe",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "OWE",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -291,7 +286,7 @@ AP_LIST = [
                 "security":         "owe",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "OWE",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -309,7 +304,7 @@ AP_LIST = [
                 "passphrase":       "welcome3080ra",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "R1-3080RA",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -320,7 +315,7 @@ AP_LIST = [
                 "passphrase":       "welcome3081dhcpv6",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "R1-3081dhcpv6",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },
@@ -330,7 +325,7 @@ AP_LIST = [
                 "security":         "owe",
                 "clients": {
                     "count":          28,
-                    "hostnamePrefix": "OWE",
+                    "hostnamePrefix": "",
                     "ipv4":           0,
                     "ipv6":           1,
                 },

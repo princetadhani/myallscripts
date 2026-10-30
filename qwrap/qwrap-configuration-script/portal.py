@@ -67,249 +67,240 @@ DEFAULT_CLI_PASSWORD = "arastra"
 #                                             Define the AP's here which need to configure                                              #
 #########################################################################################################################################
 AP_LIST = [
-    
     {
-        "host": "10.86.204.202",
+        "host": "10.86.205.82",
         "radios": {
             0: {  # 2.4ghz
-                "ssid":             "S1-Agni-Corp",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/ca.pem",
-                "bssid":            "E0:1C:A7:E0:19:50",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S1-Agni-Corp",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/radio5GhzqwrapAP3003@qwrap.com/ca.pem",
-                "bssid":            "E0:1C:A7:E0:19:70",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S1-Agni-Corp",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
-                "bssid":            "E0:1C:A7:E0:19:60",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-        },
-    },
-
-    {   # AP-2: 
-        "host": "10.86.205.21",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S1-GPSK",
-                "security":         "wpa2",
-                "passphrase":       "welcome3005",
-                "bssid":            "E0:1C:A7:E0:19:51",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S1-GPSK",
-                "security":         "wpa2",
-                "passphrase":       "welcome3006",
-                "bssid":            "E0:1C:A7:E0:19:71",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S1-Vxlan-VlanPool",
-                "security":         "wpa3-dot1x",
-                "eapType":          "peap",
-                "username":         "vxlanvlanpool",
-                "password":         "vxlanvlanpool",
-                "keyMgmt":          "FT-EAP",
-                "bssid":            "E0:1C:A7:E0:19:61",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-        },
-    },
-
-    {   # AP-3 
-        "host": "10.86.205.192",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S1-Vxlan-VlanPool",
-                "security":         "wpa3-dot1x",
-                "eapType":          "peap",
-                "username":         "vxlanvlanpool",
-                "password":         "vxlanvlanpool",
-                "keyMgmt":          "WPA-EAP-SHA256",
-                "bssid":            "E0:1C:A7:E0:19:53",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S1-Vxlan-VlanPool",
-                "security":         "wpa3-dot1x",
-                "eapType":          "peap",
-                "username":         "vxlanvlanpool",
-                "password":         "vxlanvlanpool",
-                "bssid":            "E0:1C:A7:E0:19:73",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S1-Vxlan-VlanPool",
-                "security":         "wpa3-dot1x",
-                "eapType":          "peap",
-                "username":         "vxlanvlanpool",
-                "password":         "vxlanvlanpool",
-                "bssid":            "E0:1C:A7:E0:19:61",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-        },
-    },
-
-
-    {   # AP-4 
-        "host": "10.86.204.243",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S1-EoGRE",
-                "security":         "wpa2-dot1x",
-                "eapType":          "peap",
-                "username":         "eogre3013",
-                "password":         "eogre3013",
-                "bssid":            "E0:1C:A7:E0:19:56",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            1: {  # 5ghz
-                "ssid":             "S1-EoGRE",
-                "security":         "wpa2-dot1x",
-                "eapType":          "peap",
-                "username":         "role-EoGRE-11W",
-                "password":         "role-EoGRE-11W",
-                "keyMgmt":          "FT-EAP",
-                "bssid":            "E0:1C:A7:E0:19:76",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-            2: {  # 6ghz
-                "ssid":             "S1-Agni-Corp",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3004@qwrap.com/ca.pem",
-                "bssid":            "E0:1C:A7:E0:19:60",
-                "clients": {
-                    "count":          28,
-                    "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
-                },
-            },
-        },
-    },
-
-    {   # AP-5
-        "host": "10.86.205.147",
-        "radios": {
-            0: {  # 2.4ghz
-                "ssid":             "S1-NAT-PSK",
-                "security":         "wpa2",
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
                 "passphrase":       "Hello@123",
-                "bssid":            "E0:1C:A7:E0:19:57",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
+                    "ipv4":           0,
+                    "ipv6":           1,
                 },
             },
             1: {  # 5ghz
-                "ssid":             "S1-NAT-PSK",
-                "security":         "wpa2",
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
                 "passphrase":       "Hello@123",
-                "bssid":            "E0:1C:A7:E0:19:77",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
+                    "ipv4":           0,
+                    "ipv6":           1,
                 },
             },
             2: {  # 6ghz
-                "ssid":             "S1-Agni-Corp",
-                "security":         "wpa3-dot1x",
-                "eapType":          "tls",
-                "digitalCertPath":  "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/client.pem",
-                "privateKeyPath":   "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/key.pem",
-                "serverCaCertPath": "/Users/prince.tadhani/myallscripts/qwrap/qwrap-certs/qwrapAP3003@qwrap.com/ca.pem",
-                "bssid":            "E0:1C:A7:E0:19:60",
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
                 "clients": {
                     "count":          28,
                     "hostnamePrefix": "",
-                    "ipv4":           1,
-                    "ipv6":           0,
+                    "ipv4":           0,
+                    "ipv6":           1,
                 },
             },
-        },
+        },        
+    },
+
+    {
+        "host": "10.86.205.240",
+        "radios": {
+            0: {  # 2.4ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            1: {  # 5ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            2: {  # 6ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+        },        
+    },
+
+    {
+        "host": "10.86.205.157",
+        "radios": {
+            0: {  # 2.4ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            1: {  # 5ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            2: {  # 6ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+        },        
+    },
+
+    {
+        "host": "10.86.205.90",
+        "radios": {
+            0: {  # 2.4ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            1: {  # 5ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            2: {  # 6ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+        },        
+    },
+
+    {
+        "host": "10.86.205.88",
+        "radios": {
+            0: {  # 2.4ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            1: {  # 5ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            2: {  # 6ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+        },        
+    },
+
+    {
+        "host": "10.86.205.49",
+        "radios": {
+            0: {  # 2.4ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            1: {  # 5ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+            2: {  # 6ghz
+                "ssid":             "S2-APHP-WPA3-T-SAE",
+                "security":         "wpa3",
+                "passphrase":       "Hello@123",
+                "clients": {
+                    "count":          28,
+                    "hostnamePrefix": "",
+                    "ipv4":           0,
+                    "ipv6":           1,
+                },
+            },
+        },        
     },
 
 
 
-    
 ]
