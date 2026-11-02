@@ -10,23 +10,20 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- Configuration ---
-CA_CERT       = "cacert.pem" #Tejas personal CA cert
-CA_KEY        = "cakey.pem"  #Tejas personal CA Key
-ORG_NAME      = "Arista Networks" #Org name which will goes in client cert
+CA_CERT       = "cacert.pem" # Tejas personal CA cert
+CA_KEY        = "cakey.pem"  # Tejas personal CA Key
+ORG_NAME      = "Arista Networks" # Org name which will go into client cert
 VALIDITY_DAYS = 1825  # 5 years
 
 AP_SSH_USER   = "root"
-REMOTE_DIR    = "/root/"  # Destination folder on AP for client.pem, key.pem, ca.pem
+REMOTE_DIR    = "/root/"  # Destination folder on AP
 
 # CA cert that signed the AGNI EAP server certificate.
 # The client uses this to verify the RADIUS server during mutual TLS.
-# This is NOT the same as the CA that signs client certs (cacert.pem).
-# Export it from AGNI and set the path here.
 AGNI_SERVER_CA = "AGNI_Root_CA.pem"
 
 # ---------------------------------------------------------------------------
-# Wifi OTP signing endpoint used by the arista-ssh-agent Response[...] challenge/
-# response prompt (same as SWAT's otpLib.getWifiOTP(), and qwrap-manager.py).
+# Wifi OTP signing endpoint
 # ---------------------------------------------------------------------------
 WIFI_OTP_URL = "https://license.aristanetworks.com/sign/wifi-otp/"
 WIFI_OTP_KEY = "d9ca932a4bc8fbaaa5021b00e14dd453d469eaaf"
@@ -51,14 +48,11 @@ def run_command(cmd, capture=True):
 
 
 # ---------------------------------------------------------------------------
-# Challenge-response helpers  (mirrors conn.sh logic)
+# Challenge-response helpers
 # ---------------------------------------------------------------------------
 
 def get_response(challenge):
-    """
-    Sign an arista-ssh-agent Response[...] challenge via the Wifi OTP
-    endpoint. Stateless (no session/login required).
-    """
+    """Sign an arista-ssh-agent challenge via the Wifi OTP endpoint."""
     print(f"   [otp] Fetching response for challenge: {challenge} ...")
 
     header = {
@@ -84,7 +78,7 @@ def get_response(challenge):
 
 
 # ---------------------------------------------------------------------------
-# AP file transfer via scp -O + expect (challenge-response, mirrors conn.sh)
+# AP file transfer via scp -O + expect
 # ---------------------------------------------------------------------------
 
 def get_challenge_from_ap(ap_ip):
@@ -102,14 +96,12 @@ def get_challenge_from_ap(ap_ip):
     ch = result.stdout.strip()
     if ch:
         return ch
-    # Fallback: parse from combined output (in case log_user 0 didn't suppress fully)
     match = re.search(r"Response\[([^\]]+)\]", result.stdout + result.stderr)
     return match.group(1) if match else None
 
 
 def scp_file_to_ap(local_path, remote_dest, ap_ip, response):
     """Transfer one file using scp -O, answering the OTP challenge via expect."""
-    # Escape Tcl special chars in the response string
     safe_resp = response.replace("\\", "\\\\").replace('"', '\\"') \
                         .replace("[", "\\[").replace("]", "\\]")
 
@@ -147,15 +139,15 @@ def scp_to_ap(ap_ip, files):
         dest = f"{remote_dir}/{remote_name}"
         print(f"-> Uploading {local_path} → root@{ap_ip}:{dest} ...")
         if scp_file_to_ap(local_path, dest, ap_ip, response):
-            print(f"   [OK]")
+            print("   [OK]")
         else:
-            print(f"   [FAIL]")
+            print("   [FAIL]")
             success = False
 
     if success:
         print(f"\n[SUCCESS] All files uploaded to root@{ap_ip}:{REMOTE_DIR}")
     else:
-        print(f"\n[PARTIAL] Some files failed — check AP connectivity and challenge validity.")
+        print("\n[PARTIAL] Some files failed — check AP connectivity and challenge validity.")
     return success
 
 
@@ -179,13 +171,13 @@ def main():
 
     print(f"\n--- Generating RadSec Client Certificates for: {username} ---")
 
-    # Output: one folder per client, three files matching the UI placeholders
+    # Output: folder per client with CN-prefixed filenames
     out_dir     = username
-    client_cert = os.path.join(out_dir, "client.pem")
-    client_key  = os.path.join(out_dir, "key.pem")
-    ca_copy     = os.path.join(out_dir, "ca.pem")
-    csr_file    = os.path.join(out_dir, "client.csr")
-    ext_config  = os.path.join(out_dir, "client_ext.cnf")
+    client_cert = os.path.join(out_dir, f"{username}-client.pem")
+    client_key  = os.path.join(out_dir, f"{username}-key.pem")
+    ca_copy     = os.path.join(out_dir, f"{username}-ca.pem")
+    csr_file    = os.path.join(out_dir, f"{username}-client.csr")
+    ext_config  = os.path.join(out_dir, f"{username}-client_ext.cnf")
 
     os.makedirs(out_dir, exist_ok=True)
 
@@ -211,7 +203,7 @@ def main():
         "-sha256", "-extfile", ext_config,
     ])
 
-    # 4. AGNI server CA — client uses this to verify the RADIUS server cert
+    # 4. AGNI server CA
     shutil.copy(AGNI_SERVER_CA, ca_copy)
 
     # Cleanup temp files
@@ -234,10 +226,11 @@ def main():
     if should_copy == "y":
         ap_ip = input("Enter AP IP address: ").strip()
 
+        # Files uploaded using CN prefixes on the remote destination as well
         files_to_upload = [
-            (client_cert, "client.pem"),
-            (client_key,  "key.pem"),
-            (ca_copy,     "ca.pem"),
+            (client_cert, f"{username}-client.pem"),
+            (client_key,  f"{username}-key.pem"),
+            (ca_copy,     f"{username}-ca.pem"),
         ]
 
         scp_to_ap(ap_ip, files_to_upload)
