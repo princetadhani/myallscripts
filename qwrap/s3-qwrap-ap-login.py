@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import shlex
 import sys
 import subprocess
 import time
@@ -13,13 +14,7 @@ AP_SCRIPT = os.path.expanduser("~/bin/p")
 
 IPS = [
 # For S3 Qwrap - ABZ
-'10.87.169.175',
-'10.87.169.130',
-'10.87.169.87',
-'10.87.169.17',
-'10.87.169.113',
-'10.87.169.112',
-'10.87.169.243'
+"10.87.169.113","10.87.169.243","10.87.169.17","10.87.169.130","10.87.169.112","10.87.169.87",
 ]
 
 # ------------------------------------------------------------
@@ -64,13 +59,12 @@ def open_tab(ip):
 
     command = [AP_SCRIPT, ip] + ARGS
 
-    # Escape command for AppleScript
-    command_text = " ".join(
-        f'"{arg}"' if " " in arg else arg
-        for arg in command
-    )
+    # Quote for the terminal shell; pass as data to AppleScript separately.
+    command_text = shlex.join(command)
 
-    applescript = f'''
+    applescript = '''
+on run argv
+set commandText to item 1 of argv
 tell application "iTerm2"
 
     activate
@@ -85,15 +79,16 @@ tell application "iTerm2"
         delay 0.2
 
         tell current session
-            write text "{command_text}"
+            write text commandText
         end tell
     end tell
 
 end tell
+end run
 '''
 
     result = subprocess.run(
-        ["osascript", "-e", applescript],
+        ["osascript", "-e", applescript, command_text],
         capture_output=True,
         text=True
     )
@@ -112,19 +107,25 @@ end tell
 print(f"Opening {len(IPS)} AP sessions...")
 
 if ARGS:
-    print(f"Arguments forwarded to p: {' '.join(ARGS)}")
+    print(f"Arguments forwarded to p: {shlex.join(ARGS)}")
 
 print()
 
+opened = 0
 for ip in IPS:
 
     print(f"  → {ip}")
 
-    open_tab(ip)
+    if open_tab(ip):
+        opened += 1
 
     # Small delay prevents iTerm2 from getting flooded
     time.sleep(0.3)
 
 
 print()
-print("✅ All AP sessions opened.")
+if opened == len(IPS):
+    print("✅ All AP sessions opened.")
+else:
+    print(f"❌ Opened {opened}/{len(IPS)} AP sessions.")
+    raise SystemExit(1)

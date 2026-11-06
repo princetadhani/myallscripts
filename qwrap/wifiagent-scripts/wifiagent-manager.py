@@ -140,7 +140,12 @@ AP_CONF_PATH = f'{AP_DIR}/conf/config.yaml'
 # WIFIAGENT_BIN_URL  = f'{WIFIAGENT_BASE_URL}/wifiagent.app/wifiagent'
 # WIFIAGENT_CONF_URL = f'{WIFIAGENT_BASE_URL}/config.yaml'
 
-WIFIAGENT_BASE_URL = 'https://10.86.107.57/sensorimages/airtight/please-dont-delete/qwrap-wifiagent'
+# WIFIAGENT_BASE_URL = 'https://10.86.107.57/sensorimages/airtight/please-dont-delete/qwrap-wifiagent'
+# WIFIAGENT_BIN_URL  = f'{WIFIAGENT_BASE_URL}/wifiagent.app/wifiagent'
+# WIFIAGENT_CONF_URL = f'{WIFIAGENT_BASE_URL}/config.yaml'
+
+#new wifiagent for testing:
+WIFIAGENT_BASE_URL = 'https://pune-abz-tftp.dt1.wifi.arista.cloud/tftp/misc/Dhruv/LinuxARM64Install'
 WIFIAGENT_BIN_URL  = f'{WIFIAGENT_BASE_URL}/wifiagent.app/wifiagent'
 WIFIAGENT_CONF_URL = f'{WIFIAGENT_BASE_URL}/config.yaml'
 # ===========================================================================

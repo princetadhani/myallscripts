@@ -1,30 +1,16 @@
 #!/usr/bin/env python3
-"""TC-3: repeat firmware upgrade/downgrade with a WM-connected cooldown.
+"""TC-3 firmware upgrade/downgrade loop.
 
-Standalone: pip install paramiko pexpect requests
-Run: nohup python3 fw-upgrade-downgrade-loop.py > /dev/null 2>&1 &
-Edit AP_CONFIG below. URLs are COMPLETE platform-specific firmware URLs;
-no model folder is appended. Each worker reads the installed firmware at
-startup: if it matches upgrade_url/version, downgrade first; otherwise upgrade.
-
-Like consecutive-reboots.py, client configuration/traffic is external. This
-script checks WM Connected, not client association. The ten-minute dwell
-survives SSH reconnects and server-state changes. Failsafe recovery is
-confirmed automatically, then the worker reconnects without counting recovery
-as a firmware transition.
-
-State is persisted before issuing firmware commands: restarts resume waiting
-for that transition, never blindly resubmit it. A different boot ID and WM
-Connected are required before a transition is counted. The target version is
-read from its URL/version and checked against show device info. Review logs/state before
-manually clearing a failed/pending transition. Never run two copies together.
-
-This detects boot/readiness/failsafe failures; it does not establish partition
-integrity or validate that clients have associated. Device info and upgrade
-logs are recorded for investigation. Use immutable image URLs and expected
-version strings when confirming the actual build is important.
+Dependencies: paramiko, pexpect, requests and the colocated AFC helper. Edit AP_CONFIG below.
+Config SSH unlocks root first. Firmware, device info, boot-ID inspection
+and the outdoor AFC file trigger use root SSH. WM readiness uses config CLI.
+Connection/readiness failures retry indefinitely, like consecutive-reboots.py.
+Pending intent survives restarts; a pending firmware command is never resent.
+After verified reboot/build and WM Connected, wait ten minutes and alternate.
+The initial firmware change skips cooldown. Client traffic is managed externally.
 """
 
+import argparse
 import json
 import logging
 import os
@@ -34,6 +20,7 @@ import shlex
 import signal
 import socket
 import subprocess
+import sys
 import threading
 import time
 import warnings
@@ -49,21 +36,37 @@ from urllib3.exceptions import InsecureRequestWarning
 
 # Replace AP-1-IP with the actual AP address, then uncomment the entry.
 AP_CONFIG = {
-    "10.86.205.176": {
+    "10.86.205.159": {
         "version_verify_tls": False,  # Lab firmware server uses a self-signed certificate.
         "upgrade_url": "https://10.86.107.57/sensorimages/airtight/fw_compilation_c4xx_rfe/c430/",
         "downgrade_url": "https://systemtest-upgrade.dt1.wifi.arista.cloud/builds/103/116/1/UPG_BUNDLE_23.1.0F-34_1_0_103_116_1_c430",
     },
-    # "AP-2-IP": {"upgrade_url": "https://...", "downgrade_url": "https://..."},
+
+    "10.86.205.131": {
+        "version_verify_tls": False,  # Lab firmware server uses a self-signed certificate.
+        "upgrade_url": "https://10.86.107.57/sensorimages/airtight/fw_compilation_c4xx_rfe/o405/",
+        "downgrade_url": "https://systemtest-upgrade.dt1.wifi.arista.cloud/builds/104/117/1/UPG_BUNDLE_23.1.0F-34_1_0_104_117_1_o405",
+    },
+
+    "10.86.205.163": {
+        "version_verify_tls": False,  # Lab firmware server uses a self-signed certificate.
+        "upgrade_url": "https://10.86.107.57/sensorimages/airtight/fw_compilation_c4xx_rfe/o435/",
+        "downgrade_url": "https://systemtest-upgrade.dt1.wifi.arista.cloud/builds/103/115/1/UPG_BUNDLE_23.1.0F-34_1_0_103_115_1_o435",
+    },
+
+    
+    
 }
-SSH_USERNAME = os.environ.get("AP_CONFIG_USER", "config")
-SSH_PASSWORD = os.environ.get("AP_CONFIG_PASSWORD", "Config@123")
+SSH_USERNAME = "config"
+SSH_PASSWORD = "Config@123"
 ROOT_PASSWORD = os.environ.get("AP_ROOT_PASSWORD", "arastra")
 WIFI_OTP_URL = "https://license.aristanetworks.com/sign/wifi-otp/"
 WIFI_OTP_KEY = os.environ.get("AP_WIFI_OTP_KEY", "d9ca932a4bc8fbaaa5021b00e14dd453d469eaaf")
 CONNECTED_DWELL_SECONDS = 10 * 60
 STATUS_POLL_INTERVAL_SECONDS = 15
 RETRY_INTERVAL_SECONDS = 3
+SSH_RETRY_INITIAL_SECONDS = 60
+POST_FIRMWARE_SSH_GRACE_SECONDS = 60
 PING_ATTEMPTS_PER_CHECK = 3
 PING_PROCESS_TIMEOUT_SECONDS = 5
 PORT_CONNECT_TIMEOUT_SECONDS = 3
@@ -71,12 +74,11 @@ SSH_CONNECT_TIMEOUT_SECONDS = 8
 SSH_BANNER_TIMEOUT_SECONDS = 12
 SSH_AUTH_TIMEOUT_SECONDS = 12
 CLI_COMMAND_TIMEOUT_SECONDS = 30
-# Includes image download, flashing, reboot and reconnect to WM.
-TRANSITION_TIMEOUT_SECONDS = 30 * 60
 ROOT_PROMPT = r"(?m)^[^\r\n]*#\s*$"
 CONFIG_PROMPT = r"(?m)^[^\r\n]*\]\$\s*$"
 STATE_FILE = Path(__file__).with_name("firmware_loop_state.json")
 LOG_FILE = Path(__file__).with_name("firmware_loop.log")
+AFC_SCRIPT = Path(__file__).resolve().parent / "afc-configure-6ghz-outdoor" / "afc-configure.py"
 log = logging.getLogger("firmware_loop")
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
@@ -96,7 +98,11 @@ REJECTED_COMMAND_RE = re.compile(
 
 
 class TestFailure(RuntimeError):
-    """Stop a worker without issuing another firmware command."""
+    """Verification problem; the worker retains pending intent and retries."""
+
+
+class AuthenticationFailure(TestFailure):
+    """Abort this login attempt before sending repeated credentials."""
 
 
 class StateStore:
@@ -164,7 +170,7 @@ def wait_for_ping_and_ssh_port(ip: str) -> None:
                 with socket.create_connection(
                     (ip, 22), timeout=PORT_CONNECT_TIMEOUT_SECONDS
                 ):
-                    log.debug("%s responds to ping and port 22 is open", ip)
+                    log.info("%s [NETWORK] ping responds and port 22 is open; attempting config SSH", ip)
                     return
             except OSError:
                 message = "ping responds; waiting for port 22"
@@ -175,25 +181,30 @@ def wait_for_ping_and_ssh_port(ip: str) -> None:
         time.sleep(RETRY_INTERVAL_SECONDS)
 
 def connect_ssh(ip: str) -> paramiko.SSHClient:
+    """Config login uses only the exact Config@123 password."""
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(
-        ip,
-        port=22,
-        username=SSH_USERNAME,
-        password=SSH_PASSWORD,
-        timeout=SSH_CONNECT_TIMEOUT_SECONDS,
-        banner_timeout=SSH_BANNER_TIMEOUT_SECONDS,
-        auth_timeout=SSH_AUTH_TIMEOUT_SECONDS,
-        look_for_keys=False,
-        allow_agent=False,
-    )
-    transport = client.get_transport()
-    if transport is None or not transport.is_active():
+    try:
+        client.connect(
+            ip, port=22, username=SSH_USERNAME, password=SSH_PASSWORD,
+            timeout=SSH_CONNECT_TIMEOUT_SECONDS,
+            banner_timeout=SSH_BANNER_TIMEOUT_SECONDS,
+            auth_timeout=SSH_AUTH_TIMEOUT_SECONDS,
+            look_for_keys=False, allow_agent=False,
+        )
+        transport = client.get_transport()
+        if transport is None or not transport.is_active():
+            raise paramiko.SSHException("SSH transport did not become active")
+        transport.set_keepalive(10)
+        return client
+    except paramiko.AuthenticationException:
         client.close()
-        raise paramiko.SSHException("SSH transport did not become active")
-    transport.set_keepalive(10)
-    return client
+        raise AuthenticationFailure(
+            "Config SSH authentication rejected; reconnecting on the next attempt") from None
+    except Exception:
+        client.close()
+        raise
+
 
 def _has_cli_prompt(buffer: str) -> bool:
     cleaned = ANSI_ESCAPE_RE.sub("", buffer.replace("\r", ""))
@@ -344,9 +355,8 @@ LOCAL = threading.local()
 
 
 def check_deadline():
-    deadline = getattr(LOCAL, "deadline", None)
-    if deadline is not None and time.time() >= deadline:
-        raise TestFailure("Firmware transition exceeded its deadline; inspect AP and upgrade log")
+    """Compatibility hook: reconnect/readiness waits have no overall deadline."""
+    return
 
 
 def otp(challenge):
@@ -358,54 +368,84 @@ def otp(challenge):
     return response.json()["signature"]
 
 
-def login_root_or_config(ip, user, password, prompt):
+def login_root(ip):
+    """Root-only OTP/password login; config credentials never use this path."""
+    user, password, prompt = "root", ROOT_PASSWORD, ROOT_PROMPT
     env = os.environ.copy()
     env["TERM"] = "dumb"
     child = pexpect.spawn("ssh", [
         "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
         "-o", "ConnectTimeout=10", "-o", "ServerAliveInterval=10",
-        "-o", "ServerAliveCountMax=2", f"{user}@{ip}",
+        "-o", "ServerAliveCountMax=2", "-o", "NumberOfPasswordPrompts=1",
+        "-o", "PubkeyAuthentication=no", f"{user}@{ip}",
     ], env=env, encoding="utf-8", codec_errors="replace", timeout=30)
     try:
-        passwords = 0
+        response_sent = False
         for _ in range(8):
             check_deadline()
-            idx = child.expect([prompt, "continue connecting", r"[Pp]assword:",
-                                r"Response\[([^\]]{54})", pexpect.EOF, pexpect.TIMEOUT])
+            idx = child.expect([
+                r"(?i)(?:the )?account is locked[^\r\n]*",
+                r"(?i)permission denied|authentication failed|too many authentication failures",
+                prompt, "continue connecting", r"[Pp]assword:",
+                r"Response\[([^\]]{54})", pexpect.EOF, pexpect.TIMEOUT,
+            ])
             if idx == 0:
-                return child
+                raise AuthenticationFailure(
+                    f"{user} account is locked; login attempt aborted; reconnecting after retry interval")
             if idx == 1:
+                raise AuthenticationFailure(f"{user} SSH authentication rejected; ending this login attempt")
+            if idx == 2:
+                return child
+            if idx == 3:
                 child.sendline("yes")
-            elif idx == 2:
-                passwords += 1
-                if passwords > 1:
-                    raise RuntimeError("SSH password rejected")
-                child.sendline(password)
-            elif idx == 3:
-                child.sendline(otp(child.match.group(1)))
+            elif idx in (4, 5):
+                if response_sent:
+                    raise AuthenticationFailure(
+                        f"{user} SSH requested credentials again; ending attempt before a second response")
+                response_sent = True
+                if idx == 4:
+                    child.sendline(password)
+                else:
+                    child.sendline(otp(child.match.group(1)))
+            elif idx in (6, 7) and response_sent:
+                raise ConnectionError(
+                    f"{user} SSH closed/timed out after authentication response; "
+                    "authentication result unknown, reconnecting with backoff")
             else:
-                raise RuntimeError("SSH closed/timed out before prompt")
-        raise RuntimeError("Too many authentication prompts")
+                raise ConnectionError(f"{user} SSH closed/timed out before prompt")
+        raise AuthenticationFailure(f"Too many {user} authentication prompts; stopping")
     except Exception:
         child.close(force=True)
         raise
 
 
-def root_shell(ip):
-    try:
-        return login_root_or_config(ip, "root", ROOT_PASSWORD, ROOT_PROMPT)
-    except RuntimeError:
-        log.warning("%s direct root login failed; trying config rootuser unlock", ip)
-    child = login_root_or_config(ip, SSH_USERNAME, SSH_PASSWORD, CONFIG_PROMPT)
-    try:
+def unlock_root(ip):
+    """Unlock through config BEFORE any root login, especially after a reboot."""
+    channel = getattr(LOCAL, "config_channel", None)
+    if channel is not None:
+        log.info("%s [UNLOCK] config: privilege access -> rootuser unlock", ip)
         for command in ("privilege access", "rootuser unlock"):
-            child.sendline(command)
-            child.expect(CONFIG_PROMPT)
-            if re.search(r"\b(error|failed|invalid|denied)\b", child.before, re.I):
-                raise RuntimeError(f"Root unlock rejected: {child.before}")
+            output = run_cli_command(channel, command)
+            if re.search(r"\b(error|failed|invalid|denied)\b", output, re.I):
+                raise AuthenticationFailure(f"Config rejected {command}; root login not attempted")
+        return
+    # All config authentication uses the same Paramiko password API: no
+    # terminal paste, root password, OTP handler or environment override.
+    client = connect_ssh(ip)
+    try:
+        channel, _ = open_ap_shell(client)
+        for command in ("privilege access", "rootuser unlock"):
+            output = run_cli_command(channel, command)
+            if re.search(r"\b(error|failed|invalid|denied)\b", output, re.I):
+                raise AuthenticationFailure(f"Config rejected {command}; root login not attempted")
     finally:
-        child.close(force=True)
-    return login_root_or_config(ip, "root", ROOT_PASSWORD, ROOT_PROMPT)
+        client.close()
+
+
+def root_shell(ip):
+    unlock_root(ip)
+    log.debug("%s rootuser unlock completed; opening root SSH", ip)
+    return login_root(ip)
 
 
 def root_command(child, command):
@@ -487,32 +527,74 @@ def boot_id(child):
 
 
 def issue_firmware(ip, child, url):
-    # Both URL types follow ap-upgrade.py's HTTPS URL command. No folder added.
+    """Run firmware CLI in root; wait without an overall transition timeout."""
     cli = f"upgrade method {urlsplit(url).scheme} url {url.rstrip('/')}/"
     command = "printf 'y\\n' | cli -c " + shlex.quote(cli)
-    log.info("%s starting firmware command: %s", ip, cli)
+    log.info("%s [FIRMWARE] ROOT: %s", ip, cli)
     child.sendline(command)
-    idx = child.expect(["Upgrade has started", pexpect.EOF, pexpect.TIMEOUT], timeout=60)
-    output = child.before or ""
-    log.debug("%s firmware start output: %s", ip, output.strip())
-    if idx != 0:
-        # Command may have reached the AP. Keep the persisted pending state;
-        # never resubmit automatically on an ambiguous SSH failure.
-        raise RuntimeError("No upgrade-start acknowledgement; waiting for boot evidence, not resending")
-    log.info("%s firmware request accepted; waiting for download/flash and reboot", ip)
-    deadline = time.time() + TRANSITION_TIMEOUT_SECONDS
-    # Keep the initiating SSH session open while the firmware CLI may still be
-    # downloading in the foreground. A 30-second prompt delay is normal here.
-    while time.time() < deadline:
-        idx = child.expect([ROOT_PROMPT, pexpect.EOF, pexpect.TIMEOUT], timeout=30)
+    accepted = False
+    while True:
+        idx = child.expect([
+            "Upgrade has started", ROOT_PROMPT, pexpect.EOF, pexpect.TIMEOUT,
+        ], timeout=30)
+        output = child.before or ""
+        if REJECTED_COMMAND_RE.search(output):
+            raise RuntimeError("Firmware command rejected; retaining pending intent for verification")
         if idx == 0:
-            log.info("%s firmware command returned; waiting for reboot and WM connection", ip)
+            accepted = True
+            log.info("%s [FIRMWARE] request accepted; downloading/flashing", ip)
+        elif idx == 1:
+            log.info("%s [REBOOT] firmware CLI returned; verifying reboot/build%s", ip,
+                     "" if accepted else " (start acknowledgement not seen)")
             return
-        if idx == 1:
-            log.info("%s SSH disconnected after firmware started; checking reboot and WM connection", ip)
+        elif idx == 2:
+            log.info("%s [REBOOT] firmware SSH closed; waiting for AP return", ip)
             return
-        log.info("%s firmware download/flash still running; waiting for completion", ip)
-    raise TestFailure("Firmware command did not finish within the transition timeout")
+        else:
+            log.info("%s [FIRMWARE] waiting for download/flash and automatic reboot", ip)
+
+
+# Use the proven SCP + trigger helper, kept beside this firmware loop.
+OUTDOOR_AFC_MODELS = {"O-405", "O-435"}
+
+
+def apply_outdoor_afc(ip, child, info, current_boot, state, store):
+    """Apply the reference AFC trigger once per outdoor AP boot, before WM wait."""
+    match = re.search(r"^\s*Device model\s*:\s*(\S+)", info, re.M | re.I)
+    if not match:
+        raise RuntimeError("Device model not reported; cannot decide outdoor AFC configuration")
+    model = match.group(1).upper()
+    if model not in OUTDOOR_AFC_MODELS:
+        return
+    if state.get("afc_configured_boot_id") == current_boot:
+        return
+    if not AFC_SCRIPT.is_file():
+        raise FileNotFoundError(f"AFC helper missing: {AFC_SCRIPT}")
+    payload = AFC_SCRIPT.with_name("ap.conf.diff.afc.12345")
+    if not payload.is_file():
+        raise FileNotFoundError(f"AFC config file missing: {payload}")
+    command = [sys.executable, "-u", str(AFC_SCRIPT), "--ap", ip]
+    log.info("%s [AFC] %s: executing %s --ap %s", ip, model, AFC_SCRIPT.name, ip)
+    success_reported = False
+    # The helper prints failures but may still exit zero. Require its explicit
+    # per-AP success report as well as a successful process exit.
+    with subprocess.Popen(command, cwd=str(AFC_SCRIPT.parent),
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          text=True, encoding="utf-8", errors="replace", bufsize=1) as process:
+        for line in process.stdout:
+            line = line.rstrip()
+            if line:
+                log.info("%s [AFC-HELPER] %s", ip, line)
+            if re.search(re.escape(ip) + r":\s*afc-configure succeeded\b", line):
+                success_reported = True
+        returncode = process.wait()
+    if returncode != 0 or not success_reported:
+        raise RuntimeError(
+            f"AFC helper did not confirm success (exit={returncode}); "
+            "see AFC-HELPER output; retrying on reconnect")
+    state["afc_configured_boot_id"] = current_boot
+    store.put(ip, state)
+    log.info("%s [AFC] trigger success saved locally for boot %s; reconnects will skip AFC", ip, current_boot)
 
 
 def verify_transition(ip, config, state, store, channel):
@@ -521,16 +603,19 @@ def verify_transition(ip, config, state, store, channel):
     try:
         current_boot = boot_id(child)
         if current_boot == pending["previous_boot_id"]:
-            log.info("%s waiting for a new boot after %s", ip, pending["action"])
+            log.info("%s [REBOOT] still on previous boot after %s; waiting", ip, pending["action"])
             return False
         info = root_command(child, 'cli -c "show device info"')
         log.debug("%s post-%s device info:\n%s", ip, pending["action"], info.strip())
+        apply_outdoor_afc(ip, child, info, current_boot, state, store)
     finally:
         child.close(force=True)
     expected = pending["expected_version"]
     if expected and parse_device_version(info) != expected:
         raise TestFailure(f"Expected version {expected!r} differs from post-boot device version")
+    log.info("%s [VERIFY] new boot and build %s confirmed; waiting for WM Connected", ip, expected)
     wait_until_connected(ip, channel)
+    log.info("%s [WM] Connected; starting 10-minute cooldown", ip)
     action = pending["action"]
     state[action + "s"] += 1
     state["completed_loops"] = min(state["upgrades"], state["downgrades"])
@@ -551,18 +636,30 @@ def verify_transition(ip, config, state, store, channel):
 def run_one_ap_forever(ip, config, store):
     state = store.get(ip)
     if state.get("failure"):
-        log.error("%s has a persisted test failure: %s. Worker will not continue.", ip, state["failure"])
-        return
+        state["last_failure"] = state["failure"]
+        state["failure"] = None
+        store.put(ip, state)
+        log.info("%s [RESUME] previous failure retained as history; retrying saved phase", ip)
     startup_checked = False
     while True:
         client = None
+        wait_seconds = RETRY_INTERVAL_SECONDS
         try:
             pending = state.get("pending")
-            LOCAL.deadline = pending["deadline"] if pending else None
+            LOCAL.deadline = None
             check_deadline()
+            if pending:
+                grace = pending.get("reconnect_not_before", 0) - time.time()
+                if grace > 0:
+                    log.info("%s allowing %.0fs for firmware reboot before reconnecting", ip, grace)
+                    time.sleep(min(grace, POST_FIRMWARE_SSH_GRACE_SECONDS))
+                    continue
+            log.info("%s [NETWORK] checking ping, then port 22 before SSH", ip)
             wait_for_ping_and_ssh_port(ip)
             client = connect_ssh(ip)
             channel, _ = open_ap_shell(client)
+            LOCAL.config_channel = channel
+            log.info("%s [SSH] config login successful", ip)
             output = run_cli_command(channel, "show device status")
             if _is_connected_failsafe(connection_state(output)):
                 _recover_failsafe_mode(ip, channel)
@@ -600,23 +697,18 @@ def run_one_ap_forever(ip, config, store):
                 action = state["next_action"]
                 expected_version = fetch_firmware_version(
                     config[action + "_url"], config.get("version_verify_tls", True))
-                # Write intent BEFORE sending to prevent duplicate flashes after a crash.
                 state["pending"] = {
                     "action": action, "url": config[action + "_url"],
                     "expected_version": expected_version,
                     "previous_boot_id": previous_boot,
-                    "deadline": time.time() + TRANSITION_TIMEOUT_SECONDS,
                 }
                 state["dwell_until"] = None
                 store.put(ip, state)
                 issue_firmware(ip, child, state["pending"]["url"])
+                state["pending"]["reconnect_not_before"] = time.time() + POST_FIRMWARE_SSH_GRACE_SECONDS
+                store.put(ip, state)
             finally:
                 child.close(force=True)
-        except TestFailure as exc:
-            state["failure"] = str(exc)
-            store.put(ip, state)
-            log.error("%s TEST FAILURE: %s; worker stopped, no further firmware commands", ip, exc)
-            return
         except Exception as exc:
             if isinstance(exc, pexpect.TIMEOUT):
                 reason = "SSH shell prompt timed out"
@@ -624,14 +716,16 @@ def run_one_ap_forever(ip, config, store):
                 reason = "SSH connection closed"
             else:
                 reason = " ".join(str(exc).split())[:350]
-            phase = ("awaiting " + state["pending"]["action"] + " reboot/WM readiness"
-                     if state.get("pending") else "checking AP readiness")
-            log.warning("%s %s: %s; retry in %ds", ip, phase, reason, RETRY_INTERVAL_SECONDS)
+            phase = ("awaiting " + state["pending"]["action"] + " reboot/verification"
+                     if state.get("pending") else "connecting/preparing firmware")
+            log.warning("%s [RETRY] %s: %s; retry in %ds (no overall timeout)",
+                        ip, phase, reason, RETRY_INTERVAL_SECONDS)
             log.debug("%s diagnostic details", ip, exc_info=True)
         finally:
+            LOCAL.config_channel = None
             if client is not None:
                 client.close()
-        time.sleep(RETRY_INTERVAL_SECONDS)
+        time.sleep(wait_seconds)
 
 
 def validate_config():
@@ -650,7 +744,63 @@ def validate_config():
             raise ValueError(f"{ip}: upgrade and downgrade URLs must differ")
 
 
+
+def delete_generated_files():
+    """Clean only known local artifacts; never connect to APs or start workers."""
+    import fcntl
+    lock_path = STATE_FILE.with_suffix(".lock")
+    removed = 0
+    # Acquire the same lock as a normal run before touching persisted state.
+    with lock_path.open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise SystemExit("Cleanup refused: firmware loop is running. Stop it first.")
+        paths = [LOG_FILE, STATE_FILE, STATE_FILE.with_suffix(".json.tmp"),
+                 STATE_FILE.parent / "mock.ap.conf.diff.afc.12345"]
+        paths.extend(path for path in LOG_FILE.parent.glob(LOG_FILE.name + ".*")
+                     if path.name[len(LOG_FILE.name) + 1:].isdigit())
+        cache = STATE_FILE.parent / "__pycache__"
+        paths.extend(cache.glob(Path(__file__).stem + ".*.pyc"))
+        for path in paths:
+            if path.exists() or path.is_symlink():
+                path.unlink()
+                print(f"Deleted: {path.name}")
+                removed += 1
+        if cache.is_dir() and not any(cache.iterdir()):
+            cache.rmdir()
+        lock_path.unlink(missing_ok=True)
+        print(f"Deleted: {lock_path.name}")
+        removed += 1
+    print(f"Cleanup complete: {removed} file(s) removed. Script and README preserved.")
+
+
+def resume_failed_states(store, ips):
+    """Explicit operator resume: retain pending intent, never send it again."""
+    for ip in ips:
+        state = store.get(ip)
+        if not state.get("failure"):
+            continue
+        state["last_failure"] = state["failure"]
+        state["failure"] = None
+        if state.get("pending"):
+            state["pending"].pop("deadline", None)
+        store.put(ip, state)
+        log.info("%s resuming verification without an overall timeout; pending firmware will not be resent", ip)
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--delete", action="store_true",
+                        help="Delete local logs, state, lock, mock and script bytecode; do not run the test")
+    parser.add_argument("--resume-failed", action="store_true",
+                        help="Compatibility flag: clear saved failure history, retain pending verification")
+    args = parser.parse_args()
+    if args.delete and args.resume_failed:
+        parser.error("--delete and --resume-failed cannot be combined")
+    if args.delete:
+        delete_generated_files()
+        return
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)-8s [%(threadName)s] %(message)s",
                         handlers=[logging.StreamHandler(), RotatingFileHandler(
@@ -664,6 +814,8 @@ def main():
         except BlockingIOError:
             raise SystemExit("Another firmware loop is already running in this directory")
         store = StateStore(STATE_FILE)
+        if args.resume_failed:
+            resume_failed_states(store, AP_CONFIG)
         for ip in AP_CONFIG:
             store.put(ip, store.get(ip))
         threads = []

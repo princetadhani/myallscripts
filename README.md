@@ -6,6 +6,7 @@ It is meant to grow over time — as new day-to-day tasks come up, new scripts (
 
 ## Adding New Scripts
 
+- `common-scripts/ipv6-ra/`: group unique RAs by source and advertised contents, with packet counts, M/O flags, and per-prefix A flags and lifetimes from tcpdump text pasted into `parse_ra.py`.
 - `ap/acs-api-loop/`: discover CloudVision radios once from a GET request JSON and trigger ACS every five minutes, with a discovery-only preview.
 
 As new day-to-day automation needs come up, add them here rather than keeping one-off scripts elsewhere:
